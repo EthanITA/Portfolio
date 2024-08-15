@@ -1,5 +1,5 @@
 <template>
-  <canvas ref="waveCanvas" height="400" width="800"></canvas>
+  <canvas ref="waveCanvas" class="w-full" height="400" width="800"></canvas>
 </template>
 
 <script lang="ts" setup>
