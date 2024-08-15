@@ -8,8 +8,8 @@ import { gsap } from "gsap";
 const wave = ref<any>({
   y: 200,
   length: 0.01,
-  amplitude: 50,
-  frequency: 0.05,
+  amplitude: 25,
+  frequency: 0.01,
 });
 const increment = ref(0);
 
@@ -62,11 +62,11 @@ function drawWave() {
 function animateWaveProperties() {
   const randomizeProperties = () => {
     gsap.to(wave.value, {
-      duration: 3,
+      duration: 5,
       y: getRandomValue(200, 50),
       amplitude: getRandomValue(50, 20),
       length: getRandomValue(0.01, 0.005),
-      frequency: getRandomValue(0.05, 0.02),
+      frequency: getRandomValue(0.03, 0.01),
       ease: "power1.inOut",
       onComplete: randomizeProperties,
     });
