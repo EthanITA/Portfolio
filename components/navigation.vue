@@ -1,44 +1,35 @@
 <script lang="ts" setup>
-import { onMounted } from "vue";
-
-const tabs = ref<string[]>(["Tab 1", "Tab 2231231", "Tab 3"]);
-const selectionBox = ref<HTMLElement>();
-
-const selectedTab = ref<number>(0);
-
+const page = usePage();
 onMounted(() => {
-  watch(
-    selectedTab,
-    () =>
-      nextTick(() => {
-        const tab = document.querySelector<HTMLAnchorElement>(
-          `[data-index="${selectedTab.value}"]`,
-        );
-        if (!selectionBox.value || !tab) return;
-        selectionBox.value.style.width = `${tab.clientWidth}px`;
-        selectionBox.value.style.height = `${tab.clientHeight}px`;
-        selectionBox.value.style.transform = `translate(${tab.offsetLeft}px, ${-tab.offsetTop}px)`;
-      }),
-    { immediate: true },
+  page.tabs.selectionBox = document.getElementById("tab-selection");
+  page.tabs.selection.el = document.querySelector(
+    "#navigation>[data-index='0'].tab",
   );
 });
 </script>
 
 <template>
   <nav
+    id="navigation"
     class="tabs tabs-boxed glass shadow rounded-full overflow-hidden p-2"
     role="tablist"
   >
     <div
-      ref="selectionBox"
+      id="tab-selection"
+      :style="page.tabs.selection.style"
       class="fixed transition-all duration-200 rounded-full bg-primary-200"
     />
     <a
-      v-for="(tab, i) in tabs"
+      v-for="(tab, i) in page.tabs.list"
       :data-index="i"
       class="tab text-lg px-4"
       role="tab"
-      @click="() => (selectedTab = i)"
+      @click="
+        (e: MouseEvent) => {
+          page.tabs.selection.index = i;
+          page.tabs.selection.el = e.target as HTMLAnchorElement;
+        }
+      "
     >
       {{ tab }}
     </a>

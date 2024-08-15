@@ -1,14 +1,14 @@
 <script lang="ts" setup>
-const pageProgress = usePageProgress();
+const page = usePage();
 </script>
 
 <template>
   <div class="h-full w-2 bg-primary-200 isolate z-50 shadow">
     <div
       :class="{
-        'rounded-b-none': pageProgress.percentage === 100,
+        'rounded-b-none': page.progress === 100,
       }"
-      :style="{ height: `${pageProgress.percentage}%` }"
+      :style="{ height: `${page.progress}%` }"
       class="h-full bg-primary-500 rounded-b-full"
     />
   </div>
