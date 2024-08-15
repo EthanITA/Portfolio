@@ -3,7 +3,7 @@ const pageProgress = usePageProgress();
 </script>
 
 <template>
-  <div class="h-full w-2 bg-primary-500/10 isolate z-50">
+  <div class="h-full w-2 bg-primary-200 isolate z-50 shadow">
     <div
       :class="{
         'rounded-b-none': pageProgress.percentage === 100,
