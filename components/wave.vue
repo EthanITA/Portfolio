@@ -30,6 +30,11 @@ function drawWave() {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, "#ffb0a0"); // primary-300
+  gradient.addColorStop(0.8, "#ffd0c7"); // primary-200
+  gradient.addColorStop(1, "#ffe6e1"); // primary-100
+
   const animateWave = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.beginPath();
@@ -44,11 +49,10 @@ function drawWave() {
       );
     }
 
-    ctx.lineTo(canvas.width, canvas.height); // Line to bottom right
-    ctx.lineTo(0, canvas.height); // Line to bottom left
+    ctx.lineTo(canvas.width, canvas.height);
+    ctx.lineTo(0, canvas.height);
     ctx.closePath();
-
-    ctx.fillStyle = "#ffd0c7"; // Wave fill color
+    ctx.fillStyle = gradient;
     ctx.fill();
 
     increment.value += wave.value.frequency;
