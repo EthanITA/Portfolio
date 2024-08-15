@@ -12,6 +12,6 @@
     }
 
     :root, #__nuxt, body {
-        @apply h-full w-full;
+        @apply h-full w-full bg-primary-50/80 text-gray-800;
     }
 }
