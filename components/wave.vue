@@ -70,7 +70,7 @@ function animateWaveProperties() {
       y: getRandomValue(200, 50),
       amplitude: getRandomValue(50, 20),
       length: getRandomValue(0.01, 0.005),
-      frequency: getRandomValue(0.03, 0.01),
+      frequency: getRandomValue(0.02, 0.005),
       ease: "power1.inOut",
       onComplete: randomizeProperties,
     });
