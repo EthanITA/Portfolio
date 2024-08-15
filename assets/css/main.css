@@ -12,6 +12,7 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
+
     ::-webkit-scrollbar {
         display: none;
     }
@@ -19,4 +20,14 @@
     :root, #__nuxt, body {
         @apply h-full w-full bg-primary-50/80 text-gray-800;
     }
+
 }
+
+.text-gray-800 {
+    @apply selection:bg-gray-800/20;
+}
+
+.text-primary {
+    @apply selection:bg-primary/20 !important;
+}
+
