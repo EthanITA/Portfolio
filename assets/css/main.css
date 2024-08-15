@@ -9,6 +9,11 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         font-family: 'Nunito', 'Noto Sans', sans-serif;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    ::-webkit-scrollbar {
+        display: none;
     }
 
     :root, #__nuxt, body {
