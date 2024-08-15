@@ -19,10 +19,12 @@ onMounted(() => {
       :style="page.tabs.selection.style"
       class="fixed transition-all duration-200 rounded-full bg-primary-200"
     />
+
     <a
       v-for="(tab, i) in page.tabs.list"
       :data-index="i"
-      class="tab text-lg px-4"
+      :href="`${tab.href}`"
+      class="tab text-lg px-4 space-x-2 border-primary-200"
       role="tab"
       @click="
         (e: MouseEvent) => {
@@ -31,7 +33,8 @@ onMounted(() => {
         }
       "
     >
-      {{ tab }}
+      <span class="pointer-events-none">{{ tab.name }}</span>
+      <kbd class="kbd kbd-sm pointer-events-none">{{ tab.kbd }}</kbd>
     </a>
   </nav>
 </template>

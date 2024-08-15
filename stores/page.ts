@@ -3,7 +3,11 @@ import { onMounted } from "vue";
 export const usePage = defineStore("page", () => {
   const progress = ref(0);
   const tabs = reactive<{
-    list: string[];
+    list: {
+      name: string;
+      kbd: string;
+      href: string;
+    }[];
     selection: {
       index: number;
       el: HTMLAnchorElement | null;
@@ -15,7 +19,12 @@ export const usePage = defineStore("page", () => {
     };
     selectionBox: HTMLElement | null;
   }>({
-    list: ["Home", "About", "Services", "Contact"],
+    list: [
+      { name: "Home", kbd: "/", href: "#home" },
+      { name: "About", kbd: "A", href: "#about" },
+      { name: "Projects", kbd: "P", href: "#projects" },
+      { name: "Contact", kbd: "C", href: "#contact" },
+    ],
     selection: {
       index: 0,
       el: null,
@@ -53,6 +62,15 @@ export const usePage = defineStore("page", () => {
     window.addEventListener("resize", () => {
       updatePercentage();
       updateTabSelection();
+    });
+
+    window.addEventListener("keypress", (e) => {
+      const tab = tabs.list.find((tab) => tab.kbd === e.key.toUpperCase());
+      if (!tab) return;
+      const el = document.querySelector(`a.tab[href="${tab.href}"][role=tab]`);
+      if (!el) return;
+      tabs.selection.el = el as HTMLAnchorElement;
+      tabs.selection.index = tabs.list.indexOf(tab);
     });
   });
 
