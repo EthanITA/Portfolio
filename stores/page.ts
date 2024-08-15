@@ -1,13 +1,15 @@
 import { onMounted } from "vue";
 
+export interface Tab {
+  name: string;
+  kbd: string;
+  href: string;
+}
+
 export const usePage = defineStore("page", () => {
   const progress = ref(0);
   const tabs = reactive<{
-    list: {
-      name: string;
-      kbd: string;
-      href: string;
-    }[];
+    list: Tab[];
     selection: {
       index: number;
       el: HTMLAnchorElement | null;
@@ -56,6 +58,26 @@ export const usePage = defineStore("page", () => {
     { immediate: true },
   );
 
+  const selectTab = (tab: Tab) => {
+    const el = document.querySelector<HTMLAnchorElement>(
+      `a.tab[href="${tab.href}"][role=tab]`,
+    );
+    if (!el) return;
+    tabs.selection.el = el;
+    tabs.selection.index = tabs.list.indexOf(tab);
+    useRouter().push(tab.href);
+  };
+
+  const nextTab = () => {
+    const index = (tabs.selection.index + 1) % tabs.list.length;
+    selectTab(tabs.list[index]);
+  };
+  const prevTab = () => {
+    const index =
+      (tabs.selection.index - 1 + tabs.list.length) % tabs.list.length;
+    selectTab(tabs.list[index]);
+  };
+
   onMounted(() => {
     window.addEventListener("scroll", updatePercentage);
 
@@ -64,13 +86,16 @@ export const usePage = defineStore("page", () => {
       updateTabSelection();
     });
 
-    window.addEventListener("keypress", (e) => {
-      const tab = tabs.list.find((tab) => tab.kbd === e.key.toUpperCase());
+    window.addEventListener("keydown", (e) => {
+      if (["ArrowLeft", "ArrowRight"].includes(e.key)) {
+        if (e.key === "ArrowLeft") prevTab();
+        if (e.key === "ArrowRight") nextTab();
+        return;
+      }
+      // @ts-ignore
+      const tab = tabs.list.find<Tab>((tab) => tab.kbd === e.key.toUpperCase());
       if (!tab) return;
-      const el = document.querySelector(`a.tab[href="${tab.href}"][role=tab]`);
-      if (!el) return;
-      tabs.selection.el = el as HTMLAnchorElement;
-      tabs.selection.index = tabs.list.indexOf(tab);
+      selectTab(tab);
     });
   });
 
