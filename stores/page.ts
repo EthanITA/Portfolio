@@ -39,7 +39,7 @@ export const usePage = defineStore("page", () => {
     selectionBox: null,
   });
 
-  const updatePercentage = () => {
+  const updateProgress = () => {
     const scroll = document.documentElement.scrollTop;
     const height = document.documentElement.scrollHeight - window.innerHeight;
     progress.value = (scroll / height) * 100;
@@ -79,10 +79,12 @@ export const usePage = defineStore("page", () => {
   };
 
   onMounted(() => {
-    window.addEventListener("scroll", updatePercentage);
+    updateProgress();
+
+    window.addEventListener("scroll", updateProgress);
 
     window.addEventListener("resize", () => {
-      updatePercentage();
+      updateProgress();
       updateTabSelection();
     });
 
