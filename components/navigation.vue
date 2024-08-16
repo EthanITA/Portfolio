@@ -11,13 +11,13 @@ onMounted(() => {
 <template>
   <nav
     id="navigation"
-    class="tabs tabs-boxed glass shadow rounded-full overflow-hidden space-x-1 p-2"
+    class="tabs tabs-boxed glass rounded-full overflow-hidden space-x-1 p-2"
     role="tablist"
   >
     <div
       id="tab-selection"
       :style="page.tabs.selection.style"
-      class="fixed transition-all duration-200 rounded-full bg-primary-200"
+      class="fixed shadow border-primary-300 transition-all duration-200 rounded-full bg-primary-200"
     />
 
     <a
