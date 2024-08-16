@@ -29,8 +29,8 @@ p {
   background: #ff7053
     linear-gradient(transparent 0%, transparent 50%, #ffffff 50%, #ffffff 100%);
   position: relative;
-  width: 52px;
-  height: 88px;
+  width: 36px;
+  height: 66px;
   border-radius: 100px;
   background-size: 100% 200%;
   animation:
@@ -48,8 +48,8 @@ p {
   margin: auto;
 }
 .mouse:before {
-  width: calc(52px - 6px);
-  height: calc(88px - 6px);
+  width: calc(36px - 6px);
+  height: calc(66px - 6px);
   background-color: #ffb0a0;
   border-radius: 100px;
 }
@@ -108,7 +108,7 @@ p {
 @keyframes trackBallSlide {
   0% {
     opacity: 1;
-    transform: scale(1) translateY(-20px);
+    transform: scale(1) translateY(-10px);
   }
   6% {
     opacity: 1;
@@ -121,16 +121,16 @@ p {
   15%,
   19% {
     opacity: 0;
-    transform: scale(0.4) translateY(-20px);
+    transform: scale(0.4) translateY(-10px);
   }
   28%,
   29.99% {
     opacity: 1;
-    transform: scale(1) translateY(-20px);
+    transform: scale(1) translateY(-10px);
   }
   30% {
     opacity: 1;
-    transform: scale(1) translateY(-20px);
+    transform: scale(1) translateY(-10px);
   }
   36% {
     opacity: 1;
@@ -143,16 +143,16 @@ p {
   45%,
   49% {
     opacity: 0;
-    transform: scale(0.4) translateY(-20px);
+    transform: scale(0.4) translateY(-10px);
   }
   58%,
   59.99% {
     opacity: 1;
-    transform: scale(1) translateY(-20px);
+    transform: scale(1) translateY(-10px);
   }
   60% {
     opacity: 1;
-    transform: scale(1) translateY(-20px);
+    transform: scale(1) translateY(-10px);
   }
   66% {
     opacity: 1;
@@ -165,12 +165,12 @@ p {
   75%,
   79% {
     opacity: 0;
-    transform: scale(0.4) translateY(-20px);
+    transform: scale(0.4) translateY(-10px);
   }
   88%,
   100% {
     opacity: 1;
-    transform: scale(1) translateY(-20px);
+    transform: scale(1) translateY(-10px);
   }
 }
 
