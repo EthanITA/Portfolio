@@ -9,7 +9,7 @@ const page = usePage();
         'rounded-b-none': page.progress === 100,
       }"
       :style="{ height: `${page.progress}%` }"
-      class="h-full bg-primary-500 rounded-b-full"
+      class="h-full bg-primary rounded-b-full"
     />
   </div>
 </template>
