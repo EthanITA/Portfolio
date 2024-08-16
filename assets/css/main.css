@@ -35,3 +35,7 @@ a{
     -webkit-user-drag: none;
     @apply select-none
 }
+
+* {
+    @apply cursor-none !important;
+}
