@@ -58,7 +58,7 @@ const observeHoverableElements = () => {
         mutation.addedNodes.forEach((node) => {
           if (
             (node as HTMLElement).classList &&
-            (node as HTMLElement).classList.contains("hoverable")
+            (node as HTMLElement).classList.contains("cursor-pointer")
           ) {
             (node as HTMLElement).addEventListener(
               "mouseenter",
