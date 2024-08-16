@@ -11,7 +11,7 @@ onMounted(() => {
 <template>
   <nav
     id="navigation"
-    class="tabs tabs-boxed glass shadow rounded-full overflow-hidden p-2"
+    class="tabs tabs-boxed glass shadow rounded-full overflow-hidden space-x-1 p-2"
     role="tablist"
   >
     <div
@@ -22,9 +22,12 @@ onMounted(() => {
 
     <a
       v-for="(tab, i) in page.tabs.list"
+      :class="{
+        'hover:bg-primary-100': page.tabs.selection.index !== i,
+      }"
       :data-index="i"
       :href="`${tab.href}`"
-      class="tab text-lg px-4 space-x-2 border-primary-200 flex-nowrap"
+      class="tab text-lg px-4 space-x-2 flex-nowrap transition-colors duration-200 ease-out !rounded-full"
       role="tab"
       @click="
         (e: MouseEvent) => {
