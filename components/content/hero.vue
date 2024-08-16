@@ -1,7 +1,7 @@
 <script lang="ts" setup></script>
 
 <template>
-  <div class="hero h-full min-h-[512px]">
+  <div class="hero h-full max-h-full min-h-[512px] relative">
     <div class="hero-overlay flex">
       <Wave class="items-center justify-center blur-3xl" />
     </div>
@@ -19,6 +19,7 @@
       </div>
     </div>
   </div>
+  <Nudge class="absolute left-[50%] bottom-4 -translate-x-1/2" />
 </template>
 
 <style scoped></style>
