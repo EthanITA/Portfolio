@@ -27,7 +27,7 @@ onMounted(() => {
       }"
       :data-index="i"
       :href="`${tab.href}`"
-      class="tab text-lg px-4 space-x-2 flex-nowrap transition-colors duration-200 ease-out !rounded-full"
+      class="tab cursor-pointer text-lg px-4 space-x-2 flex-nowrap transition-colors duration-200 ease-out !rounded-full"
       role="tab"
       @click="
         (e: MouseEvent) => {

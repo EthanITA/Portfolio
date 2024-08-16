@@ -30,6 +30,55 @@ const updatePosition = (e: MouseEvent) => {
   position.value.y = e.clientY;
 };
 
+const handleMouseEnter = () => {
+  state.value = "hover";
+};
+
+const handleMouseLeave = () => {
+  state.value = "default";
+};
+
+// Event delegation: Handle hover states using a single event listener
+const handleHoverState = (event: Event) => {
+  const target = event.target as HTMLElement;
+  if (target && target.classList.contains("cursor-pointer")) {
+    if (event.type === "mouseenter") {
+      handleMouseEnter();
+    } else if (event.type === "mouseleave") {
+      handleMouseLeave();
+    }
+  }
+};
+
+// MutationObserver to detect dynamic elements
+const observeHoverableElements = () => {
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+        mutation.addedNodes.forEach((node) => {
+          if (
+            (node as HTMLElement).classList &&
+            (node as HTMLElement).classList.contains("hoverable")
+          ) {
+            (node as HTMLElement).addEventListener(
+              "mouseenter",
+              handleHoverState,
+            );
+            (node as HTMLElement).addEventListener(
+              "mouseleave",
+              handleHoverState,
+            );
+          }
+        });
+      }
+    });
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  return observer;
+};
+
 onMounted(() => {
   let ts: number = 0;
   let lastState: State;
