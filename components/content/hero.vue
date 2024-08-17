@@ -2,7 +2,7 @@
 
 <template>
   <div class="hero h-full max-h-full min-h-[512px] relative">
-    <div class="hero-overlay flex">
+    <div class="hero-overlay flex pointer-events-none">
       <Wave class="items-center justify-center blur-3xl" />
     </div>
     <div class="hero-content text-gray-700 text-center">
@@ -19,7 +19,7 @@
       </div>
     </div>
   </div>
-  <Nudge class="absolute left-[50%] bottom-8 -translate-x-1/2" />
+  <Nudge class="fixed left-[50%] bottom-8 -translate-x-1/2" />
 </template>
 
 <style scoped></style>
