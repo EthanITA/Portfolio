@@ -1,7 +1,7 @@
 <script lang="ts" setup></script>
 
 <template>
-  <div class="hero h-full max-h-full min-h-[512px] relative">
+  <div class="hero relative min-h-full">
     <div class="hero-overlay flex pointer-events-none">
       <Wave class="items-center justify-center blur-3xl" />
     </div>
