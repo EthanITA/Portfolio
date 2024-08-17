@@ -37,7 +37,9 @@ onMounted(() => {
       "
     >
       <span class="pointer-events-none">{{ tab.name }}</span>
-      <kbd class="kbd kbd-sm pointer-events-none">{{ tab.kbd }}</kbd>
+      <kbd class="hidden sm:block kbd kbd-sm pointer-events-none">{{
+        tab.kbd
+      }}</kbd>
     </a>
   </nav>
 </template>
