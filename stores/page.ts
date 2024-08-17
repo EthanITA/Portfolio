@@ -38,6 +38,10 @@ export const usePage = defineStore("page", () => {
     },
     selectionBox: null,
   });
+  const hasCursor = ref(false);
+
+  const updateHasCursor = () =>
+    (hasCursor.value = matchMedia("(pointer: fine)").matches);
 
   const updateProgress = () => {
     const scroll = document.documentElement.scrollTop;
@@ -80,10 +84,12 @@ export const usePage = defineStore("page", () => {
 
   onMounted(() => {
     updateProgress();
+    updateHasCursor();
 
     window.addEventListener("scroll", updateProgress);
 
     window.addEventListener("resize", () => {
+      updateHasCursor();
       updateProgress();
       updateTabSelection();
     });
@@ -102,6 +108,7 @@ export const usePage = defineStore("page", () => {
   });
 
   return {
+    hasCursor,
     progress,
     tabs,
   };
