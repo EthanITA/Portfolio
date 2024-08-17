@@ -48,6 +48,14 @@ export const usePage = defineStore("page", () => {
     const height = document.documentElement.scrollHeight - window.innerHeight;
     progress.value = (scroll / height) * 100;
   };
+
+  const setProgress = (value: number) => {
+    progress.value = value;
+    document.documentElement.scrollTop =
+      (value / 100) *
+      (document.documentElement.scrollHeight - window.innerHeight);
+  };
+
   const updateTabSelection = () =>
     nextTick(() => {
       if (!tabs.selectionBox || !tabs.selection.el) return;
@@ -110,6 +118,7 @@ export const usePage = defineStore("page", () => {
   return {
     hasCursor,
     progress,
+    setProgress,
     tabs,
   };
 });
