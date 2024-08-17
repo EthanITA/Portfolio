@@ -1,5 +1,8 @@
 <script lang="ts" setup>
 const page = usePage();
+
+const isSelected = (index: number) => page.tabs.selection.index === index;
+
 onMounted(() => {
   page.tabs.selectionBox = document.getElementById("tab-selection");
   page.tabs.selection.el = document.querySelector(
@@ -23,7 +26,8 @@ onMounted(() => {
     <a
       v-for="(tab, i) in page.tabs.list"
       :class="{
-        'hover:bg-primary-100': page.tabs.selection.index !== i,
+        'hover:bg-primary-100': !isSelected(i),
+        'text-primary-600': isSelected(i),
       }"
       :data-index="i"
       :href="`${tab.href}`"
@@ -37,9 +41,9 @@ onMounted(() => {
       "
     >
       <span class="pointer-events-none">{{ tab.name }}</span>
-      <kbd class="hidden sm:block kbd kbd-sm pointer-events-none">{{
-        tab.kbd
-      }}</kbd>
+      <kbd class="hidden sm:block kbd kbd-sm pointer-events-none">
+        {{ tab.kbd }}
+      </kbd>
     </a>
   </nav>
 </template>
