@@ -14,7 +14,10 @@ onMounted(() => {
 <template>
   <nav
     id="navigation"
-    class="tabs tabs-boxed glass rounded-full overflow-hidden space-x-1 p-2"
+    :class="{
+      glass: page.hasScrolled,
+    }"
+    class="tabs transition-all duration-500 tabs-boxed rounded-full overflow-hidden space-x-1 p-2"
     role="tablist"
   >
     <div

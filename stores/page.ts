@@ -39,6 +39,10 @@ export const usePage = defineStore("page", () => {
     selectionBox: null,
   });
   const hasCursor = ref(false);
+  const hasScrolled = computed(() => {
+    const threshold = 5;
+    return progress.value > threshold;
+  });
 
   const updateHasCursor = () =>
     (hasCursor.value = matchMedia("(pointer: fine)").matches);
@@ -117,6 +121,7 @@ export const usePage = defineStore("page", () => {
 
   return {
     hasCursor,
+    hasScrolled,
     progress,
     setProgress,
     tabs,

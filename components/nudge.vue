@@ -1,13 +1,12 @@
 <script lang="ts" setup>
 const page = usePage();
-const threshold = 5;
 </script>
 
 <template>
   <div
     :class="{
-      'opacity-0': page.progress > threshold,
-      'opacity-100': page.progress <= threshold,
+      'opacity-0': page.hasScrolled,
+      'opacity-100': !page.hasScrolled,
     }"
     class="flex flex-col justify-center items-center pointer-events-none transition-opacity duration-500"
   >
