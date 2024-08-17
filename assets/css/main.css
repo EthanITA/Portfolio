@@ -32,9 +32,8 @@
     @apply selection:bg-primary/20 !important;
 }
 
-a{
+* {
     -webkit-user-drag: none;
-    @apply select-none
 }
 
 * {
