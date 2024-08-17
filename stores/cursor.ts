@@ -19,20 +19,19 @@ export const useCursor = defineStore("cursor", () => {
     x: 0,
     y: 0,
   });
-
-  const state = ref<State>("default");
+  const mouseState = reactive({
+    isHovering: false,
+    isFocused: false,
+  });
+  const state = computed<State>(() => {
+    if (mouseState.isFocused) return "focus";
+    else if (mouseState.isHovering) return "hover";
+    return "default";
+  });
 
   const updatePosition = (e: MouseEvent) => {
     position.value.x = e.clientX;
     position.value.y = e.clientY;
-  };
-
-  const handleMouseEnter = () => {
-    state.value = "hover";
-  };
-
-  const handleMouseLeave = () => {
-    state.value = "default";
   };
 
   // Event delegation: Handle hover states using a single event listener
@@ -40,9 +39,9 @@ export const useCursor = defineStore("cursor", () => {
     const target = event.target as HTMLElement;
     if (target && target.classList.contains("cursor-pointer")) {
       if (event.type === "mouseenter") {
-        handleMouseEnter();
+        mouseState.isHovering = true;
       } else if (event.type === "mouseleave") {
-        handleMouseLeave();
+        mouseState.isHovering = false;
       }
     }
   };
@@ -78,24 +77,22 @@ export const useCursor = defineStore("cursor", () => {
 
   onMounted(() => {
     let ts: number = 0;
-    let lastState: State;
 
     window.addEventListener("mousemove", updatePosition);
 
     window.addEventListener("mousedown", () => {
-      lastState = state.value;
-      state.value = "focus";
+      mouseState.isFocused = true;
       ts = Date.now();
     });
 
     window.addEventListener("mouseup", () => {
-      state.value = lastState ?? "default";
+      mouseState.isFocused = false;
     });
 
     window.addEventListener("click", () => {
       const isTap = Date.now() - ts < 25;
-      if (isTap) state.value = "focus";
-      setTimeout(() => (state.value = lastState ?? "default"), 100);
+      if (isTap) mouseState.isFocused = true;
+      setTimeout(() => (mouseState.isFocused = false), 100);
     });
 
     document.body.addEventListener("mouseenter", handleHoverState, true);
