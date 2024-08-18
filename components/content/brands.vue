@@ -19,7 +19,6 @@ const updateIsOverflowing = () => {
 };
 
 onMounted(() => {
-  if (!brandsDiv.value) return;
   updateIsOverflowing();
   window.addEventListener("resize", updateIsOverflowing);
 });
