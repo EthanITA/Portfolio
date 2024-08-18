@@ -23,6 +23,7 @@ export default defineNuxtConfig({
           onload: "this.onload=null;this.rel='stylesheet'",
         },
       ],
+      title: "Marco Dong",
     },
   },
 });
