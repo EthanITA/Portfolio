@@ -48,7 +48,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="isolate py-12 relative select-none">
+  <div class="isolate py-12 relative select-none overflow-x-hidden">
     <div
       ref="brandsDiv"
       :class="{
