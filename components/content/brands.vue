@@ -2,20 +2,43 @@
 import Marquee from "~/components/atom/marquee.vue";
 
 const techs = ref([
-  { name: "Deloitte", logo: "deloitte.svg" },
-  { name: "Autotorino", logo: "autotorino.svg" },
-  { name: "Indra", logo: "indra.svg" },
-  { name: "Minsait", logo: "minsait.svg" },
-  { name: "Pinpoint", logo: "pinpoint.svg" },
-  { name: "Skillbill", logo: "skillbill.svg" },
+  {
+    name: "Indra",
+    logo: "indra.svg",
+    website: "https://www.indracompany.com/en",
+  },
+  {
+    name: "Pinpoint",
+    logo: "pinpoint.svg",
+    website: "https://www.pinpointweb.it/",
+  },
+  {
+    name: "Minsait",
+    logo: "minsait.svg",
+    website: "https://www.minsait.com/en",
+  },
+  {
+    name: "Skillbill",
+    logo: "skillbill.svg",
+    website: "https://www.skillbill.it/",
+  },
+  {
+    name: "Autotorino",
+    logo: "autotorino.svg",
+    website: "https://www.autotorino.it/",
+  },
+  {
+    name: "Deloitte",
+    logo: "deloitte.svg",
+    website: "https://www.deloittedigital.com/it/en.html",
+  },
 ]);
 
 const brandsDiv = ref<HTMLDivElement | null>(null);
 const isOverflowing = ref(false);
 const updateIsOverflowing = () => {
   if (!brandsDiv.value) return;
-  isOverflowing.value =
-    brandsDiv.value.scrollWidth > brandsDiv.value.clientWidth;
+  isOverflowing.value = window.innerWidth <= brandsDiv.value.clientWidth;
 };
 
 onMounted(() => {
@@ -25,23 +48,30 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="isolate py-12 relative overflow-x-hidden select-none">
+  <div class="isolate py-12 relative select-none">
     <div
       ref="brandsDiv"
       :class="{
         'invisible pointer-events-none': isOverflowing,
       }"
-      class="flex gap-4"
+      class="flex min-w-full w-max justify-between"
     >
-      <NuxtImg
+      <a
         v-for="tech in techs"
         :key="tech.logo"
-        :alt="tech.name"
-        :src="`/images/brands/${tech.logo}`"
-        class="w-auto h-[32px] mx-auto"
-        height="24"
-        width="24"
-      />
+        :href="tech.website"
+        class="hover:opacity-90 cursor-pointer duration-300 hover:scale-110 transition-[transform,opacity,color] hover:bg-primary-100 p-2 px-4 rounded-full"
+        target="_blank"
+      >
+        <NuxtImg
+          :key="tech.logo"
+          :alt="tech.name"
+          :src="`/images/brands/${tech.logo}`"
+          class="min-w-fit w-auto h-[32px]"
+          height="24"
+          width="24"
+        ></NuxtImg>
+      </a>
     </div>
     <div class="absolute top-12">
       <Marquee v-if="isOverflowing">
