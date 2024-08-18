@@ -8,10 +8,14 @@ const hovering = ref(false);
 
 const unwatch = ref<WatchStopHandle>();
 
-const updateProgress = () =>
+const updateProgress = () => {
+  if (!page.hasCursor) return;
   page.setProgress((cursor.position.y / window.innerHeight) * 100);
+};
 
 const drag = () => {
+  if (!page.hasCursor) return;
+
   unwatch.value = watch(() => cursor.position.y, updateProgress);
   window.addEventListener("mouseup", () => {
     if (unwatch) {
@@ -30,10 +34,9 @@ const drag = () => {
   >
     <div
       :class="{
-        'w-full': unwatch || hovering,
+        'w-full': (unwatch || hovering) && page.hasCursor,
       }"
       class="w-2 bg-primary-200 transition-all shadow"
-      draggable="true"
       @click="updateProgress"
       @mousedown="drag"
     >
