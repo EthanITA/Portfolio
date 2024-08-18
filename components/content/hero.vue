@@ -19,7 +19,7 @@
       </div>
     </div>
   </div>
-  <Nudge class="fixed left-[50%] bottom-8 -translate-x-1/2" />
+  <Nudge class="absolute left-[50%] bottom-8 -translate-x-1/2" />
 </template>
 
 <style scoped></style>
