@@ -1,20 +1,6 @@
-interface Size {
-  h: number;
-  w: number;
-}
 type State = "default" | "hover" | "focus";
 
 export const useCursor = defineStore("cursor", () => {
-  const sizeState = ref<Record<State, Size>>({
-    default: { h: 16, w: 16 },
-    hover: { h: 24, w: 24 },
-    focus: { h: 36, w: 36 },
-  });
-
-  const size = computed<Size>(() => {
-    return sizeState.value[state.value];
-  });
-
   const position = ref({
     x: 0,
     y: 0,
@@ -114,7 +100,6 @@ export const useCursor = defineStore("cursor", () => {
   });
 
   return {
-    size,
     position,
     state,
   };

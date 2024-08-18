@@ -6,14 +6,34 @@ const page = usePage();
 <template>
   <div
     v-show="page.hasCursor"
+    id="cursor"
+    :data-type="cursor.state"
     :style="{
-      width: `${cursor.size.w}px`,
-      height: `${cursor.size.h}px`,
       top: `${cursor.position.y}px`,
       left: `${cursor.position.x}px`,
     }"
-    class="fixed bg-primary -translate-x-1/2 -translate-y-1/2 glass opacity-90 shadow-primary rounded-full duration-200 transition-[height,width] pointer-events-none ease-in-out z-50"
+    class="-translate-x-1/2 -translate-y-1/2 rounded-full"
   ></div>
 </template>
 
-<style scoped></style>
+<style scoped>
+#cursor {
+  @apply bg-primary glass shadow-primary opacity-90
+  fixed z-[9999] pointer-events-none;
+
+  transition-property: height, width, background-color, opacity;
+  @apply ease-in-out duration-200;
+}
+
+#cursor[data-type="default"] {
+  @apply size-4 opacity-80;
+}
+
+#cursor[data-type="hover"] {
+  @apply size-8;
+}
+
+#cursor[data-type="focus"] {
+  @apply size-10 bg-primary-500;
+}
+</style>
