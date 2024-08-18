@@ -54,7 +54,7 @@ onMounted(() => {
       :class="{
         'invisible pointer-events-none': isOverflowing,
       }"
-      class="flex min-w-full w-max justify-between"
+      class="flex min-w-full w-max justify-between px-2"
     >
       <a
         v-for="tech in techs"
