@@ -8,7 +8,7 @@
       <ContentValueTransparency />
       <ContentValueIntegrity />
     </div>
-    <ContentBrands class="mx-auto" />
+    <ContentBrands />
   </div>
 </template>
 

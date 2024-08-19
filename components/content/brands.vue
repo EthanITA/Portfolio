@@ -30,7 +30,7 @@ const techs = ref([
 </script>
 
 <template>
-  <div class="flex gap-8">
+  <div class="flex gap-8 justify-center">
     <div v-for="tech in techs">
       <NuxtImg
         :key="tech.logo"
