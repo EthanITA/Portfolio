@@ -9,23 +9,30 @@ const expanded = ref(false);
     :class="{
       'swap-active': expanded,
     }"
-    class="swap h-full bg-white card select-auto"
+    class="h-full bg-white card"
   >
-    <figure v-if="$slots.creativity" class="swap-off">
-      <slot name="creativity" />
-    </figure>
-    <div class="swap-off card-body">
+    <div class="card-body">
       <h3 class="card-title">
         <slot name="header" />
       </h3>
-      <slot />
-    </div>
-    <div class="swap-on card-body">
-      <h3 class="card-title">
-        <slot name="header" />
-      </h3>
-      <div class="flex items-center max-w-2xl h-full mx-auto justify-center">
-        <slot name="description" />
+      <div class="swap overflow-x-hidden select-auto">
+        <div
+          :class="{
+            'pointer-events-none': expanded,
+          }"
+          class="swap-off overflow-x-hidden"
+        >
+          <slot />
+        </div>
+        <div
+          :class="{
+            'max-w-2xl': expanded,
+            'pointer-events-none': !expanded,
+          }"
+          class="swap-on"
+        >
+          <slot name="description" />
+        </div>
       </div>
     </div>
     <div
@@ -42,4 +49,9 @@ const expanded = ref(false);
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.card,
+.card-body {
+  @apply overflow-x-hidden;
+}
+</style>
