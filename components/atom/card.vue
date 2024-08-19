@@ -4,11 +4,19 @@ const expanded = ref(false);
 
 <template>
   <div class="h-full bg-white card">
+    <figure class="w-full">
+      <slot name="creativity" />
+    </figure>
     <div class="card-body overflow-hidden">
       <h3 class="card-title">
         <slot name="header" />
       </h3>
-      <div class="overflow-hidden">
+      <div
+        :class="{
+          'h-full': $slots.creativity,
+        }"
+        class="overflow-hidden"
+      >
         <slot />
       </div>
     </div>

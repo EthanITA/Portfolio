@@ -1,19 +1,39 @@
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+const extended = ref(false);
+</script>
 
 <template>
-  <AtomCard>
+  <AtomCard class="image-full bg-[#EFF9FF]">
     <template #header> Transparency</template>
-    <p>Trust through open communication</p>
-    <template #description>
-      <p class="h-fit">
-        I believe that <strong>trust</strong> is built upon
-        <strong>open communication</strong>. From the initial consultation to
-        the final deployment, I keep clients informed and involved at every
-        stage of the project. By being <strong>transparent</strong> about
-        progress, challenges, and timelines, I ensure that there are no
-        surprises—only results that meet or exceed expectations.
-      </p>
+    <template #creativity>
+      <NuxtImg
+        :class="{
+          'blur-xl opacity-50': extended,
+        }"
+        class="w-full transition-all duration-300 ease-in-out"
+        src="images/values/transparency.png"
+      />
     </template>
+    <AtomSwap v-model="extended" :class="{ 'h-full': extended }" hide-action>
+      <template #off>
+        <p>Trust through open communication</p>
+      </template>
+      <template #on>
+        <div class="flex size-full items-center justify-center">
+          <div class="text-center px-8 md:px-16">
+            <p>
+              <strong>Trust</strong> is built through <strong></strong
+              ><strong>open communication</strong>, ensuring that stakeholders
+              are informed and involved. By being
+              <strong>transparent</strong> about progress, challenges, and
+              timelines, I ensure that only results that meet or exceed
+              expectations.
+            </p>
+          </div>
+        </div>
+      </template>
+    </AtomSwap>
+    <AtomSwapAction v-model="extended" />
   </AtomCard>
 </template>
 
