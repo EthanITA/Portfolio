@@ -33,9 +33,6 @@
 }
 
 *, a{
-    -webkit-user-drag: none;
-}
-
-* {
     @apply cursor-none !important;
+    -webkit-user-drag: none;
 }
