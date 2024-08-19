@@ -9,15 +9,13 @@ const props = defineProps<{
   language?: string;
 }>();
 
-const formattedCode = ref<string>("");
-
-onMounted(() => {
-  formattedCode.value = Prism.highlight(
+const formattedCode = computed<string>(() =>
+  Prism.highlight(
     props.code,
     Prism.languages[props.language ?? "ts"],
     props.language ?? "ts",
-  );
-});
+  ),
+);
 </script>
 
 <template>
@@ -27,7 +25,7 @@ onMounted(() => {
         <pre
           :data-prefix="i + 1"
           class="last:pb-2"
-        ><code :class="`language-${language ?? 'ts'}`" v-html="line"></code></pre>
+        ><code  v-html="line"></code></pre>
       </template>
     </div>
   </div>
