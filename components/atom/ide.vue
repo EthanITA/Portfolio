@@ -19,7 +19,7 @@ onMounted(() => {
     <template v-for="(line, i) in code.trim().split('\n')" :key="i">
       <pre
         :data-prefix="i + 1"
-      ><code :class="`lang-${language ?? 'ts'}`">{{ line }}</code></pre>
+      ><code :class="`language-${language ?? 'ts'}`">{{ line }}</code></pre>
     </template>
   </div>
 </template>

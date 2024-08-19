@@ -18,8 +18,8 @@ const page = usePage();
 
 <style scoped>
 #cursor {
-  @apply bg-primary glass shadow-primary opacity-90
-  fixed z-[9999] pointer-events-none;
+  @apply bg-primary glass opacity-90;
+  @apply fixed z-[9999] pointer-events-none;
 
   transition-property: height, width, background-color, opacity;
   @apply ease-in-out duration-200;
