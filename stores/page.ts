@@ -107,6 +107,11 @@ export const usePage = defineStore("page", () => {
     });
 
     window.addEventListener("keydown", (e) => {
+      // Ignore if any modifier keys are pressed
+      if (e.ctrlKey || e.altKey || e.metaKey) {
+        return;
+      }
+
       if (["ArrowLeft", "ArrowRight"].includes(e.key)) {
         if (e.key === "ArrowLeft") prevTab();
         if (e.key === "ArrowRight") nextTab();
