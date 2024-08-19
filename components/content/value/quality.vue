@@ -67,16 +67,21 @@ const expanded = ref<boolean>(false);
       </template>
       <template #on>
         <div class="flex size-full items-center justify-center">
-          <p class="text-center px-8 md:px-32">
-            I’m committed to delivering <strong>high-quality</strong> work by
-            focusing on the details that matter. Whether it's building a project
-            from scratch or maintaining an existing one, I ensure that every
-            line of code is <strong>clean</strong>, <strong>efficient</strong>,
-            and <strong>scalable</strong>. My dedication to excellence means
-            going beyond the minimum requirements to create web applications
-            that are not only functional but also <strong>polished</strong> and
-            <strong>reliable</strong>.
-          </p>
+          <div class="text-center px-8 md:px-32">
+            <p>
+              I’m committed to delivering <strong>high-quality</strong> work by
+              making real difference. Whether it's building a project from
+              scratch or maintaining an existing one, I ensure
+              <strong>clean</strong>, <strong>efficient</strong>, and
+              <strong>scalable</strong> code.
+            </p>
+            <p>
+              In fast-paced environments, I adapt my approach to balance
+              <strong>quality</strong> with the need for rapid results, aiming
+              for outcomes that meet technical requirements and drive
+              <strong>business impact</strong>.
+            </p>
+          </div>
         </div>
       </template>
     </AtomSwap>
