@@ -22,10 +22,10 @@ export const usePage = defineStore("page", () => {
     selectionBox: HTMLElement | null;
   }>({
     list: [
-      { name: "Home", kbd: "/", href: "#home" },
-      { name: "About", kbd: "A", href: "#about" },
-      { name: "Projects", kbd: "P", href: "#projects" },
-      { name: "Contact", kbd: "C", href: "#contact" },
+      { name: "Home", kbd: "1", href: "#home" },
+      { name: "About", kbd: "2", href: "#about" },
+      { name: "Projects", kbd: "3", href: "#projects" },
+      { name: "Contact", kbd: "4", href: "#contact" },
     ],
     selection: {
       index: 0,
