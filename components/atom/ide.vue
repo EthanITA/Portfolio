@@ -4,23 +4,29 @@ import "prismjs/components/prism-typescript";
 
 import "assets/css/prism.css";
 
-defineProps<{
+const props = defineProps<{
   code: string;
   language?: string;
 }>();
 
+const formattedCode = ref<string>("");
+
 onMounted(() => {
-  Prism.highlightAll();
+  formattedCode.value = Prism.highlight(
+    props.code,
+    Prism.languages[props.language ?? "ts"],
+    props.language ?? "ts",
+  );
 });
 </script>
 
 <template>
-  <div class="mockup-code !select-auto overflow-x-hidden">
-    <div class="mr-2 overflow-x-auto">
-      <template v-for="(line, i) in code.trim().split('\n')" :key="i">
+  <div class="mockup-code !select-auto">
+    <div class="mr-2 h-full overflow-auto">
+      <template v-for="(line, i) in formattedCode.trim().split('\n')" :key="i">
         <pre
           :data-prefix="i + 1"
-        ><code :class="`language-${language ?? 'ts'}`">{{ line }}</code></pre>
+        ><code :class="`language-${language ?? 'ts'}`" v-html="line"></code></pre>
       </template>
     </div>
   </div>

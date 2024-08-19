@@ -45,6 +45,10 @@ h2 {
     @apply text-4xl text-primary font-extrabold mb-2;
 }
 
+h3, .card-title {
+    @apply text-primary font-bold text-2xl;
+}
+
 img {
     @apply select-none;
 }

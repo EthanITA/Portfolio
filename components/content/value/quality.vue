@@ -1,11 +1,17 @@
 <script lang="ts" setup>
-const codeLines = ref<string>(`
+const css = ref<string>(`
+/* CSS */
 #cursor {
+  /** styling */
+  @apply -translate-x-1/2 -translate-y-1/2 rounded-full;
   @apply bg-primary glass opacity-90;
-  @apply fixed z-[9999] pointer-events-none;
 
+  /** transition */
   transition-property: height, width, background-color, opacity;
   @apply ease-in-out duration-200;
+
+  /** z position */
+  @apply fixed z-[9999] pointer-events-none;
 }
 
 #cursor[data-type="default"] {
@@ -21,27 +27,60 @@ const codeLines = ref<string>(`
 }
 
 `);
+
+const html = `
+<!-- HTML -->
+<div
+  v-if="page.hasCursor"
+  id="cursor"
+  :data-type="cursor.state"
+  :style="position"
+/>`;
+
+const ts = `
+// TypeScript
+import type { CSSProperties } from "vue";
+
+const cursor = useCursor();
+const page = usePage();
+
+const position = computed<CSSProperties>(() => ({
+  top: \`\${cursor.position.y}px\`,
+  left: \`\${cursor.position.x}px\`,
+}));
+`;
+
+const expanded = ref<boolean>(false);
 </script>
 
 <template>
   <AtomCard class="col-span-full">
-    <template #header> Quality</template>
-    <template #default>
-      <p>Excellence in every line of code</p>
-      <AtomIde :code="codeLines" language="css" />
-    </template>
-    <template #description>
-      <p>
-        I’m committed to delivering <strong>high-quality</strong> work by
-        focusing on the details that matter. Whether it's building a project
-        from scratch or maintaining an existing one, I ensure that every line of
-        code is <strong>clean</strong>, <strong>efficient</strong>, and
-        <strong>scalable</strong>. My dedication to excellence means going
-        beyond the minimum requirements to create web applications that are not
-        only functional but also <strong>polished</strong> and
-        <strong>reliable</strong>.
-      </p>
-    </template>
+    <template #header> Quality </template>
+    <AtomSwap ref="swapRef" v-model="expanded" hide-action>
+      <template #off>
+        <p>Readability and scalability, excellence in every line of code</p>
+        <div class="mx-8 mt-4 gap-4 grid grid-cols-2">
+          <AtomIde :code="html" language="html" />
+          <AtomIde :code="ts" language="typescript" />
+          <AtomIde :code="css" class="h-80 col-span-full" language="css" />
+        </div>
+      </template>
+      <template #on>
+        <div class="flex size-full items-center justify-center">
+          <p class="text-center px-8 md:px-32">
+            I’m committed to delivering <strong>high-quality</strong> work by
+            focusing on the details that matter. Whether it's building a project
+            from scratch or maintaining an existing one, I ensure that every
+            line of code is <strong>clean</strong>, <strong>efficient</strong>,
+            and <strong>scalable</strong>. My dedication to excellence means
+            going beyond the minimum requirements to create web applications
+            that are not only functional but also <strong>polished</strong> and
+            <strong>reliable</strong>.
+          </p>
+        </div>
+      </template>
+    </AtomSwap>
+    <AtomSwapAction v-model="expanded" />
   </AtomCard>
 </template>
 
