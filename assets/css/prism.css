@@ -17,16 +17,15 @@ code[class*="language-"]{
 }
 
 /* Selection */
-code[class*="language-"]::-moz-selection,
-code[class*="language-"] *::-moz-selection,
-pre[class*="language-"] *::-moz-selection {
+code::-moz-selection,
+code *::-moz-selection{
     background: hsl(220, 13%, 28%);
     color: inherit;
     text-shadow: none;
 }
 
-code[class*="language-"]::selection,
-code[class*="language-"] *::selection {
+code::selection,
+code *::selection {
     background: hsl(220, 13%, 28%);
     color: inherit;
     text-shadow: none;
@@ -102,43 +101,32 @@ code[class*="language-"] *::selection {
 }
 
 /* CSS overrides */
-code.language-css{
+[data-lang="css"] code{
     color: hsl(29, 48%, 59%);
 }
 
-.language-css .token.selector {
+[data-lang="css"] .token.selector {
     color: hsl(207, 82%, 66%);
 }
 
-.language-css .token.property {
+[data-lang="css"] .token.property {
     color: hsl(220, 14%, 71%);
 }
 
-.language-css .token.function,
-.language-css .token.url > .token.function {
+[data-lang="css"] .token.function,
+[data-lang="css"] .token.url > .token.function {
     color: hsl(187, 47%, 55%);
 }
 
-.language-css .token.url > .token.string.url {
+[data-lang="css"] .token.url > .token.string.url {
     color: hsl(95, 38%, 62%);
 }
 
-.language-css .token.important,
-.language-css .token.atrule .token.rule {
+[data-lang="css"] .token.important,
+[data-lang="css"] .token.atrule .token.rule {
     color: hsl(296, 64%, 62%);
     font-style: italic;
 
-}
-
-/* JS overrides */
-.language-javascript .token.operator {
-    color: hsl(296, 64%, 62%);
-    font-style: italic;
-
-}
-
-.language-javascript .token.template-string > .token.interpolation > .token.interpolation-punctuation.punctuation {
-    color: hsl(5, 48%, 51%);
 }
 
 /* JSON overrides */

@@ -23,6 +23,7 @@ const formattedCode = computed<string>(() =>
     <div class="h-full overflow-auto border-t-2 border-[#333842]">
       <template v-for="(line, i) in formattedCode.trim().split('\n')" :key="i">
         <pre
+          :data-lang="language"
           :data-prefix="i + 1"
           class="last:pb-2"
         ><code  v-html="line"></code></pre>
