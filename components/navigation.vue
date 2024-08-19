@@ -17,7 +17,7 @@ onMounted(() => {
     :class="{
       glass: page.hasScrolled,
     }"
-    class="tabs transition-all duration-500 tabs-boxed rounded-full overflow-hidden space-x-1 p-2"
+    class="tabs transition-all duration-500 tabs-boxed rounded-full overflow-hidden space-x-1 p-2 bg-primary-50/40"
     role="tablist"
   >
     <div
