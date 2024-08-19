@@ -10,6 +10,9 @@ const expanded = defineModel<boolean>();
     @click="expanded = !expanded"
   >
     <PlusIcon
+      :class="{
+        'rotate-45': expanded,
+      }"
       class="size-8 transition-transform text-white duration-200 shadow rounded-full glass bg-primary-300"
     />
   </div>
