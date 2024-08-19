@@ -36,3 +36,24 @@
     @apply cursor-none !important;
     -webkit-user-drag: none;
 }
+
+p {
+    @apply text-xl text-gray-800 mt-2;
+}
+
+h2 {
+    @apply text-4xl text-primary font-extrabold mb-2;
+}
+
+.mockup-code {
+    --n: 31.3815% 0.021108 254.139175;
+    --nc: 74.6477% 0.0216 264.435964;
+}
+
+.mockup-code:before {
+    box-shadow:
+            1.4em 0 0 0 #FE5F57,
+            2.8em 0 0 0 #FEBC2E,
+            4.2em 0 0 0 #29C940;
+    opacity: 1;
+}

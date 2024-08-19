@@ -2,7 +2,7 @@
 
 <template>
   <div class="hero relative min-h-full">
-    <div class="hero-overlay flex pointer-events-none">
+    <div class="hero-overlay flex pointer-events-none absolute w-screen">
       <Wave class="items-center justify-center blur-3xl" />
     </div>
     <div class="hero-content text-gray-700 text-center">
@@ -12,9 +12,9 @@
           <br />
           <span class="text-primary">A Full-Stack Developer.</span>
         </h1>
-        <p class="text-xl">
-          I'm passionate about crafting web app and committed to deliver
-          high-quality work.
+        <p>
+          I'm passionate about crafting web app and dedicated to go above and
+          beyond the minimum standards.
         </p>
       </div>
     </div>
