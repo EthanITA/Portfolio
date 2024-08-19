@@ -59,7 +59,7 @@ const expanded = ref<boolean>(false);
     <AtomSwap ref="swapRef" v-model="expanded" hide-action>
       <template #off>
         <p>Readability and scalability, excellence in every line of code</p>
-        <div class="mx-8 mt-4 gap-4 grid grid-cols-2">
+        <div class="m-8 gap-4 grid grid-cols-2">
           <AtomIde :code="html" language="html" />
           <AtomIde :code="ts" language="typescript" />
           <AtomIde :code="css" class="h-80 col-span-full" language="css" />

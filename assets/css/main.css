@@ -42,7 +42,7 @@ p {
 }
 
 h2 {
-    @apply text-4xl text-primary font-extrabold mb-2;
+    @apply text-4xl text-primary font-extrabold mb-4;
 }
 
 h3, .card-title {
