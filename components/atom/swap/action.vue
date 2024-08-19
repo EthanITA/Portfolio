@@ -5,16 +5,15 @@ const expanded = defineModel<boolean>();
 </script>
 
 <template>
-  <div
-    class="action absolute bottom-4 right-4 h-fit w-fit cursor-pointer"
-    @click="expanded = !expanded"
-  >
-    <PlusIcon
-      :class="{
-        'rotate-45': expanded,
-      }"
-      class="size-8 transition-transform text-white duration-200 shadow rounded-full glass bg-primary-300"
-    />
+  <div class="absolute bottom-4 right-4" @click="expanded = !expanded">
+    <button class="btn btn-sm btn-circle btn-primary cursor-pointer">
+      <PlusIcon
+        :class="{
+          'rotate-45': expanded,
+        }"
+        class="size-full p-1 transition-transform text-white duration-200 rounded-full"
+      />
+    </button>
   </div>
 </template>
 
