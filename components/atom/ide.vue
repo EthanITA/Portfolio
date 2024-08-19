@@ -15,12 +15,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mockup-code !select-auto">
-    <template v-for="(line, i) in code.trim().split('\n')" :key="i">
-      <pre
-        :data-prefix="i + 1"
-      ><code :class="`language-${language ?? 'ts'}`">{{ line }}</code></pre>
-    </template>
+  <div class="mockup-code !select-auto overflow-x-hidden">
+    <div class="mr-2 overflow-x-auto">
+      <template v-for="(line, i) in code.trim().split('\n')" :key="i">
+        <pre
+          :data-prefix="i + 1"
+        ><code :class="`language-${language ?? 'ts'}`">{{ line }}</code></pre>
+      </template>
+    </div>
   </div>
 </template>
 
