@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@heroicons/vue": "^2.1.5",
     "@nuxt/image": "^1.7.0",
     "@pinia/nuxt": "^0.5.3",
     "gsap": "^3.12.5",

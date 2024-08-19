@@ -22,14 +22,14 @@ const codeLines = ref<string>(`
 </script>
 
 <template>
-  <div class="max-w-4xl sm:mx-auto py-16 space-y-8 mx-4">
+  <div class="max-w-4xl md:mx-auto py-16 space-y-8 mx-4">
     <h2>Values</h2>
-    <div class="grid grid-cols-2 gap-2 sm:-mx-8">
+    <div class="grid grid-cols-2 gap-2 md:-mx-8">
       <AtomCard class="col-span-full">
         <template #header> Quality</template>
         <template #default>
           <p>Excellence in every line of code</p>
-          <AtomIde :code="codeLines" class="overflow-x-hidden" language="css" />
+          <AtomIde :code="codeLines" language="css" />
         </template>
         <template #description>
           <p>
