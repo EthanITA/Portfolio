@@ -56,7 +56,7 @@ const expanded = ref<boolean>(false);
 <template>
   <AtomCard class="col-span-full">
     <template #header> Quality </template>
-    <AtomSwap ref="swapRef" v-model="expanded" hide-action>
+    <AtomSwap v-model="expanded" hide-action>
       <template #off>
         <p>Readability and scalability, excellence in every line of code</p>
         <div class="md:m-8 mt-8 gap-4 grid md:grid-cols-2">

@@ -6,16 +6,17 @@ import "assets/css/prism.css";
 
 const props = defineProps<{
   code: string;
-  language?: string;
+  language?: "typescript" | "css" | "html";
 }>();
+const formattedCode = ref<string>("");
 
-const formattedCode = computed<string>(() =>
-  Prism.highlight(
+onMounted(() => {
+  formattedCode.value = Prism.highlight(
     props.code,
-    Prism.languages[props.language ?? "ts"],
-    props.language ?? "ts",
-  ),
-);
+    Prism.languages[props.language ?? "typescript"],
+    props.language ?? "typescript",
+  );
+});
 </script>
 
 <template>
@@ -26,7 +27,7 @@ const formattedCode = computed<string>(() =>
           :data-lang="language"
           :data-prefix="i + 1"
           class="last:pb-2"
-        ><code  v-html="line"></code></pre>
+        ><code v-html="line"></code></pre>
       </template>
     </div>
   </div>
