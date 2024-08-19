@@ -22,10 +22,11 @@ onMounted(() => {
 
 <template>
   <div class="mockup-code !select-auto">
-    <div class="mr-2 h-full overflow-auto">
+    <div class="h-full overflow-auto border-t-2 border-[#333842]">
       <template v-for="(line, i) in formattedCode.trim().split('\n')" :key="i">
         <pre
           :data-prefix="i + 1"
+          class="last:pb-2"
         ><code :class="`language-${language ?? 'ts'}`" v-html="line"></code></pre>
       </template>
     </div>
