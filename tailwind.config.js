@@ -68,6 +68,7 @@ export default {
           "secondary-content": "#ffffff",
           accent: "#1d13ff",
           "accent-content": "#ffffff",
+          "base-content": "#1F2937",
         },
       },
     ],
