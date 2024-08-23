@@ -4,6 +4,7 @@
   <Cursor />
   <div class="h-full w-full pr-2">
     <NuxtPage />
+    <Footer />
   </div>
 </template>
 <script lang="ts" setup></script>
