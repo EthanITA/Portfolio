@@ -6,7 +6,7 @@
       <Wave class="items-center justify-center blur-3xl" />
     </div>
     <div class="hero-content text-gray-700 text-center">
-      <div class="max-w-2xl space-y-8">
+      <div class="max-w-2xl space-y-12">
         <h1 class="text-7xl font-black">
           <span>I'm Marco Dong.</span>
           <br />
