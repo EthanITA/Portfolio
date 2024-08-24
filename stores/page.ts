@@ -1,4 +1,4 @@
-import { onMounted } from "vue";
+import { type CSSProperties, onMounted } from "vue";
 
 export interface Tab {
   name: string;
@@ -13,11 +13,7 @@ export const usePage = defineStore("page", () => {
     selection: {
       index: number;
       el: HTMLAnchorElement | null;
-      style: {
-        width: string;
-        height: string;
-        transform: string;
-      };
+      style: CSSProperties;
     };
     selectionBox: HTMLElement | null;
   }>({
