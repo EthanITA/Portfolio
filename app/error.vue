@@ -3,7 +3,7 @@ import type { NuxtError } from "#app";
 
 const { error } = defineProps<{ error: NuxtError }>();
 
-useSeoMeta({ title: String(error.status), robots: "noindex, follow" });
+useSeoMeta({ title: String(error.status) });
 </script>
 
 <template>
