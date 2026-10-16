@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@takumi-rs/core": "^2.16.2",
     "@types/node": "^24.19.0",
     "@types/three": "^0.186.0",
     "daisyui": "^5.7.50",
