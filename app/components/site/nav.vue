@@ -3,13 +3,11 @@ import { Island, Surface, ThemeToggle } from "@cela/design";
 import { type AnimatableObject, createAnimatable, spring, utils } from "animejs";
 
 import { nav } from "~/utils/site/links";
-import { motionOn } from "~/utils/site/motion";
+import { SPRING, motionOn } from "~/utils/site/motion";
 
 const IDLE = "Building Sidecar, Sage and AI Shell";
 const LABEL_MS = 1200;
 const FOLD_AT = 0.8;
-// MOTION_SPRING.snappy's values: the design's own factory calls createSpring, which warns on every call under animejs 4.5.
-const SNAPPY = { damping: 20, mass: 1, stiffness: 250 };
 
 const route = useRoute();
 const folded = ref(false);
@@ -38,7 +36,7 @@ const place = (): void => {
   const to = { x: active.offsetLeft, scaleX: active.offsetWidth };
   if (!slide || !motionOn()) {
     utils.set(bar, to);
-    slide ??= motionOn() ? createAnimatable(bar, { x: {}, scaleX: {}, ease: spring(SNAPPY) }) : undefined;
+    slide ??= motionOn() ? createAnimatable(bar, { x: {}, scaleX: {}, ease: spring(SPRING.snappy) }) : undefined;
     return;
   }
   slide.x?.(to.x);

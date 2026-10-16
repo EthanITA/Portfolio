@@ -2,7 +2,18 @@ import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
 import { animate, splitText, stagger } from "animejs";
 import type { TransitionProps } from "vue";
 
-export type EnterOptions = { delay?: number; distance?: number; words?: boolean };
+export type EnterOptions = { delay?: number; distance?: number; words?: boolean; line?: boolean };
+
+const LINE_MS = 600;
+
+// onScroll's lerp per frame is lerp(.01, .2, sync), so 0.6 trails the scroll by about 120 ms at 60 fps.
+export const SCRUB_SMOOTH = 0.6;
+
+// MOTION_SPRING's values: the design's own factories call createSpring, which warns on every call under animejs 4.5.
+export const SPRING = {
+  gentle: { damping: 15, mass: 1, stiffness: 100 },
+  snappy: { damping: 20, mass: 1, stiffness: 250 },
+} as const;
 
 // The head script stamps this before first paint, so CSS and script agree on whether anything moves.
 export const motionOn = (): boolean => document.documentElement.dataset.motion === "on";
@@ -12,9 +23,15 @@ const settle = (el: HTMLElement): void => {
   el.style.removeProperty("transform");
 };
 
-export const enter = (el: HTMLElement, { delay = 0, distance = 12, words = false }: EnterOptions = {}): void => {
+export const enter = (el: HTMLElement, { delay = 0, distance = 12, words = false, line = false }: EnterOptions = {}): void => {
   if (!motionOn()) {
     el.dataset.entered = "";
+    return;
+  }
+  if (line) {
+    el.style.transform = "scaleX(0)";
+    el.dataset.entered = "";
+    animate(el, { delay, duration: LINE_MS, ease: MOTION_EASE.out, scaleX: [0, 1], onComplete: () => settle(el) });
     return;
   }
   if (words) {
@@ -41,11 +58,6 @@ export const enter = (el: HTMLElement, { delay = 0, distance = 12, words = false
     translateY: [distance, 0],
     onComplete: () => settle(el),
   });
-};
-
-export const drawLine = (el: HTMLElement, delay = 0): void => {
-  if (!motionOn()) return;
-  animate(el, { delay, duration: 600, ease: MOTION_EASE.out, scaleX: [0, 1] });
 };
 
 export const pageTransition: TransitionProps = {

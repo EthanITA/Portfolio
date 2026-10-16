@@ -8,11 +8,22 @@
   color-scheme: dark;
 }
 
-/* Hidden only while an entrance is still to play; no JS, reduced motion and a stalled app all see the page. */
-:root[data-motion="on"] [data-enter]:not([data-entered]) {
-  opacity: 0;
+/* Hidden only while an entrance is still to play; no JS, reduced motion, print and a stalled app all see the page. */
+@media screen {
+  :root[data-motion="on"] [data-enter]:not([data-entered]) {
+    opacity: 0;
+  }
 }
 
 @utility wrap {
   @apply mx-auto w-full max-w-5xl px-5 sm:px-8;
+}
+
+/* Chip's look for links and static labels: the Chip component is a toggle button, which a link must not nest. */
+@utility chip-look {
+  @apply typo-caption-medium inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-raised px-3.5 text-muted no-underline;
+}
+
+@utility status-dot {
+  @apply breathe size-2 shrink-0 rounded-full bg-primary;
 }

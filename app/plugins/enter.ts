@@ -39,6 +39,7 @@ const vEnter: Directive<HTMLElement, EnterValue> = {
   mounted(el, { modifiers, value }) {
     const opts = resolve(el, value, !!modifiers.stagger);
     if (modifiers.words) opts.words = true;
+    if (modifiers.line) opts.line = true;
     if (modifiers.now) {
       enter(el, opts);
       return;
