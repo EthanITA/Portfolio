@@ -80,13 +80,13 @@ export const launch = (): Promise<Browser> => chromium.launch({ headless: true, 
 const withTimeout = <T>(promise: Promise<T>, ms: number, what: string): Promise<T> =>
   Promise.race([promise, new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${what} timed out after ${ms} ms`)), ms).unref())]);
 
-type Worker = { page: Page; cdp: CDPSession; stale: boolean; errors: string[] };
+type Worker = { page: Page; cdp: CDPSession; stale: boolean; errors: string[]; width: number; height: number; scale: number };
 
 export const openPage = async ({ browser, url, width, height, scale = 1, timeout = 120_000 }: { browser: Browser; url: string; width: number; height: number; scale?: number; timeout?: number }): Promise<Worker> => {
   const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: scale, reducedMotion: "no-preference", colorScheme: "light" });
   await context.addInitScript(INIT_SCRIPT);
   const page = await context.newPage();
-  const worker: Worker = { page, cdp: await context.newCDPSession(page), stale: false, errors: [] };
+  const worker: Worker = { page, cdp: await context.newCDPSession(page), stale: false, errors: [], width, height, scale };
   page.on("pageerror", (error) => worker.errors.push(error.message));
   page.on("framenavigated", (frame) => {
     if (frame === page.mainFrame()) worker.stale = true;
@@ -119,7 +119,9 @@ const capture = async ({ worker, ms, timeout }: { worker: Worker; ms: number; ti
     timeout,
     `frame at ${ms} ms`,
   );
-  const { data } = await worker.cdp.send("Page.captureScreenshot", { format: "png", optimizeForSpeed: true });
+  // This CDP session never saw Playwright's device scale override, so the clip has to carry it or the frame comes out at CSS size.
+  const clip = { x: 0, y: 0, width: worker.width, height: worker.height, scale: worker.scale };
+  const { data } = await worker.cdp.send("Page.captureScreenshot", { format: "png", optimizeForSpeed: true, clip });
   return Buffer.from(data, "base64");
 };
 
@@ -172,6 +174,8 @@ export const renderFrames = async ({ url, dir, width, height, scale = 1, fps = 6
           png = await capture({ worker, ms, timeout });
         }
         if (worker.errors.length) throw new Error(`page error at ${ms} ms: ${worker.errors.join("; ")}`);
+        const size = `${png.readUInt32BE(16)}x${png.readUInt32BE(20)}`;
+        if (size !== `${outWidth}x${outHeight}`) throw new Error(`frame ${index} came out ${size}, expected ${outWidth}x${outHeight}`);
         await writeFile(join(dir, Frame.name(index)), png);
         hashes.set(index, createHash("sha256").update(png).digest("hex"));
         onProgress?.(hashes.size, queue.length);
