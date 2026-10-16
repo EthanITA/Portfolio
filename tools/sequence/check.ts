@@ -243,6 +243,20 @@ const edges = async (): Promise<Record<string, unknown>> => {
   report.restored = { phases };
   expect(!phases.includes("break"), `a reload past the section replayed the break: ${phases.join(" ")}`);
 
+  const flaky = await open();
+  let attempts = 0;
+  await flaky.page.route(/\/sequence\/light\/1920\/096\.avif/, (route) => {
+    attempts++;
+    return route.abort();
+  });
+  await flaky.page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
+  await scrub(flaky.page, 0.402);
+  await settle(flaky.page);
+  const held = await probe(flaky.page);
+  const failedFrame = { attempts, frame: held.frame, state: held.state, errors: flaky.errors.filter((error) => !error.startsWith("Failed to load resource")) };
+  report.failedFrame = failedFrame;
+  expect(attempts === 2 && held.frame === 96 && held.state === "live" && !failedFrame.errors.length, `a failing frame: ${JSON.stringify(failedFrame)}`);
+
   const scriptless = await open({ javaScriptEnabled: false });
   await scriptless.page.goto(`http://localhost:${PORT}/`);
   const still = await scriptless.page.evaluate(() => {
