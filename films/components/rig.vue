@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
-import { Camera, type Shot } from "~~/films/utils/camera";
+import type { Shot } from "~~/films/scripts/script";
+import { Camera } from "~~/films/utils/camera";
 
 const { shots, at, until } = defineProps<{ shots: Shot[]; at?: number; until?: number }>();
 

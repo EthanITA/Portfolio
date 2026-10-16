@@ -1,6 +1,5 @@
 import { MOTION_EASE } from "@cela/design/utils/motion";
-
-export type Shot = { at: number; duration: number; scale: number; anchor?: string };
+import type { Shot } from "../scripts/script.ts";
 
 export type View = { x: number; y: number; scale: number };
 
