@@ -1,12 +1,19 @@
 <script setup lang="ts">
 import { Surface } from "@cela/design";
+import { type JSAnimation, type ScrollObserver, animate, onScroll } from "animejs";
 
+import type { Product } from "~/utils/site/films";
 import { links } from "~/utils/site/links";
+import { SCRUB_SMOOTH, motionOn } from "~/utils/site/motion";
 import { seo } from "~/utils/site/seo";
 import type { Run } from "~/utils/site/text";
 
-type Flagship = { slug: "sidecar" | "sage" | "shell"; name: string; text: Run[]; status: string; to: string; link: string };
-type Work = { name: string; text: string; number?: string; label: string };
+type Flagship = { slug: Product; name: string; text: Run[]; status: string; to: string; link: string };
+type Count = { to: number; after?: string; decimals?: number };
+type Work = { name: string; text: string; count?: Count; label: string };
+
+const DRIFT = 0.3;
+const DRIFT_OPACITY = 0.4;
 
 useHead({ titleTemplate: "%s" });
 useSeoMeta({ title: seo.home.title, description: seo.home.description });
@@ -52,7 +59,7 @@ const flagships: Flagship[] = [
 const tiers = ["Runs", "Waits for you", "Stops at the line"];
 
 const work: Work[] = [
-  { name: "Klarna", text: "Software engineer on the Klarna app.", number: "100M+", label: "monthly active users" },
+  { name: "Klarna", text: "Software engineer on the Klarna app.", count: { to: 100, after: "M+" }, label: "monthly active users" },
   {
     name: "Moneyfarm",
     text: "A customer-facing LLM agent inside a regulated wealth manager, and the evals that decide whether it's safe to release.",
@@ -61,106 +68,129 @@ const work: Work[] = [
   {
     name: "LexSA",
     text: "An AI assistant for tax professionals that I built alone end to end, from retrieval and agents down to Cloudflare and the database.",
-    number: "272 of 272",
+    count: { to: 272, after: " of 272" },
     label: "commits are mine",
   },
   {
     name: "Intellectual.AI",
     text: "A custom GPT that strangers keep using. Once #16 in Education.",
-    number: "200K+",
+    count: { to: 200, after: "K+" },
     label: "conversations, 4.5 stars from 90+ ratings",
   },
-  { name: "Twilight", text: "A demand test before building anything: 979 visitors and 113 leads.", number: "11.5%", label: "conversion" },
+  {
+    name: "Twilight",
+    text: "A demand test before building anything: 979 visitors and 113 leads.",
+    count: { to: 11.5, after: "%", decimals: 1 },
+    label: "conversion",
+  },
   {
     name: "Freelance",
     text: "Seven engagements since 2022, for two individuals, four SMEs and one corporate, each run from the first call to the invoice.",
-    number: "7",
+    count: { to: 7 },
     label: "engagements",
   },
 ];
+
+const hero = useTemplateRef<HTMLElement>("hero");
+const intro = useTemplateRef<HTMLElement>("intro");
+const heroProgress = ref(0);
+let drift: JSAnimation | undefined;
+let scroller: ScrollObserver | undefined;
+
+onMounted(() => {
+  if (!hero.value || !intro.value || !motionOn()) return;
+  scroller = onScroll({
+    target: hero.value,
+    enter: "top top",
+    leave: "top bottom",
+    sync: SCRUB_SMOOTH,
+    onUpdate: (self) => (heroProgress.value = self.progress),
+  });
+  drift = animate(intro.value, {
+    ease: "linear",
+    opacity: [1, DRIFT_OPACITY],
+    translateY: [0, -hero.value.offsetHeight * DRIFT],
+    autoplay: scroller,
+  });
+});
+
+onBeforeUnmount(() => {
+  drift?.revert();
+  scroller?.revert();
+});
 </script>
 
 <template>
   <div class="home">
-    <section class="hero wrap">
-      <div class="intro">
+    <section ref="hero" class="hero">
+      <SiteMount name="hero">
+        <LazyStageHero :progress="heroProgress" />
+      </SiteMount>
+      <div ref="intro" class="intro">
         <h1 class="title">
-          <span>I build AI products end to end.</span>
-          <span class="second">The agents write a lot of the code, and the standard is mine.</span>
+          <span v-enter.now.words class="first">I build AI products end to end.</span>
+          <span v-enter.now="200" class="second">The agents write a lot of the code, and the standard is mine.</span>
         </h1>
-        <p class="roles">Software engineer at Klarna, AI product engineer at Moneyfarm, and founder of Cela, where I'm building Sidecar, Sage and AI Shell.</p>
+        <p v-enter.now="320" class="roles">Software engineer at Klarna, AI product engineer at Moneyfarm, and founder of Cela, where I'm building Sidecar, Sage and AI Shell.</p>
         <div class="actions">
-          <a class="btn btn-primary" href="#sequence">See the work</a>
-          <NuxtLink class="btn btn-outline" to="/cv">Read the CV</NuxtLink>
+          <a v-enter.now="420" v-press class="btn btn-primary action" href="#sequence">See the work</a>
+          <NuxtLink v-enter.now="480" v-press class="btn btn-outline action" to="/cv">Read the CV</NuxtLink>
         </div>
       </div>
-      <SiteMount name="hero">
-        <LazyStageHero />
-      </SiteMount>
     </section>
 
     <ScrollSequence id="sequence" :beats="beats" closing="Three products, one rule." />
 
     <section class="flagships wrap" aria-label="Sidecar, Sage and AI Shell">
-      <Surface v-for="item in flagships" :key="item.slug" as="article" class="flagship" :data-flagship="item.slug">
-        <h2 class="name">{{ item.name }}</h2>
-        <p class="text"><SiteRuns :runs="item.text" /></p>
-        <span class="status">{{ item.status }}</span>
-        <NuxtLink class="more" :to="item.to">{{ item.link }}</NuxtLink>
-      </Surface>
+      <SiteFlagship v-for="item in flagships" :key="item.slug" v-enter.stagger v-bind="item" />
     </section>
 
-    <div class="plays wrap">
-      <SiteMount name="play">
-        <LazyPlaySidecar />
-      </SiteMount>
-      <SiteMount name="play">
-        <LazyPlaySage />
-      </SiteMount>
-      <SiteMount name="play">
-        <LazyPlayShell />
-      </SiteMount>
-    </div>
+    <SitePlaygrounds />
 
     <section class="line wrap" aria-labelledby="line-title">
-      <h2 id="line-title" class="heading">One rule runs through all three.</h2>
-      <p class="body">A step that only looks runs by itself. A step that changes something waits for you. A step you can't take back stops at the line, and the click is yours.</p>
+      <h2 id="line-title" v-enter.words class="heading">One rule runs through all three.</h2>
+      <p v-enter class="body">A step that only looks runs by itself. A step that changes something waits for you. A step you can't take back stops at the line, and the click is yours.</p>
       <ul class="tiers">
-        <li v-for="tier in tiers" :key="tier">{{ tier }}</li>
+        <li v-for="tier in tiers" :key="tier" v-enter.stagger class="tier">{{ tier }}</li>
       </ul>
       <SiteMount name="line">
         <LazyStageLine />
       </SiteMount>
-      <p class="small">A toy version that matches words. Sage and AI Shell ask a separate model to rate every step, never the one that wrote it.</p>
+      <p v-enter class="small">A toy version that matches words. Sage and AI Shell ask a separate model to rate every step, never the one that wrote it.</p>
     </section>
 
     <section class="work wrap" aria-labelledby="work-title">
-      <h2 id="work-title" class="heading">Work</h2>
+      <h2 id="work-title" v-enter.words class="heading">Work</h2>
       <ul class="entries">
-        <Surface v-for="entry in work" :key="entry.name" as="li" variant="flat" class="entry">
+        <Surface v-for="entry in work" :key="entry.name" v-enter.stagger as="li" variant="flat" class="entry">
+          <p class="figure">
+            <SiteCount v-if="entry.count" class="number" v-bind="entry.count" />
+            <span v-else class="number since">{{ entry.label }}</span>
+            <span v-if="entry.count" class="label">{{ entry.label }}</span>
+          </p>
           <h3 class="name">{{ entry.name }}</h3>
           <p class="text">{{ entry.text }}</p>
-          <p class="figure">
-            <span v-if="entry.number" class="number">{{ entry.number }}</span>
-            <span class="label">{{ entry.label }}</span>
-          </p>
         </Surface>
       </ul>
     </section>
 
     <section class="standard wrap" aria-labelledby="standard-title">
-      <h2 id="standard-title" class="heading">How I work</h2>
-      <p class="body">Agents write a lot of my code. I wrote the rules they work under, I review what they ship, and nothing goes out under my name that I can't explain.</p>
-      <NuxtLink class="more" to="/how">Read the rules</NuxtLink>
+      <h2 id="standard-title" v-enter.words class="heading">How I work</h2>
+      <p v-enter class="body">Agents write a lot of my code. I wrote the rules they work under, I review what they ship, and nothing goes out under my name that I can't explain.</p>
+      <span v-enter.line class="rule" aria-hidden="true" />
+      <NuxtLink v-enter class="more" to="/how">
+        Read the rules
+        <svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+      </NuxtLink>
     </section>
 
     <section class="contact wrap" aria-labelledby="contact-title">
-      <h2 id="contact-title" class="heading">Contact</h2>
-      <p class="body">LinkedIn is the fastest way to reach me. Email works too.</p>
+      <h2 id="contact-title" v-enter.words class="heading">Contact</h2>
+      <p v-enter class="body">LinkedIn is the fastest way to reach me. Email works too.</p>
       <ul class="links">
-        <li><a :href="links.linkedin" rel="me noopener" target="_blank">LinkedIn</a></li>
-        <li><SiteEmail /></li>
-        <li><a :href="links.github" rel="me noopener" target="_blank">GitHub</a></li>
+        <li v-enter.stagger><a class="chip-look" :href="links.linkedin" rel="me noopener" target="_blank">LinkedIn</a></li>
+        <li v-enter.stagger><a class="chip-look" :href="links.github" rel="me noopener" target="_blank">GitHub</a></li>
+        <li v-enter.stagger><SiteEmail class="chip-look" /></li>
       </ul>
     </section>
   </div>
@@ -168,19 +198,19 @@ const work: Work[] = [
 
 <style scoped>
 .home {
-  @apply flex flex-col gap-24 pt-8 sm:pt-16;
+  @apply flex flex-col gap-28;
 }
 
 .hero {
-  @apply flex flex-col gap-10;
+  @apply relative -mt-20 flex h-svh min-h-160 flex-col justify-end overflow-hidden pt-20 pb-16 md:justify-center md:pb-0;
 }
 
 .intro {
-  @apply flex flex-col gap-6;
+  @apply relative mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 sm:px-8;
 }
 
 .title {
-  @apply m-0 flex flex-col gap-2 text-4xl font-bold tracking-tight text-balance sm:text-6xl;
+  @apply m-0 flex max-w-4xl flex-col gap-2 text-4xl font-bold tracking-tight text-balance lg:text-5xl 2xl:text-6xl;
 }
 
 .second {
@@ -188,43 +218,19 @@ const work: Work[] = [
 }
 
 .roles {
-  @apply typo-body-lg max-w-2xl text-muted;
+  @apply typo-body-lg max-w-xl text-muted;
 }
 
 .actions {
-  @apply flex flex-wrap gap-3;
+  @apply flex flex-col gap-3 sm:flex-row;
+}
+
+.action {
+  @apply min-h-11 justify-center px-5;
 }
 
 .flagships {
   @apply grid gap-4 md:grid-cols-3;
-}
-
-.flagship {
-  @apply flex flex-col gap-3;
-}
-
-.name {
-  @apply typo-heading-lg m-0;
-}
-
-.text {
-  @apply typo-body-md text-muted;
-}
-
-.status {
-  @apply typo-caption-medium w-fit rounded-full bg-primary-soft px-2.5 py-1 text-primary;
-}
-
-.more {
-  @apply typo-body-strong mt-auto w-fit text-primary underline-offset-4;
-
-  &:focus-visible {
-    @apply focus-ring;
-  }
-}
-
-.plays {
-  @apply flex flex-col gap-10;
 }
 
 .line,
@@ -244,10 +250,10 @@ const work: Work[] = [
 
 .tiers {
   @apply m-0 flex list-none flex-wrap gap-2 p-0;
+}
 
-  & li {
-    @apply typo-caption-medium rounded-full border border-border px-3 py-1;
-  }
+.tier {
+  @apply typo-eyebrow chip-look;
 }
 
 .small {
@@ -263,33 +269,69 @@ const work: Work[] = [
 }
 
 .figure {
-  @apply mt-auto flex flex-col;
+  @apply flex flex-col gap-1;
 }
 
 .number {
-  @apply font-mono text-3xl font-medium tracking-tight tabular-nums;
+  @apply font-mono text-5xl font-medium tracking-tight tabular-nums;
+}
+
+.since {
+  @apply text-3xl;
 }
 
 .label {
   @apply typo-caption text-muted;
 }
 
-.links {
-  @apply m-0 flex list-none flex-wrap gap-x-5 gap-y-2 p-0;
+.name {
+  @apply typo-heading-lg m-0 mt-2;
+}
 
-  & a {
-    @apply typo-body-strong text-primary underline-offset-4;
+.text {
+  @apply typo-body text-muted;
+}
+
+.rule {
+  @apply block h-px w-40 origin-left bg-primary;
+}
+
+.more {
+  @apply typo-body-strong inline-flex min-h-11 w-fit items-center gap-2 text-primary no-underline;
+
+  &:focus-visible {
+    @apply focus-ring;
   }
+}
 
-  & a:focus-visible {
+.arrow {
+  @apply size-4 transition-transform duration-(--duration-snappy) ease-out;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.links {
+  @apply m-0 flex list-none flex-wrap gap-2 p-0;
+
+  & .chip-look:focus-visible {
     @apply focus-ring;
   }
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .more:hover,
-  .links a:hover {
-    @apply underline;
+  .entry:hover {
+    @apply -translate-y-1;
+  }
+
+  .more:hover .arrow {
+    @apply translate-x-1;
+  }
+
+  .links .chip-look:hover {
+    @apply border-border-strong text-fg;
   }
 }
 </style>
