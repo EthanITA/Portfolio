@@ -19,18 +19,22 @@ useSchemaOrg([
 const beats: Beat[] = [
   {
     title: "Looks",
+    glyph: "looks",
     text: ["A command that only reads runs straight away, the way it would if you'd typed it."],
   },
   {
     title: "Changes",
+    glyph: "changes",
     text: ["One that deletes or overwrites lands on your line with a note saying what it would do, and waits for Enter."],
   },
   {
     title: "Can't be undone",
+    glyph: "undone",
     text: ["One that's genuinely destructive explains itself and asks first. Saying yes only puts it on your line, so it takes two deliberate acts."],
   },
   {
     title: "One answer from a pipe",
+    glyph: "pipe",
     text: [{ code: "ai -p" }, " works like ", { code: "claude -p" }, ". Pipe in a staged diff and get a commit message back."],
   },
 ];
@@ -38,6 +42,7 @@ const beats: Beat[] = [
 
 <template>
   <SiteProduct
+    slug="shell"
     name="AI Shell"
     sub="Plain words in, a shell command out."
     :lead="[

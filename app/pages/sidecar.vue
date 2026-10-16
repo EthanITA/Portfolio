@@ -19,6 +19,7 @@ useSchemaOrg([
 const beats: Beat[] = [
   {
     title: "Review",
+    glyph: "review",
     text: [
       "Approve or reject a line, a hunk, a file or a whole folder. Claude hears about every reject, and ",
       { code: "⌘Z" },
@@ -27,10 +28,12 @@ const beats: Beat[] = [
   },
   {
     title: "Comments",
+    glyph: "comments",
     text: ["Select anything on a page Claude built and leave a note. Send it, and it reaches the conversation as your own message."],
   },
   {
     title: "Follows you",
+    glyph: "follows",
     text: ["Switch terminal tab or start typing in another session, and Sidecar moves there with you."],
   },
 ];
@@ -38,6 +41,7 @@ const beats: Beat[] = [
 
 <template>
   <SiteProduct
+    slug="sidecar"
     name="Sidecar"
     sub="A companion window for Claude Code."
     :lead="[
