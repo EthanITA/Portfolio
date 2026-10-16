@@ -1,16 +1,18 @@
 <script setup lang="ts">
+import { links } from "~/utils/site/links";
+import { seo } from "~/utils/site/seo";
 import type { Beat } from "~/utils/site/text";
 
-const description =
-  "Sidecar is a companion window for Claude Code. Review every change line by line and send comments back into the conversation.";
+const { title, description } = seo.sidecar;
 
-useSeoMeta({ title: "Sidecar", description });
+useSeoMeta({ title, description });
+defineOgImage("Card", { title, sub: "A companion window for Claude Code." });
 useSchemaOrg([
   defineSoftwareApp({
-    name: "Sidecar",
+    name: title,
     description,
     applicationCategory: "DeveloperApplication",
-    author: { "@id": "#identity" },
+    author: { "@id": links.identity },
   }),
 ]);
 

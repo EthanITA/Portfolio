@@ -2,18 +2,19 @@
 import { Surface } from "@cela/design";
 
 import { links } from "~/utils/site/links";
+import { seo } from "~/utils/site/seo";
 import type { Run } from "~/utils/site/text";
 
 type Flagship = { slug: "sidecar" | "sage" | "shell"; name: string; text: Run[]; status: string; to: string; link: string };
 type Work = { name: string; text: string; number?: string; label: string };
 
 useHead({ titleTemplate: "%s" });
-useSeoMeta({
-  title: "Marco Dong · AI product engineer",
-  description:
-    "Marco Dong, AI product engineer in Milan. I build AI products end to end: Sidecar, Sage and AI Shell at Cela, and agents at Klarna and Moneyfarm.",
+useSeoMeta({ title: seo.home.title, description: seo.home.description });
+useSchemaOrg([defineWebPage({ "@type": "ProfilePage", mainEntity: { "@id": links.identity } })]);
+defineOgImage("Card", {
+  title: "I build AI products end to end.",
+  sub: "The agents write a lot of the code, and the standard is mine.",
 });
-useSchemaOrg([defineWebPage({ "@type": "ProfilePage", mainEntity: { "@id": "#identity" } })]);
 
 const beats = ["Agents do the work.", "Every step, up to the click you can't take back.", "That click stays yours."];
 
@@ -98,12 +99,7 @@ const work: Work[] = [
       </SiteMount>
     </section>
 
-    <section id="sequence" class="sequence wrap">
-      <ol class="beats">
-        <li v-for="beat in beats" :key="beat">{{ beat }}</li>
-      </ol>
-      <p class="closing">Three products, one rule.</p>
-    </section>
+    <ScrollSequence id="sequence" :beats="beats" closing="Three products, one rule." />
 
     <section class="flagships wrap" aria-label="Sidecar, Sage and AI Shell">
       <Surface v-for="item in flagships" :key="item.slug" as="article" class="flagship" :data-flagship="item.slug">
@@ -197,14 +193,6 @@ const work: Work[] = [
 
 .actions {
   @apply flex flex-wrap gap-3;
-}
-
-.beats {
-  @apply m-0 flex list-none flex-col gap-6 p-0 text-3xl font-bold tracking-tight sm:text-5xl;
-}
-
-.closing {
-  @apply typo-heading-xl mt-8 text-primary;
 }
 
 .flagships {

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Surface } from "@cela/design";
 
+import { seo } from "~/utils/site/seo";
+
 type Rule = { rule: string; why: string };
 
-useSeoMeta({
-  title: "How I work",
-  description: "How Marco Dong works with AI agents: the rules they work under and the hooks that enforce them.",
-});
+useSeoMeta({ title: seo.how.title, description: seo.how.description });
+defineOgImage("Card", { title: seo.how.title, sub: "Agents write a lot of my code." });
 
 const rules: Rule[] = [
   {

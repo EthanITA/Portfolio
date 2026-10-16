@@ -1,5 +1,6 @@
 export const links = {
   github: "https://github.com/EthanITA",
+  identity: "https://madong.me/#identity",
   linkedin: "https://www.linkedin.com/in/marcodong-838453",
   site: "https://madong.me",
 } as const;

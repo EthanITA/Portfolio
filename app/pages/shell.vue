@@ -1,16 +1,18 @@
 <script setup lang="ts">
+import { links } from "~/utils/site/links";
+import { seo } from "~/utils/site/seo";
 import type { Beat } from "~/utils/site/text";
 
-const description =
-  "AI Shell turns plain words into shell commands, runs the ones that only look, and stops before anything destructive.";
+const { title, description } = seo.shell;
 
-useSeoMeta({ title: "AI Shell", description });
+useSeoMeta({ title, description });
+defineOgImage("Card", { title, sub: "Plain words in, a shell command out." });
 useSchemaOrg([
   defineSoftwareApp({
-    name: "AI Shell",
+    name: title,
     description,
     applicationCategory: "DeveloperApplication",
-    author: { "@id": "#identity" },
+    author: { "@id": links.identity },
   }),
 ]);
 

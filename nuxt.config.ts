@@ -2,9 +2,13 @@ import tailwindcss from "@tailwindcss/vite";
 import tailwindAutoReference from "vite-plugin-vue-tailwind-auto-reference";
 
 import { links } from "./app/utils/site/links.ts";
+import { type PageSeo, seo } from "./app/utils/site/seo.ts";
 
-const description =
-  "Marco Dong, AI product engineer in Milan. I build AI products end to end: Sidecar, Sage and AI Shell at Cela, and agents at Klarna and Moneyfarm.";
+const markdown = (page: PageSeo): { title: string; href: string; description: string } => ({
+  title: page.title,
+  href: `${links.site}${page.path}.md`,
+  description: page.description,
+});
 
 // Runs before the stylesheet paints, so a stored dark choice never flashes light first.
 const themeScript = `try{document.documentElement.dataset.theme=localStorage.getItem("cela-theme")==="dark"?"dark":"light"}catch(e){document.documentElement.dataset.theme="light"}`;
@@ -38,13 +42,21 @@ export default defineNuxtConfig({
         "Software engineer at Klarna, AI product engineer at Moneyfarm, and founder of Cela, where I'm building Sidecar, Sage and AI Shell.",
         "Three products, one rule. A step that only looks runs by itself. A step that changes something waits for you. A step you can't take back stops at the line, and the click is yours.",
       ].join("\n\n"),
+      pages: false,
       sections: [
+        { title: "Sidecar, Sage and AI Shell", links: [seo.sidecar, seo.sage, seo.shell].map(markdown) },
+        {
+          title: "Marco Dong",
+          links: [
+            ...[seo.how, seo.about, seo.cv].map(markdown),
+            { title: "Download PDF", href: `${links.site}/marco-dong-cv.pdf`, description: seo.cv.description },
+          ],
+        },
         {
           title: "Contact",
           links: [
             { title: "LinkedIn", href: links.linkedin, description: "LinkedIn is the fastest way to reach me." },
             { title: "GitHub", href: links.github },
-            { title: "CV", href: "/marco-dong-cv.pdf" },
           ],
         },
       ],
@@ -58,7 +70,9 @@ export default defineNuxtConfig({
   compatibilityDate: "latest",
   css: ["~/assets/css/main.css"],
   devtools: { enabled: false },
+  experimental: { prerenderErrorPages: true },
   fonts: {
+    defaults: { styles: ["normal"], subsets: ["latin", "latin-ext"] },
     families: [
       { name: "Plus Jakarta Sans", global: true, preload: true, weights: [400, 500, 600, 700] },
       { name: "DM Mono", global: true, weights: [400, 500] },
@@ -68,6 +82,8 @@ export default defineNuxtConfig({
   linkChecker: { failOnError: true, skipInspections: ["absolute-site-urls"] },
   modules: ["@nuxtjs/seo", "@nuxt/fonts", "@pinia/nuxt"],
   nitro: { prerender: { crawlLinks: true, ignore: ["/film"], routes: ["/"] } },
+  ogImage: { defaults: { height: 630, width: 1200 }, zeroRuntime: true },
+  routeRules: { "/404.html": { robots: false } },
   robots: {
     groups: [{ allow: ["/"], userAgent: aiCrawlers }],
   },
@@ -90,7 +106,7 @@ export default defineNuxtConfig({
   site: {
     url: links.site,
     name: "Marco Dong",
-    description,
+    description: seo.home.description,
     defaultLocale: "en",
     separator: "·",
   },

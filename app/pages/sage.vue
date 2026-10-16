@@ -1,17 +1,19 @@
 <script setup lang="ts">
+import { links } from "~/utils/site/links";
+import { seo } from "~/utils/site/seo";
 import type { Beat } from "~/utils/site/text";
 
-const description =
-  "Sage is a Mac assistant in the notch. Hold a key, say what you want, and it does the steps, asking before anything it can't undo.";
+const { title, description } = seo.sage;
 
-useSeoMeta({ title: "Sage", description });
+useSeoMeta({ title, description });
+defineOgImage("Card", { title, sub: "A Mac assistant in the notch." });
 useSchemaOrg([
   defineSoftwareApp({
-    name: "Sage",
+    name: title,
     description,
     applicationCategory: "UtilitiesApplication",
     operatingSystem: "macOS",
-    author: { "@id": "#identity" },
+    author: { "@id": links.identity },
   }),
 ]);
 

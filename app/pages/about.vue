@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { links } from "~/utils/site/links";
+import { seo } from "~/utils/site/seo";
+
 type Milestone = { when: string; what: string };
 
-useSeoMeta({
-  title: "About",
-  description: "Marco Dong: computer science in Bologna, an MBA, Deloitte, Indra, Klarna, Moneyfarm and Cela.",
-});
-useSchemaOrg([defineWebPage({ "@type": ["AboutPage", "ProfilePage"], mainEntity: { "@id": "#identity" } })]);
+useSeoMeta({ title: seo.about.title, description: seo.about.description });
+useSchemaOrg([defineWebPage({ "@type": ["AboutPage", "ProfilePage"], mainEntity: { "@id": links.identity } })]);
+defineOgImage("Card", { title: "I don't know what I don't know, so I go and find out." });
 
 const timeline: Milestone[] = [
   { when: "High school", what: "Built a small humanoid robot driven from a smartphone, for my diploma." },

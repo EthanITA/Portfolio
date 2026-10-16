@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { cv } from "~/utils/site/cv";
 import { links } from "~/utils/site/links";
+import { seo } from "~/utils/site/seo";
 
-useSeoMeta({
-  title: "CV",
-  description: "The CV of Marco Dong, AI product engineer. Agent products, end to end.",
-});
+useSeoMeta({ title: seo.cv.title, description: seo.cv.description });
+defineOgImage("Card", { title: seo.cv.title, sub: cv.headline });
 
 const side = [
   { title: "Selected work", entries: cv.work },
