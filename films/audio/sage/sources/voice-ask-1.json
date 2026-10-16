@@ -1,0 +1,9 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "cedar",
+  "text": "I want to join the standup",
+  "transcript": "I want to join the standup",
+  "id": "gen-1792183600-RrA4lRgdBBPcJGRX1QlY",
+  "cost": 0,
+  "bytes": 86400
+}
