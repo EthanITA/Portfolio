@@ -167,7 +167,7 @@ const run = async ({ width, height, reduced }: { width: number; height: number; 
       const targets = JSON.parse(section.dataset.targets ?? "{}") as Record<string, { x: number; y: number; width: number; height: number }>;
       return Object.entries(targets).map(([screen, target]) => {
         const card = document.querySelector<HTMLElement>(`[data-flagship="${screen}"]`)!;
-        const rect = (card.querySelector<HTMLElement>("[data-poster]") ?? card).getBoundingClientRect();
+        const rect = (card.querySelector<HTMLElement>("[data-flagship-poster]") ?? card).getBoundingClientRect();
         return { screen, dx: Math.abs(target.x - rect.left), dy: Math.abs(target.y - (rect.top + scrollY)), dw: Math.abs(target.width - rect.width), dh: Math.abs(target.height - rect.height) };
       });
     });
@@ -181,6 +181,92 @@ const run = async ({ width, height, reduced }: { width: number; height: number; 
   report.errors = errors;
   expect(!errors.length, `${label}: ${errors.length} console errors or failed requests`);
   await browser.close();
+  return report;
+};
+
+const edges = async (): Promise<Record<string, unknown>> => {
+  const report: Record<string, unknown> = {};
+  const browser = await chromium.launch({ args: ["--enable-unsafe-swiftshader"] });
+  const open = async (options: Parameters<typeof browser.newContext>[0] = {}): Promise<{ page: Page; errors: string[] }> => {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, ...options });
+    const page = await context.newPage();
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    page.on("console", (message) => message.type() === "error" && errors.push(message.text()));
+    return { page, errors };
+  };
+
+  const theme = await open();
+  await theme.page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
+  await scrub(theme.page, 0.5);
+  await settle(theme.page);
+  const switched = await theme.page.evaluate(async () => {
+    const section = document.querySelector<HTMLElement>("[data-scene=sequence]")!;
+    const started = performance.now();
+    document.documentElement.dataset.theme = "dark";
+    while (section.dataset.themeApplied !== "dark" && performance.now() - started < 2000) await new Promise(requestAnimationFrame);
+    return { applied: section.dataset.themeApplied, ms: Math.round(performance.now() - started) };
+  });
+  report.theme = switched;
+  expect(switched.applied === "dark" && switched.ms <= 400, `theme toggle applied ${switched.applied} after ${switched.ms} ms`);
+
+  await scrub(theme.page, 1);
+  await settle(theme.page);
+  await scrub(theme.page, 0.86);
+  await settle(theme.page);
+  const back = await theme.page.evaluate(() => ({
+    phase: document.querySelector<HTMLElement>("[data-scene=sequence]")!.dataset.phase,
+    cards: [...document.querySelectorAll<HTMLElement>("[data-flagship]")].map((card) => getComputedStyle(card).opacity),
+  }));
+  report.scrubBack = back;
+  expect(back.phase === "break" && back.cards.every((opacity) => opacity === "0"), `scrubbing back to 0.86 left ${JSON.stringify(back)}`);
+
+  await theme.page.click('a[href="/sidecar"]');
+  await theme.page.waitForURL("**/sidecar");
+  await settle(theme.page);
+  report.unmount = { errors: theme.errors };
+  expect(!theme.errors.length, `errors around the theme toggle or unmount: ${theme.errors.join("; ")}`);
+
+  const restored = await open();
+  await restored.page.addInitScript(() => {
+    const phases: string[] = [];
+    Object.assign(window, { __phases: phases });
+    addEventListener("DOMContentLoaded", () => {
+      scrollTo(0, document.documentElement.scrollHeight);
+      const section = document.querySelector<HTMLElement>("[data-scene=sequence]");
+      if (section) new MutationObserver(() => phases.push(section.dataset.phase ?? "")).observe(section, { attributes: true, attributeFilter: ["data-phase"] });
+    });
+  });
+  await restored.page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
+  await settle(restored.page);
+  const phases = await restored.page.evaluate(() => (window as unknown as { __phases: string[] }).__phases);
+  report.restored = { phases };
+  expect(!phases.includes("break"), `a reload past the section replayed the break: ${phases.join(" ")}`);
+
+  const scriptless = await open({ javaScriptEnabled: false });
+  await scriptless.page.goto(`http://localhost:${PORT}/`);
+  const still = await scriptless.page.evaluate(() => {
+    const section = document.querySelector<HTMLElement>("[data-scene=sequence]")!;
+    return { sticky: getComputedStyle(section.firstElementChild!).position, lines: [...section.querySelectorAll("[data-line]")].map((line) => getComputedStyle(line).opacity) };
+  });
+  report.noScript = still;
+  expect(still.sticky !== "sticky" && still.lines.every((opacity) => opacity === "1"), `without JS: ${JSON.stringify(still)}`);
+  await browser.close();
+
+  const blind = await chromium.launch({ args: ["--disable-webgl", "--disable-3d-apis"] });
+  const page = await (await blind.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
+  await scrub(page, 0.86);
+  await settle(page);
+  const fallback = await page.evaluate(() => {
+    const section = document.querySelector<HTMLElement>("[data-scene=sequence]")!;
+    return { tiles: section.dataset.tiles, phase: section.dataset.phase, frames: section.querySelector<HTMLElement>("canvas")!.style.opacity };
+  });
+  report.noWebgl = { ...fallback, pageErrors };
+  expect(fallback.tiles === "false" && fallback.phase === "break" && Number(fallback.frames) < 1 && !pageErrors.length, `without WebGL: ${JSON.stringify(report.noWebgl)}`);
+  await blind.close();
   return report;
 };
 
@@ -202,7 +288,7 @@ try {
     if (key.includes("/960.")) expect(bytes < 2_500_000, `${key} is ${bytes} bytes`);
   }
   const reports = [await run({ width: 1440, height: 900 }), await run({ width: 390, height: 844 }), await run({ width: 1440, height: 900, reduced: true })];
-  console.log(JSON.stringify({ sizes, reports, failures }, undefined, 2));
+  console.log(JSON.stringify({ sizes, reports, edges: await edges(), failures }, undefined, 2));
 } finally {
   server.close();
 }
