@@ -17,6 +17,7 @@ export default defineNuxtModule({
 
     // Nobody watches a film route in a browser, and a hot update mid-render would rebuild the timeline under the renderer.
     if (nuxt.options.dev) nuxt.options.vite.server = { ...nuxt.options.vite.server, hmr: false };
+    nuxt.options.routeRules = { ...nuxt.options.routeRules, "/film/**": { ssr: false } };
 
     addComponentsDir({ path: resolve("films/components"), prefix: "Film" });
     addImportsDir(resolve("films/composables"));
