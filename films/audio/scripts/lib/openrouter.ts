@@ -6,7 +6,7 @@ const SPEND_LOG = "/Users/madong/.claude/jobs/e4337bca/tmp/site/spend.log";
 
 export type AudioRequest = {
   model: string;
-  messages: Array<{ role: "system" | "user"; content: string }>;
+  messages: Array<{ role: "system" | "user" | "assistant"; content: string }>;
   audio?: { voice?: string; format: string };
   seed?: number;
   stream?: boolean;
@@ -116,7 +116,7 @@ export const requestAudio = async (req: AudioRequest): Promise<AudioResult> => {
     take(p);
   }
 
-  if (id && typeof cost !== "number") cost = await fetchCost(id);
+  if (id && !cost) cost = (await fetchCost(id)) ?? cost;
   return { audio: Buffer.from(audio.join(""), "base64"), transcript: transcript.join(""), text: text.join(""), id, cost, shape: seen };
 };
 

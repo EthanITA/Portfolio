@@ -64,13 +64,17 @@ export const tick = (variant: TickVariant, seed: number): Stereo => {
 export const click = (variant: ClickVariant, seed: number): Stereo => {
   const rand = rng(seed);
   const f = { soft: 420, approve: 520, reject: 330 }[variant];
-  const lp = biquad("lowpass", 2200);
+  const bp = biquad("bandpass", 3000, 0.8);
   const n = seconds(0.1);
-  const x = new Float32Array(n);
+  const crisp = new Float32Array(n);
+  const body = new Float32Array(n);
   for (let i = 0; i < n; i++) {
     const t = i / SAMPLE_RATE;
-    x[i] = 0.7 * lp(rand() * 2 - 1) * Math.exp(-t / 0.0035) + 0.8 * Math.sin(2 * Math.PI * f * t) * Math.exp(-t / 0.012);
+    crisp[i] = bp(rand() * 2 - 1) * Math.exp(-t / 0.003);
+    body[i] = Math.sin(2 * Math.PI * f * t) * Math.exp(-t / 0.012);
   }
+  normalizeTo(crisp, 1);
+  const x = body.map((v, i) => 0.55 * v + 0.8 * crisp[i]!);
   fadeEdges(x, 0, seconds(0.02));
   return centered(normalizeTo(x, 1), (rand() - 0.5) * 0.2);
 };
@@ -108,7 +112,7 @@ export const thud = (): Stereo => {
   for (let i = 0; i < n; i++) {
     const t = i / SAMPLE_RATE;
     phase += (2 * Math.PI * (52 + 40 * Math.exp(-t / 0.03))) / SAMPLE_RATE;
-    const body = Math.sin(phase) * Math.exp(-t / 0.11);
+    const body = Math.cos(phase) * Math.exp(-t / 0.11) * Math.min(1, t / 0.0015);
     const knock = lp(rand() * 2 - 1) * Math.exp(-t / 0.012) * 0.5;
     x[i] = muted(body + knock);
   }

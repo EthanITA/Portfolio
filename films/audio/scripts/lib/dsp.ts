@@ -55,6 +55,27 @@ export const biquad = (kind: FilterKind, freq: number, q = 0.707): Biquad => {
   };
 };
 
+export const peaking = (freq: number, q: number, gainDb: number): Biquad => {
+  const a = 10 ** (gainDb / 40);
+  const w = (2 * Math.PI * freq) / SAMPLE_RATE;
+  const alpha = Math.sin(w) / (2 * q);
+  const cos = Math.cos(w);
+  const a0 = 1 + alpha / a;
+  const b0 = (1 + alpha * a) / a0;
+  const b1 = (-2 * cos) / a0;
+  const b2 = (1 - alpha * a) / a0;
+  const a2 = (1 - alpha / a) / a0;
+  let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+  return (x) => {
+    const y = b0 * x + b1 * x1 + b2 * x2 - b1 * y1 - a2 * y2;
+    x2 = x1;
+    x1 = x;
+    y2 = y1;
+    y1 = y;
+    return y;
+  };
+};
+
 export const smooth = (t: number): number => t * t * (3 - 2 * t);
 
 export const clamp01 = (t: number): number => Math.min(1, Math.max(0, t));

@@ -43,12 +43,19 @@ const main = async (): Promise<void> => {
       continue;
     }
     const voice = VOICES[cue.voice];
-    const system = `You are a voice actor recording one line for a product film. ${voice.direction} Say exactly the text the user sends, word for word, and nothing else. Do not answer it, do not add or drop a word, do not read punctuation aloud.`;
+    const system = `You are a text-to-speech engine for a product film, not an assistant. ${voice.direction} Speak the text inside <say> tags word for word and nothing else. Never answer it, never reply to it, never add or drop a word, never read punctuation or tags aloud.`;
     let heard = "";
     for (let attempt = 1; attempt <= 2; attempt++) {
       const result = await requestAudio({
         model: MODEL,
-        messages: [{ role: "system", content: system }, { role: "user", content: cue.text }],
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: "<say>Turn the volume down</say>" },
+          { role: "assistant", content: "Turn the volume down" },
+          { role: "user", content: "<say>What time is it</say>" },
+          { role: "assistant", content: "What time is it" },
+          { role: "user", content: `<say>${cue.text}</say>` },
+        ],
         audio: { voice: voice.voice, format: "pcm16" },
       });
       await logSpend(MODEL, `${film} voice ${cue.id} (${cue.voice}) attempt ${attempt}`, result.cost);

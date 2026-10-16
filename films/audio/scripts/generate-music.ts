@@ -23,6 +23,7 @@ const main = async (): Promise<void> => {
   const arg = (flag: string): string | undefined => flags[flags.indexOf(flag) + 1];
   const take = flags.includes("--take") ? Number(arg("--take")) : 1;
   const format = flags.includes("--format") ? arg("--format")! : "mp3";
+  const model = flags.includes("--model") ? arg("--model")! : MODEL;
   const dir = join(ROOT, film, "sources");
   await mkdir(dir, { recursive: true });
   const existing = (await readdir(dir)).filter((f) => f.startsWith(`music.take${take}.`) && !f.endsWith(".json"));
@@ -31,18 +32,18 @@ const main = async (): Promise<void> => {
   const seconds = FILMS[film].durationMs / 1000;
   const prompt = `${MUSIC_SKELETON} ${MUSIC_VARIANT[film]} Aim for about ${seconds + 15} seconds.`;
   const result = await requestAudio({
-    model: MODEL,
+    model,
     messages: [{ role: "user", content: prompt }],
     audio: { format },
     seed: SEED + take,
     stream: !flags.includes("--no-stream"),
   });
   await writeJson(join(ROOT, "_work", `${film}-music-shape.json`), result.shape);
-  await logSpend(MODEL, `${film} bed take ${take}`, result.cost);
+  await logSpend(model, `${film} bed take ${take}`, result.cost);
   if (!result.audio.length) throw new Error(`no audio came back; response text: ${result.text.slice(0, 400)}; shape ${JSON.stringify(skeleton(result.shape)).slice(0, 800)}`);
   const ext = sniff(result.audio);
   await writeFile(join(dir, `music.take${take}.${ext}`), result.audio);
-  await writeJson(join(dir, `music.take${take}.json`), { model: MODEL, seed: SEED + take, format, prompt, id: result.id, cost: result.cost, text: result.text, bytes: result.audio.length });
+  await writeJson(join(dir, `music.take${take}.json`), { model, seed: SEED + take, format, prompt, id: result.id, cost: result.cost, text: result.text, bytes: result.audio.length });
   console.log(`${film} take ${take}: ${result.audio.length} bytes ${ext}, cost ${result.cost}`);
 };
 

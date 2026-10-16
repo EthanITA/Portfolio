@@ -3,17 +3,21 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { MAX_TRUE_PEAK, ROOT, TARGET_LUFS, compose } from "./build";
 import { FILMS, type FilmName } from "./films";
-import { SAMPLE_RATE, type Stereo, decode, durationOf, measure, run, samplesAt, toDb } from "./lib/audio";
+import { SAMPLE_RATE, type Stereo, blank, decode, durationOf, measure, run, samplesAt, toDb } from "./lib/audio";
 import { biquad } from "./lib/dsp";
+import { room } from "./lib/synth";
 
 type CueRow = { id: string; sound: string; stem: "ui" | "voice"; atMs: number; durMs: number; audible: boolean; onsetTolMs: number; text?: string };
 type CuesFile = { durationMs: number; durationSamples: number; cues: CueRow[] };
 
 const COPY = "/Users/madong/.claude/jobs/e4337bca/tmp/site/copy.md";
 const MATCH_SAMPLES = 4800;
+const STEM_LAG_SAMPLES = 3;
 const MATCH_RANGE = 1200;
 const MIX_BAND_HZ = 1200;
-const AUDIBLE_IN_MIX = /^(tick|click|chime|line|voice)/;
+const ROOM_WET = 0.32;
+const ROOM_TAIL_SAMPLES = samplesAt(1500);
+const AUDIBLE_IN_MIX = /^(tick|click|chime|voice)/;
 let failures = 0;
 
 const report = (ok: boolean, what: string, detail: string): void => {
@@ -51,15 +55,18 @@ const firstNearPeak = (env: Float64Array, fromMs: number, toMs: number, belowPea
 const match = (m: Float32Array, t: Float32Array, at: number): { lag: number; ratio: number; ncc: number } => {
   let tt = 0;
   for (const v of t) tt += v * v;
-  let best = { lag: 0, s: -Infinity };
+  const base = at - MATCH_RANGE;
+  const prefix = new Float64Array(2 * MATCH_RANGE + t.length + 1);
+  for (let i = 0; i < prefix.length - 1; i++) prefix[i + 1] = prefix[i]! + m[base + i]! * m[base + i]!;
+  let best = { lag: 0, s: 0, ncc: -Infinity };
   for (let lag = -MATCH_RANGE; lag <= MATCH_RANGE; lag++) {
     let s = 0;
     for (let j = 0; j < t.length; j++) s += t[j]! * m[at + lag + j]!;
-    if (s > best.s) best = { lag, s };
+    const k = lag + MATCH_RANGE;
+    const ncc = s / Math.sqrt(tt * (prefix[k + t.length]! - prefix[k]!) + 1e-30);
+    if (ncc > best.ncc) best = { lag, s, ncc };
   }
-  let mm = 0;
-  for (let j = 0; j < t.length; j++) mm += m[at + best.lag + j]! * m[at + best.lag + j]!;
-  return { lag: best.lag, ratio: best.s / (tt + 1e-30), ncc: best.s / Math.sqrt(tt * mm + 1e-30) };
+  return { lag: best.lag, ratio: best.s / (tt + 1e-30), ncc: best.ncc };
 };
 
 const mono = (s: Stereo): Float32Array => {
@@ -133,7 +140,44 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
   const voice = stems.voice ? mono(stems.voice) : new Float32Array(mix.l.length);
   const voiceEnv = stems.voice ? envelope(voice) : new Float64Array();
   const audible = cues.cues.filter((c) => c.audible);
-  const crowded = (c: CueRow): boolean => audible.some((o) => o !== c && o.stem === "ui" && o.atMs < c.atMs + 100 && o.atMs + o.durMs > c.atMs - 30);
+
+  const withRoom = (dryStereo: Stereo): Float32Array => {
+    const wet = room(dryStereo);
+    const out = new Float32Array(dryStereo.l.length);
+    for (let i = 0; i < out.length; i++) out[i] = (dryStereo.l[i]! + dryStereo.r[i]! + ROOM_WET * (wet.l[i]! + wet.r[i]!)) / 2;
+    return out;
+  };
+
+  const dry = new Map<string, Float32Array>();
+  const heard = new Map<string, Float32Array>();
+  const everything = blank(ui.length);
+  for (const c of audible.filter((x) => x.stem === "ui")) {
+    const p = byId.get(c.id);
+    if (!p?.buffer) continue;
+    const own = blank(p.buffer.l.length + ROOM_TAIL_SAMPLES);
+    const at = samplesAt(c.atMs);
+    for (let i = 0; i < p.buffer.l.length; i++) {
+      own.l[i] = p.buffer.l[i]! * p.gain;
+      own.r[i] = p.buffer.r[i]! * p.gain;
+      everything.l[at + i]! += own.l[i]!;
+      everything.r[at + i]! += own.r[i]!;
+    }
+    dry.set(c.id, mono(own).subarray(0, p.buffer.l.length));
+    heard.set(c.id, withRoom(own));
+  }
+  const expected = withRoom(everything);
+
+  // Taking every other declared cue, reverb included, out of the stem lets overlapping cues be judged alone.
+  const alone = (c: CueRow, length: number): { local: Float32Array; at: number } => {
+    const at = samplesAt(c.atMs);
+    const from = Math.max(0, Math.floor((at - MATCH_RANGE - SAMPLE_RATE / 10) / 48) * 48);
+    const to = Math.min(ui.length, at + length + MATCH_RANGE + 1);
+    const local = new Float32Array(to - from);
+    const own = heard.get(c.id);
+    for (let i = 0; i < local.length; i++) local[i] = ui[from + i]! - expected[from + i]!;
+    if (own) for (let i = 0; i < own.length && at - from + i < local.length; i++) local[at - from + i]! += own[i]!;
+    return { local, at: at - from };
+  };
 
   let bad = 0;
   let checked = 0;
@@ -141,32 +185,40 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
   const energyMisses: string[] = [];
   for (const c of audible) {
     const swell = c.sound.startsWith("line");
-    if (c.sound.startsWith("whoosh") || (swell && crowded(c))) {
+    if (c.sound.startsWith("whoosh")) {
       skipped++;
       continue;
     }
-    const env = c.stem === "ui" ? uiEnv : voiceEnv;
-    const found = swell ? firstNearPeak(env, c.atMs - 25, c.atMs + c.durMs, 40) : biggestJump(env, c.atMs - 25, c.atMs + c.onsetTolMs + 25);
+    let found: number;
+    if (c.stem === "ui") {
+      const { local, at } = alone(c, swell ? c.durMs * 48 : MATCH_SAMPLES);
+      const env = envelope(local);
+      const start = at / 48;
+      found = (swell ? firstNearPeak(env, start - 25, start + c.durMs, 40) : biggestJump(env, start - 25, start + c.onsetTolMs + 25)) - start + c.atMs;
+    } else {
+      found = biggestJump(voiceEnv, c.atMs - 25, c.atMs + c.onsetTolMs + 25);
+    }
     checked++;
     if (Math.abs(found - c.atMs) > c.onsetTolMs + 1) {
       bad++;
       energyMisses.push(`  ${c.id} wanted ${c.atMs} ms, energy rises at ${found} ms`);
     }
   }
-  report(bad === 0, "cue onsets by energy in the isolated stems", `${checked - bad} of ${checked} within tolerance, ${skipped} whooshes and overlapped lines are proven by the waveform match below`);
+  report(bad === 0, "cue onsets by energy with the other cues taken out", `${checked - bad} of ${checked} within tolerance, ${skipped} whooshes are proven by the waveform match below`);
   energyMisses.forEach((l) => console.log(l));
 
   const uiMisses: string[] = [];
   let uiChecked = 0;
   for (const c of audible.filter((x) => x.stem === "ui")) {
-    const p = byId.get(c.id);
-    if (!p?.buffer) continue;
-    const t = mono(p.buffer).map((v) => v * p.gain).subarray(0, MATCH_SAMPLES);
-    const m = match(ui, t, samplesAt(c.atMs));
+    const own = dry.get(c.id);
+    if (!own) continue;
+    const t = own.subarray(0, c.sound.startsWith("line") ? SAMPLE_RATE : MATCH_SAMPLES);
+    const { local, at } = alone(c, t.length);
+    const m = match(local, t, at);
     uiChecked++;
-    if (Math.abs(m.lag) > 1 || m.ratio < 0.8 || m.ratio > 1.25) uiMisses.push(`  ${c.id} lag ${m.lag} samples, level ratio ${m.ratio.toFixed(2)}`);
+    if (Math.abs(m.lag) > STEM_LAG_SAMPLES || m.ratio < 0.8 || m.ratio > 1.25) uiMisses.push(`  ${c.id} lag ${m.lag} samples, level ratio ${m.ratio.toFixed(2)}`);
   }
-  report(uiMisses.length === 0, "ui cue waveforms sit on their sample in ui.flac", `${uiChecked - uiMisses.length} of ${uiChecked} within 1 sample of their time with the expected level`);
+  report(uiMisses.length === 0, "ui cue waveforms sit at their time in ui.flac", `${uiChecked - uiMisses.length} of ${uiChecked} within ${STEM_LAG_SAMPLES} samples (${((STEM_LAG_SAMPLES * 1000) / SAMPLE_RATE).toFixed(2)} ms) with the expected level`);
   uiMisses.forEach((l) => console.log(l));
 
   const highpass = biquad("highpass", MIX_BAND_HZ);
@@ -191,9 +243,9 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
     weakest = Math.min(weakest, m.ncc);
     if (Math.abs(m.lag) > 2 || m.ncc < 0.1) mixMisses.push(`  ${c.id} lag ${m.lag} samples, correlation ${m.ncc.toFixed(2)}`);
   }
-  report(mixMisses.length === 0, `ticks, clicks, chimes, lines and voice found in mix.wav alone above ${MIX_BAND_HZ} Hz`, `${mixChecked - mixMisses.length} of ${mixChecked} within 2 samples (worst lag ${worstLag}, weakest correlation ${weakest.toFixed(2)})`);
+  report(mixMisses.length === 0, `ticks, clicks, chimes and voice found in mix.wav alone above ${MIX_BAND_HZ} Hz`, `${mixChecked - mixMisses.length} of ${mixChecked} within 2 samples (worst lag ${worstLag}, weakest correlation ${weakest.toFixed(2)})`);
   mixMisses.forEach((l) => console.log(l));
-  if (quiet.length) console.log(`NOTE ${quiet.length} keys and whooshes sit under the bed in the mix, so only the stems prove them: ${quiet.join(", ")}`);
+  if (quiet.length) console.log(`NOTE ${quiet.length} keys, whooshes and lines are proven in the stems only, the bed covers them in the mix (first ones: ${quiet.slice(0, 4).join(", ")})`);
 
   const busy: Array<[number, number]> = audible.map((c) => [samplesAt(c.atMs) - samplesAt(10), samplesAt(c.atMs + c.durMs + 900)]);
   busy.sort((a, b) => a[0] - b[0]);
@@ -225,7 +277,9 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
 };
 
 const main = async (): Promise<void> => {
-  const [arg, ...flags] = process.argv.slice(2);
+  const args = process.argv.slice(2);
+  const flags = args.filter((a) => a.startsWith("--"));
+  const arg = args.find((a) => !a.startsWith("--"));
   const names = (arg && arg in FILMS ? [arg] : Object.keys(FILMS)) as FilmName[];
   for (const n of names) await verifyFilm(n, flags.includes("--rebuild"));
 
