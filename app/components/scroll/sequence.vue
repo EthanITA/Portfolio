@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import type { ScrollObserver, Timeline } from "animejs";
+import type { ScrollObserver, Timer } from "animejs";
 
-import { MOTION_EASE } from "@cela/design/utils/motion";
-import { createTimeline, onScroll } from "animejs";
+import { createTimer, onScroll } from "animejs";
 
 import { createFrames, sequencePath, type Frames } from "~/utils/scroll/frames";
 import { MANIFEST } from "~/utils/scroll/manifest.gen";
-import { BEAT_FADE, BEAT_RANGES, fitFrame, frameAt, isBeatVisible, SEQUENCE, type Rect, type Theme } from "~/utils/scroll/sequence";
+import { BEAT_RANGES, beatStyle, cardOpacity, fitFrame, frameAt, SEQUENCE, type Rect, type Theme } from "~/utils/scroll/sequence";
 import { createTiles, SCREENS, type Screen, type TileLayer, type Targets } from "~/utils/scroll/tiles";
 
 const { beats, closing } = defineProps<{ beats: string[]; closing: string }>();
@@ -35,6 +34,12 @@ const srcset = (index: number, format: "avif" | "webp"): string =>
   [960, 1920].map((width) => `${sequencePath(`${theme.value}/${width}/${String(index).padStart(3, "0")}`, format)} ${width}w`).join(", ");
 
 const readTheme = (): Theme => (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
+
+const write = (element: HTMLElement, styles: { opacity?: string; transform?: string }): void => {
+  for (const [property, value] of Object.entries(styles) as ["opacity" | "transform", string][]) {
+    if (element.style[property] !== value) element.style[property] = value;
+  }
+};
 
 let teardown = (): void => {};
 
@@ -95,9 +100,12 @@ const setup = (): void => {
     stamped = { progress: label, frame: index };
     lines.forEach((line, beat) => {
       const range = BEAT_RANGES[beat];
-      const visible = String(!!range && isBeatVisible(progress, range));
-      if (line.dataset.visible !== visible) line.dataset.visible = visible;
+      if (!range) return;
+      const { opacity, rise } = beatStyle(progress, range);
+      write(line, { opacity: String(opacity), transform: `translateY(${rise.toFixed(2)}px)` });
+      if (line.dataset.visible !== String(opacity > 0)) line.dataset.visible = String(opacity > 0);
     });
+    for (const card of cards) write(card, { opacity: progress < 1 ? String(cardOpacity(progress)) : "" });
   };
 
   const schedule = (): void => {
@@ -120,7 +128,7 @@ const setup = (): void => {
     documentTargets = Object.fromEntries(
       SCREENS.flatMap((screen) => {
         const card = document.querySelector<HTMLElement>(`[data-flagship="${screen}"]`);
-        const rect = (card?.querySelector<HTMLElement>("[data-poster]") ?? card)?.getBoundingClientRect();
+        const rect = (card?.querySelector<HTMLElement>("[data-flagship-poster]") ?? card)?.getBoundingClientRect();
         if (!rect?.width || !rect.height) return [];
         return [[screen, { x: rect.left, y: rect.top + scroll, width: rect.width, height: rect.height }]];
       }),
@@ -159,35 +167,27 @@ const setup = (): void => {
     schedule();
   };
 
-  const timeline: Timeline = createTimeline({
+  // Styles derive from p, not timeline tweens, which strand mid-value when the smoothing skips past their start.
+  const timer: Timer = createTimer({
+    duration: 1000,
     autoplay: onScroll({
       target: section,
       enter: "top top",
       leave: "bottom bottom",
       sync: SEQUENCE.smoothing,
       onUpdate: (observer: ScrollObserver) => {
-        progress = timeline.progress;
+        progress = timer.progress;
         scroll = observer.scroll;
         draw();
       },
     }),
   });
-  if (cards.length) timeline.set(cards, { opacity: 0 }, 0);
-  lines.forEach((line, beat) => {
-    const range = BEAT_RANGES[beat];
-    if (!range) return;
-    const [from, to] = range;
-    timeline
-      .add(line, { opacity: [0, 1], y: [BEAT_FADE.rise, 0], duration: BEAT_FADE.in * 1000, ease: MOTION_EASE.out }, from * 1000)
-      .add(line, { opacity: [1, 0], duration: BEAT_FADE.out * 1000, ease: MOTION_EASE.out }, (to - BEAT_FADE.out) * 1000);
-  });
-  if (cards.length) timeline.add(cards, { opacity: [0, 1], duration: (1 - SEQUENCE.landAt) * 1000, ease: "linear" }, SEQUENCE.landAt * 1000);
-  timeline.add({ duration: 1 }, 999);
 
   // Seeding the playhead at the restored scroll keeps the smoothing from replaying the film on a reload mid-page.
   const box = section.getBoundingClientRect();
   progress = Math.min(Math.max(-box.top / (box.height - innerHeight), 0), 1);
-  timeline.seek(progress * timeline.duration);
+  timer.seek(progress * timer.duration);
+  draw();
 
   const resize = new ResizeObserver(() => measure());
   for (const element of [section, document.documentElement, ...cards]) resize.observe(element);
@@ -221,7 +221,8 @@ const setup = (): void => {
   teardown = () => {
     disposed = true;
     cancelAnimationFrame(pending);
-    timeline.revert();
+    timer.revert();
+    for (const element of [...lines, ...cards]) write(element, { opacity: "", transform: "" });
     resize.disconnect();
     nearby.disconnect();
     visible.disconnect();

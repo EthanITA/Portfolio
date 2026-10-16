@@ -1,3 +1,5 @@
+import { MOTION_EASE } from "@cela/design/utils/motion";
+
 export const SEQUENCE = {
   frames: 192,
   filmMs: 6400,
@@ -26,7 +28,15 @@ export type Rect = { x: number; y: number; width: number; height: number };
 export const frameAt = (progress: number): number =>
   Math.round((Math.min(Math.max(progress, 0), SEQUENCE.breakAt) / SEQUENCE.breakAt) * (SEQUENCE.frames - 1));
 
-export const isBeatVisible = (progress: number, [from, to]: readonly [number, number]): boolean => progress > from && progress < to;
+const clamp01 = (value: number): number => Math.min(Math.max(value, 0), 1);
+
+export const beatStyle = (progress: number, [from, to]: readonly [number, number]): { opacity: number; rise: number } => {
+  const enter = MOTION_EASE.out(clamp01((progress - from) / BEAT_FADE.in));
+  const exit = MOTION_EASE.out(clamp01((progress - to + BEAT_FADE.out) / BEAT_FADE.out));
+  return { opacity: enter * (1 - exit), rise: BEAT_FADE.rise * (1 - enter) };
+};
+
+export const cardOpacity = (progress: number): number => clamp01((progress - SEQUENCE.landAt) / (1 - SEQUENCE.landAt));
 
 export type FitOptions = { width: number; height: number; safe: readonly [number, number] };
 
