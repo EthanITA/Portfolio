@@ -123,7 +123,8 @@ const glow = (): CanvasTexture => {
   const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 64;
-  const context = canvas.getContext("2d");
+  // A CPU-backed canvas uploads to WebGL without the GPU readback stall Chrome warns about.
+  const context = canvas.getContext("2d", { willReadFrequently: true });
   if (context) {
     const gradient = context.createRadialGradient(128, 128, 0, 128, 128, 128);
     gradient.addColorStop(0, "rgba(255,255,255,1)");
