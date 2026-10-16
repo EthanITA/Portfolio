@@ -8,6 +8,11 @@
   color-scheme: dark;
 }
 
+/* Hidden only while an entrance is still to play; no JS, reduced motion and a stalled app all see the page. */
+:root[data-motion="on"] [data-enter]:not([data-entered]) {
+  opacity: 0;
+}
+
 @utility wrap {
   @apply mx-auto w-full max-w-5xl px-5 sm:px-8;
 }

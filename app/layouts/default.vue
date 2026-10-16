@@ -15,7 +15,7 @@
 }
 
 .main {
-  @apply flex-1 outline-none;
+  @apply flex-1 pt-20 outline-none print:pt-0;
 }
 
 .skip {
