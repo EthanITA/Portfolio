@@ -1,36 +1,36 @@
 {
-  "name": "nuxt-app",
+  "name": "madong.me",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.24.0",
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "nuxt dev --port 3100 --host localhost",
     "generate": "nuxt generate",
+    "postinstall": "nuxt prepare",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "typecheck": "nuxt typecheck"
   },
   "dependencies": {
-    "@heroicons/vue": "^2.1.5",
-    "@nuxt/image": "^1.7.0",
-    "@nuxthub/core": "^0.7.3",
-    "@pinia/nuxt": "^0.5.3",
-    "gsap": "^3.12.5",
-    "nuxt": "^3.12.4",
-    "pinia": "^2.2.1",
-    "prismjs": "^1.29.0",
-    "vue": "latest"
+    "@cela/design": "github:cela-sage/design",
+    "@nuxt/fonts": "^1.0.1",
+    "@nuxtjs/seo": "^6.0.1",
+    "@pinia/nuxt": "^1.0.3",
+    "animejs": "^4.5.0",
+    "nuxt": "npm:nuxt-nightly@5.0.0-2610161507-5812474",
+    "pinia": "^4.1.0",
+    "three": "^0.186.1"
   },
   "devDependencies": {
-    "@types/prismjs": "^1.26.4",
-    "autoprefixer": "^10.4.20",
-    "daisyui": "^4.12.10",
-    "i": "^0.3.7",
-    "postcss": "^8.4.41",
-    "prettier": "3.3.3",
-    "tailwindcss": "^3.4.9",
-    "wrangler": "^3.72.2"
-  },
-  "overrides": {
-    "vue": "latest"
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24.19.0",
+    "@types/three": "^0.186.0",
+    "daisyui": "^5.7.50",
+    "playwright": "^1.64.1",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "vite-plugin-vue-tailwind-auto-reference": "^2.0.2",
+    "vue-tsc": "^3.3.11"
   }
 }

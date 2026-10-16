@@ -1,29 +1,20 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
+import tailwindcss from "@tailwindcss/vite";
+import tailwindAutoReference from "vite-plugin-vue-tailwind-auto-reference";
+
 export default defineNuxtConfig({
-  compatibilityDate: "2024-04-03",
-  devtools: { enabled: true },
-  modules: ["@pinia/nuxt", "@nuxt/image", "@nuxthub/core"],
+  compatibilityDate: "latest",
   css: ["~/assets/css/main.css"],
-  postcss: {
-    plugins: {
-      tailwindcss: {},
-      autoprefixer: {},
-    },
+  devtools: { enabled: false },
+  modules: ["@nuxtjs/seo", "@nuxt/fonts", "@pinia/nuxt"],
+  nitro: { prerender: { crawlLinks: true, routes: ["/"] } },
+  site: {
+    url: "https://madong.me",
+    name: "Marco Dong",
+    description: "AI product engineer in Milan. I build AI products end to end: Sidecar, Sage and AI Shell at Cela.",
+    defaultLocale: "en",
   },
-  app: {
-    head: {
-      htmlAttrs: {
-        lang: "en",
-      },
-      link: [
-        {
-          href: "https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap",
-          rel: "preload",
-          as: "style",
-          onload: "this.onload=null;this.rel='stylesheet'",
-        },
-      ],
-      title: "Marco Dong",
-    },
-  },
+  // Prerendered at build so crawlers and AI agents read real HTML; nothing renders on a server at runtime.
+  ssr: true,
+  typescript: { strict: true },
+  vite: { plugins: [tailwindAutoReference(["./assets/css/main.css"]), tailwindcss()] },
 });

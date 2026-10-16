@@ -1,0 +1,14 @@
+allowBuilds:
+  esbuild: true
+  sharp: true
+  vite-plugin-vue-tailwind-auto-reference: true
+minimumReleaseAgeExclude:
+  - '@nuxt/kit-nightly@5.0.0-2610161507-5812474'
+  - '@nuxt/nitro-server-nightly@5.0.0-2610161507-5812474'
+  - '@nuxt/schema-nightly@5.0.0-2610161507-5812474'
+  - '@nuxt/vite-builder-nightly@5.0.0-2610161507-5812474'
+  - '@nuxt/vite-server-nightly@5.0.0-2610161507-5812474'
+  - nuxt-nightly@5.0.0-2610161507-5812474
+overrides:
+  # Later builds add dev-close-sockets by its node_modules path, which Nuxt's server import protection refuses.
+  nuxt-nightly>@nuxt/cli: npm:@nuxt/cli-nightly@4.0.0-20260924-135740-11226da
