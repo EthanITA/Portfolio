@@ -20,6 +20,7 @@ export type SceneOptions = {
   mode: SceneMode;
   duration: number;
   root: () => HTMLElement | undefined;
+  box?: () => HTMLElement | undefined;
   canvas: () => HTMLCanvasElement | undefined;
   setup: SceneSetup;
   reducedOnDemand?: boolean;
@@ -39,7 +40,7 @@ export type Scene = {
 const LIVE_RATIO = 0.1;
 const MAX_DT = 50;
 
-export const useScene = ({ mode, duration, root, canvas, setup, reducedOnDemand }: SceneOptions): Scene => {
+export const useScene = ({ mode, duration, root, box = root, canvas, setup, reducedOnDemand }: SceneOptions): Scene => {
   const film = mode === "film";
   const state = ref<SceneState>("poster");
   const theme = ref<StageTheme>("light");
@@ -109,8 +110,8 @@ export const useScene = ({ mode, duration, root, canvas, setup, reducedOnDemand 
           return undefined;
         }
         runtime = created;
-        const box = root()?.getBoundingClientRect();
-        if (box) runtime.resize(box.width, box.height);
+        const size = box()?.getBoundingClientRect();
+        if (size) runtime.resize(size.width, size.height);
         if (film) draw(0);
         sync();
         return created;
@@ -182,7 +183,7 @@ export const useScene = ({ mode, duration, root, canvas, setup, reducedOnDemand 
       runtime.resize(entry.contentRect.width, entry.contentRect.height);
       if (shown) draw(0);
     });
-    sizes.observe(el);
+    sizes.observe(box() ?? el);
     cleanups.push(() => sizes.disconnect());
 
     if (film) {
