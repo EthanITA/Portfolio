@@ -7,9 +7,9 @@
   "mix": {
     "file": "mix.wav",
     "targetLufs": -16,
-    "bedGainDb": 3.2,
+    "bedGainDb": 3,
     "integratedLufs": -16,
-    "truePeakDbtp": -3.6
+    "truePeakDbtp": -2.8
   },
   "cues": [
     {
@@ -3219,7 +3219,7 @@
       "marks": "one conventional commit subject comes back"
     },
     {
-      "id": "push-line",
+      "id": "push-command",
       "sound": "whoosh.still",
       "stem": "ui",
       "atMs": 3200,
@@ -3228,10 +3228,10 @@
       "audible": true,
       "onsetTolMs": 40,
       "sheet": "3-10",
-      "marks": "the camera pushes in on the line"
+      "marks": "the camera pushes in on the command"
     },
     {
-      "id": "push-line-2",
+      "id": "push-command-2",
       "sound": "whoosh.still",
       "stem": "ui",
       "atMs": 10700,
@@ -3240,10 +3240,10 @@
       "audible": true,
       "onsetTolMs": 40,
       "sheet": "10-18",
-      "marks": "the camera pushes in on the line"
+      "marks": "the camera pushes in on the command"
     },
     {
-      "id": "push-line-3",
+      "id": "push-command-3",
       "sound": "whoosh.still",
       "stem": "ui",
       "atMs": 18700,
@@ -3252,19 +3252,7 @@
       "audible": true,
       "onsetTolMs": 40,
       "sheet": "18-27",
-      "marks": "the camera pushes in on the line"
-    },
-    {
-      "id": "push-line-4",
-      "sound": "whoosh.still",
-      "stem": "ui",
-      "atMs": 27400,
-      "atSample": 1315200,
-      "durMs": 1200,
-      "audible": true,
-      "onsetTolMs": 40,
-      "sheet": "27-32",
-      "marks": "the camera pushes in on the line"
+      "marks": "the camera pushes in on the command"
     },
     {
       "id": "pull-back",
@@ -3559,5 +3547,82 @@
       "attackMs": 40,
       "releaseMs": 600
     }
-  ]
+  ],
+  "bed": {
+    "bpm": 108,
+    "barMs": 2222.22,
+    "downbeatMs": 3200,
+    "closeMs": 32089,
+    "sections": [
+      {
+        "bar": -1,
+        "atMs": 978,
+        "layers": [
+          "hat"
+        ]
+      },
+      {
+        "bar": 0,
+        "atMs": 3200,
+        "layers": [
+          "kick",
+          "hat"
+        ]
+      },
+      {
+        "bar": 2,
+        "atMs": 7644,
+        "layers": [
+          "kick",
+          "hat",
+          "bass"
+        ]
+      },
+      {
+        "bar": 5,
+        "atMs": 14311,
+        "layers": [
+          "kick",
+          "hat",
+          "bass",
+          "pluck"
+        ]
+      },
+      {
+        "bar": 7,
+        "atMs": 18756,
+        "layers": [
+          "kick",
+          "hat",
+          "bass",
+          "pluck",
+          "clap"
+        ]
+      },
+      {
+        "bar": 9,
+        "atMs": 23200,
+        "layers": [
+          "kick",
+          "hat",
+          "bass",
+          "pluck",
+          "clap",
+          "stab"
+        ]
+      },
+      {
+        "bar": 11,
+        "atMs": 27644,
+        "layers": [
+          "kick",
+          "hat",
+          "bass",
+          "pluck",
+          "clap",
+          "stab"
+        ]
+      }
+    ]
+  }
 }

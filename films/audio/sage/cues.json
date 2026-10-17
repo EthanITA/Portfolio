@@ -7,9 +7,9 @@
   "mix": {
     "file": "mix.wav",
     "targetLufs": -16,
-    "bedGainDb": 0.1,
+    "bedGainDb": 3.12,
     "integratedLufs": -16,
-    "truePeakDbtp": -2.4
+    "truePeakDbtp": -2.9
   },
   "cues": [
     {
@@ -236,8 +236,8 @@
       "id": "push-pay",
       "sound": "whoosh.still",
       "stem": "ui",
-      "atMs": 30000,
-      "atSample": 1440000,
+      "atMs": 31600,
+      "atSample": 1516800,
       "durMs": 1200,
       "audible": true,
       "onsetTolMs": 40,
@@ -299,7 +299,7 @@
       "reason": "voice understood",
       "fromMs": 9600,
       "toMs": 10426,
-      "depthDb": -9.17,
+      "depthDb": -6,
       "attackMs": 120,
       "releaseMs": 400
     },
@@ -307,7 +307,7 @@
       "reason": "voice ask-2",
       "fromMs": 30400,
       "toMs": 31416,
-      "depthDb": -8.29,
+      "depthDb": -6,
       "attackMs": 120,
       "releaseMs": 400
     },
@@ -319,5 +319,89 @@
       "attackMs": 120,
       "releaseMs": 400
     }
-  ]
+  ],
+  "bed": {
+    "bpm": 108,
+    "barMs": 2222.22,
+    "downbeatMs": 3000,
+    "closeMs": 36333,
+    "sections": [
+      {
+        "bar": -1,
+        "atMs": 778,
+        "layers": [
+          "hat"
+        ]
+      },
+      {
+        "bar": 0,
+        "atMs": 3000,
+        "layers": [
+          "kick",
+          "hat"
+        ]
+      },
+      {
+        "bar": 3,
+        "atMs": 9667,
+        "layers": [
+          "kick",
+          "hat",
+          "bass"
+        ]
+      },
+      {
+        "bar": 4,
+        "atMs": 11889,
+        "layers": [
+          "kick",
+          "hat",
+          "bass",
+          "pluck"
+        ]
+      },
+      {
+        "bar": 9,
+        "atMs": 23000,
+        "layers": [
+          "kick",
+          "hat",
+          "bass",
+          "pluck",
+          "stab"
+        ]
+      },
+      {
+        "bar": 11,
+        "atMs": 27444,
+        "layers": [
+          "kick",
+          "hat",
+          "bass",
+          "pluck",
+          "clap",
+          "stab"
+        ]
+      },
+      {
+        "bar": 12,
+        "atMs": 29667,
+        "layers": [
+          "kick",
+          "hat",
+          "bass",
+          "pluck"
+        ]
+      },
+      {
+        "bar": 14,
+        "atMs": 34111,
+        "layers": [
+          "kick",
+          "hat",
+          "bass"
+        ]
+      }
+    ]
+  }
 }

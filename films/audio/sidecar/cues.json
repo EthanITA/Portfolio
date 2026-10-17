@@ -7,9 +7,9 @@
   "mix": {
     "file": "mix.wav",
     "targetLufs": -16,
-    "bedGainDb": -2.3,
+    "bedGainDb": 2.5,
     "integratedLufs": -16,
-    "truePeakDbtp": -3.9
+    "truePeakDbtp": -3
   },
   "cues": [
     {
@@ -467,7 +467,7 @@
       "marks": "the violet line between terminal and island draws"
     },
     {
-      "id": "push-review",
+      "id": "push-hunks",
       "sound": "whoosh.still",
       "stem": "ui",
       "atMs": 10000,
@@ -476,19 +476,19 @@
       "audible": true,
       "onsetTolMs": 40,
       "sheet": "10-18",
-      "marks": "the camera pushes in on the review"
+      "marks": "the camera pushes in on the hunks"
     },
     {
-      "id": "push-artifacts",
+      "id": "push-note",
       "sound": "whoosh.still",
       "stem": "ui",
-      "atMs": 18000,
-      "atSample": 864000,
+      "atMs": 18800,
+      "atSample": 902400,
       "durMs": 1200,
       "audible": true,
       "onsetTolMs": 40,
       "sheet": "18-28",
-      "marks": "the camera pushes in on the artifacts"
+      "marks": "the camera pushes in on the note"
     },
     {
       "id": "push-history",
@@ -563,5 +563,91 @@
       "attackMs": 40,
       "releaseMs": 600
     }
-  ]
+  ],
+  "bed": {
+    "bpm": 108,
+    "barMs": 2222.22,
+    "downbeatMs": 3000,
+    "closeMs": 40778,
+    "sections": [
+      {
+        "bar": -1,
+        "atMs": 778,
+        "layers": [
+          "hat"
+        ]
+      },
+      {
+        "bar": 0,
+        "atMs": 3000,
+        "layers": [
+          "kick",
+          "hat"
+        ]
+      },
+      {
+        "bar": 2,
+        "atMs": 7444,
+        "layers": [
+          "kick",
+          "hat",
+          "bass"
+        ]
+      },
+      {
+        "bar": 3,
+        "atMs": 9667,
+        "layers": [
+          "kick",
+          "hat",
+          "bass",
+          "pluck"
+        ]
+      },
+      {
+        "bar": 7,
+        "atMs": 18556,
+        "layers": [
+          "kick",
+          "hat",
+          "bass",
+          "pluck",
+          "clap"
+        ]
+      },
+      {
+        "bar": 9,
+        "atMs": 23000,
+        "layers": [
+          "kick",
+          "hat",
+          "bass",
+          "pluck",
+          "clap",
+          "stab"
+        ]
+      },
+      {
+        "bar": 11,
+        "atMs": 27444,
+        "layers": [
+          "kick",
+          "hat",
+          "bass",
+          "pluck",
+          "clap",
+          "stab"
+        ]
+      },
+      {
+        "bar": 14,
+        "atMs": 34111,
+        "layers": [
+          "kick",
+          "hat",
+          "bass"
+        ]
+      }
+    ]
+  }
 }
