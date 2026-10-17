@@ -45,7 +45,7 @@ onMounted(() => {
 
 /* Not .card, which @cela/design styles globally and would add a real border under the glass's inset ring. */
 .sheet {
-  @apply flex flex-col gap-2 p-2.5 shadow-lg;
+  @apply flex flex-col gap-2 p-2.5 shadow-lg inset-ring inset-ring-(--glass-border-color);
 }
 
 .foot {
