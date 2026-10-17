@@ -21,8 +21,8 @@ export const REGIONS: Record<string, BeatRegion> = {
   steps: ISLAND,
   asks: ISLAND,
   hands: ISLAND,
-  // The three seams are the subject; the file path above them would stretch it to 242 px against the 210 crop.
-  review: { frame: SIDECAR, x: 638, y: 144, width: 336, height: 210 },
+  // The path and the first two seams; the second hunk's last row falls below, since path to its border is 221 px.
+  review: { frame: SIDECAR, x: 638, y: 68, width: 336, height: 210 },
   comments: { frame: SIDECAR, x: 420, y: 250, width: 336, height: 210 },
   follows: { frame: SIDECAR_TERMINAL, x: 17, y: 350, width: 336, height: 210 },
 };
