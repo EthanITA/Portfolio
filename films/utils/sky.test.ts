@@ -162,12 +162,17 @@ describe("Sky.caps", () => {
 
 describe("Sky.press", () => {
   const cap: Cap = { keys: "enter", at: 1000, leave: 4000, dips: [3000], pulses: [2000], bottom: 0 };
-  it("rests at scale 1, swells 6 percent halfway through a pulse and sinks 4 percent halfway through a press", () => {
-    assert.deepEqual(Sky.press({ ms: 1500, cap }), { opacity: 1, y: 0, blur: 0, scale: 1 });
+  it("rests at scale 1, swells 6 percent halfway through a pulse and goes down a depth line on a press without shrinking", () => {
+    assert.deepEqual(Sky.press({ ms: 1500, cap }), { opacity: 1, y: 0, blur: 0, scale: 1, down: 0 });
     assert.equal(Sky.press({ ms: 2000, cap }).scale, 1);
     assert.equal(Sky.press({ ms: 2000 + SKY.pulse.over / 2, cap }).scale, SKY.pulse.scale);
     assert.equal(Sky.press({ ms: 2000 + SKY.pulse.over, cap }).scale, 1);
-    assert.equal(Sky.press({ ms: 3000 + SKY.dip.over / 2, cap }).scale, SKY.dip.scale);
+    assert.deepEqual(
+      [2999, 3000, 3000 + SKY.dip.over].map((ms) => Sky.press({ ms, cap }).down),
+      [0, 1, 0],
+    );
+    const halfway = Sky.press({ ms: 3000 + SKY.dip.over / 2, cap });
+    assert.ok(halfway.down > 0 && halfway.down < 1 && halfway.scale === 1, JSON.stringify(halfway));
     assert.equal(Sky.press({ ms: 4180, cap }).opacity, 0);
   });
 });
