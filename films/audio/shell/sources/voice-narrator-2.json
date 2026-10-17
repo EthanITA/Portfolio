@@ -1,0 +1,12 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "Only looks? It runs.",
+  "spoken": "Only looks? It runs.",
+  "transcript": "Only looks? It runs.",
+  "id": "gen-1792232432-EyJe5c4ElUtgnpRPpdIx",
+  "cost": 0,
+  "bytes": 127200,
+  "speechMs": 1645,
+  "attempt": 7
+}

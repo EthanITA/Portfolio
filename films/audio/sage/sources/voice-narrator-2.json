@@ -1,0 +1,12 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "No app to open. Just hold a key.",
+  "spoken": "No app to open. Just hold a key.",
+  "transcript": "No app to open. Just hold a key.",
+  "id": "gen-1792231332-LpLcsltWfq9uT5QcA4RR",
+  "cost": 0,
+  "bytes": 110400,
+  "speechMs": 2278,
+  "attempt": 3
+}

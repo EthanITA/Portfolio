@@ -1,0 +1,12 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "Changed your mind? ⌘Z takes back 50 decisions.",
+  "spoken": "Changed your mind? Command Z takes back fifty decisions.",
+  "transcript": "Changed your mind? Command Z takes back fifty decisions.",
+  "id": "gen-1792232672-KqCZmyPlYOo5d1rwSl0D",
+  "cost": 0,
+  "bytes": 165600,
+  "speechMs": 3091,
+  "attempt": 4
+}

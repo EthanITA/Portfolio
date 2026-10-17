@@ -1,0 +1,9 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "Approve a hunk. Reject two lines.",
+  "spoken": "Approve a hunk. Reject two lines.",
+  "transcript": "Approve a hunk. Reject two lines.",
+  "adopted": "narrator-3.attempt3.wav",
+  "speechMs": 2254
+}

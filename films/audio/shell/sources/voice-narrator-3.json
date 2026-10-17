@@ -1,0 +1,12 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "Changes something? It waits for your Enter.",
+  "spoken": "Changes something? It waits for your Enter.",
+  "transcript": "Changes something? It waits for your Enter.",
+  "id": "gen-1792231171-eoiIjTA5AK2m1KaVK3ni",
+  "cost": 0,
+  "bytes": 151200,
+  "speechMs": 2762,
+  "attempt": 2
+}

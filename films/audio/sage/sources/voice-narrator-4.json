@@ -1,0 +1,12 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "Then it does the steps. One by one.",
+  "spoken": "Then it does the steps. One by one.",
+  "transcript": "Then it does the steps. One by one.",
+  "id": "gen-1792231373-Q6gry6HudlhOSHXqiLSZ",
+  "cost": 0,
+  "bytes": 129600,
+  "speechMs": 2464,
+  "attempt": 2
+}

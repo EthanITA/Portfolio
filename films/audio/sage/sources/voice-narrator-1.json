@@ -1,0 +1,12 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "A Mac assistant in the notch.",
+  "spoken": "A Mac assistant in the notch.",
+  "transcript": "A Mac assistant in the notch.",
+  "id": "gen-1792231304-60OKHvq6qXk8BWejVMu3",
+  "cost": 0,
+  "bytes": 93600,
+  "speechMs": 1852,
+  "attempt": 3
+}

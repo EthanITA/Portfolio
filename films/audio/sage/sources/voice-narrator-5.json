@@ -1,0 +1,9 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "Changing something? It asks. You get five seconds.",
+  "spoken": "Changing something? It asks. You get five seconds.",
+  "transcript": "Changing something? It asks. You get five seconds.",
+  "adopted": "narrator-5.attempt1.wav",
+  "speechMs": 3203
+}

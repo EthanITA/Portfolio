@@ -1,0 +1,9 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "Claude hears about it.",
+  "spoken": "Claude hears about it.",
+  "transcript": "Claude hears about it.",
+  "adopted": "narrator-4.attempt5.wav",
+  "speechMs": 1324
+}

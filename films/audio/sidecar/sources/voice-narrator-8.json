@@ -1,0 +1,12 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "Claude does the work. You decide what lands.",
+  "spoken": "Claude does the work. You decide what lands.",
+  "transcript": "Claude does the work. You decide what lands.",
+  "id": "gen-1792232326-K2t2xkR7ctfw16yfTxuZ",
+  "cost": 0,
+  "bytes": 177600,
+  "speechMs": 3048,
+  "attempt": 1
+}
