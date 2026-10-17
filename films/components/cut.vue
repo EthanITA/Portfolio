@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { MOTION_DURATION } from "@cela/design/utils/motion";
 import type { Cue, FilmScript } from "~~/films/scripts/script";
 
 const { script, voice = [] } = defineProps<{ script: FilmScript; voice?: Cue[] }>();
@@ -18,7 +19,8 @@ const presses = computed(() =>
   script.keys.map((press) => {
     const at = press.at - 200;
     const until = press.until ?? press.at + 1000;
-    const beside = captions.value.filter((caption) => caption.at < until && at < caption.until);
+    // A caption leaving before the key has arrived would only make it jump, so the key lets it go.
+    const beside = captions.value.filter((caption) => caption.at < until && at + MOTION_DURATION.base < caption.until);
     return { keys: press.key, at, until, beside };
   }),
 );
