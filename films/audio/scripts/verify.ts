@@ -5,12 +5,13 @@ import { SAGE_SCRIPT } from "../../../app/utils/play/script/sage";
 import { MAX_TRUE_PEAK, ROOT, TARGET_LUFS, compose, rawBed } from "./build";
 import { FILMS, type FilmName } from "./films";
 import { SAMPLE_RATE, type Stereo, blank, decode, durationOf, measure, run, samplesAt, toDb } from "./lib/audio";
+import type { BedPlan } from "./lib/bed";
 import { biquad } from "./lib/dsp";
 import { room } from "./lib/synth";
 
 type CueRow = { id: string; sound: string; stem: "ui" | "voice"; atMs: number; durMs: number; audible: boolean; onsetTolMs: number; text?: string };
 type DuckRow = { reason: string; fromMs: number; toMs: number; depthDb: number; attackMs: number; releaseMs: number };
-type CuesFile = { durationMs: number; durationSamples: number; mix: { bedGainDb: number }; cues: CueRow[]; ducks: DuckRow[] };
+type CuesFile = { durationMs: number; durationSamples: number; mix: { bedGainDb: number }; cues: CueRow[]; ducks: DuckRow[]; bed?: BedPlan };
 
 const COPY = "/Users/madong/.claude/jobs/e4337bca/tmp/site/copy.md";
 const MATCH_SAMPLES = 4800;
@@ -267,6 +268,20 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
 
     const bed = mono(await rawBed(name));
     const music = mono(stems.music);
+
+    if (cues.bed) {
+      const { closeMs } = cues.bed;
+      const endCard = cues.cues.find((c) => c.id === "line-end-card");
+      const early = endCard ? endCard.atMs - closeMs : Number.NaN;
+      report(early > 0 && early <= 1000, "the closing hit lands just before the end-card line", `closing hit at ${closeMs} ms, line at ${endCard?.atMs} ms`);
+      const frame = samplesAt(5);
+      let loudest = { ms: 0, db: -Infinity };
+      for (let ms = closeMs - 150; ms <= closeMs + 150; ms += 5) {
+        const db = rmsDb(bed, samplesAt(ms), samplesAt(ms) + frame);
+        if (db > loudest.db) loudest = { ms, db };
+      }
+      report(loudest.ms >= closeMs && loudest.ms <= closeMs + 60, "the loudest bed moment around the close is the closing hit", `peak window at ${loudest.ms} ms, close at ${closeMs} ms`);
+    }
     const gainDb = cues.mix.bedGainDb;
     const hop = samplesAt(20);
     const ratioAt = (ms: number): number => rmsDb(music, samplesAt(ms), samplesAt(ms) + hop) - rmsDb(bed, samplesAt(ms), samplesAt(ms) + hop) - gainDb;
@@ -279,7 +294,7 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
     const shallow: string[] = [];
     for (const d of voiceDucks) {
       let worst = -Infinity;
-      for (let ms = Math.ceil(d.fromMs / 20) * 20 + 20; ms + 40 <= d.toMs; ms += 20) worst = Math.max(worst, ratioAt(ms));
+      for (let ms = Math.ceil(d.fromMs / 20) * 20 + 20; ms + 40 <= d.toMs; ms += 20) if (rmsDb(bed, samplesAt(ms), samplesAt(ms) + hop) > -90) worst = Math.max(worst, ratioAt(ms));
       if (worst > Math.min(-6, d.depthDb) + 0.5) shallow.push(`  ${d.reason} bed only ${worst.toFixed(1)} dB down, recorded ${d.depthDb} dB`);
     }
     report(

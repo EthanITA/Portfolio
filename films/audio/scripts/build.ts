@@ -6,7 +6,7 @@ import {
 } from "./lib/audio";
 import { biquad, fadeEdges, hash, normalizeTo, peaking, rng } from "./lib/dsp";
 import { writeJson } from "./lib/openrouter";
-import { synthBed } from "./lib/bed";
+import { bedPlan, synthBed } from "./lib/bed";
 import * as synth from "./lib/synth";
 import { type CueSpec, FILMS, type FilmName, type FilmSpec } from "./films";
 
@@ -453,6 +453,7 @@ const cuesJson = (name: FilmName, built: Built, bedGain: number, loudness: Loudn
     .filter((c): c is Extract<CueSpec, { sound: "typing" }> => c.sound === "typing")
     .map((c) => ({ id: c.id, text: c.text, startMs: c.at, endMs: c.endMs, presses: pressTimes({ startMs: c.at, endMs: c.endMs, text: c.text, seed: hash(`${name}/${c.id}`), presses: c.presses }) })),
   ducks: built.ducks,
+  ...(built.film.music.source === "synth" && { bed: bedPlan(name) }),
 });
 
 const main = async (): Promise<void> => {
