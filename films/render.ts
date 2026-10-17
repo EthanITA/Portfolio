@@ -46,18 +46,20 @@ const fit = async ({ url, script, width, height }: { url: string; script: FilmSc
       landed: document.querySelector<HTMLElement>(".film-rig")?.dataset.landed ?? "",
       sky: document.querySelector<HTMLElement>(".film-sky")?.dataset.problems ?? "the frame has no .film-sky",
       placed: [
-        ...[".film-key-caps", ".film-end"].flatMap((selector) =>
-          [...document.querySelectorAll(selector)]
-            .filter((element) => {
-              let opacity = 1;
-              for (let node: Element | undefined = element; node; node = node.parentElement ?? undefined) opacity *= Number(getComputedStyle(node).opacity);
-              return opacity > 0.05;
-            })
-            .map((element) => ({ selector, element })),
-        ),
+        ...[...document.querySelectorAll(".film-end")]
+          .filter((element) => {
+            let opacity = 1;
+            for (let node: Element | undefined = element; node; node = node.parentElement ?? undefined) opacity *= Number(getComputedStyle(node).opacity);
+            return opacity > 0.05;
+          })
+          .map((element) => ({ selector: ".film-end", element })),
         // A word's 0.4em travel crosses the margin only while it fades, so its place is read at rest.
-        ...[".film-sky", ".film-title"].flatMap((selector) =>
-          [...document.querySelectorAll<HTMLElement>(`${selector} [data-at]`)].filter((element) => element.style.opacity === "1" && !element.style.transform).map((element) => ({ selector, element })),
+        ...[
+          { selector: ".film-sky", resting: ".film-sky [data-at]" },
+          { selector: ".film-title", resting: ".film-title [data-at]" },
+          { selector: ".film-sky-cap", resting: ".film-sky [data-cap]" },
+        ].flatMap(({ selector, resting }) =>
+          [...document.querySelectorAll<HTMLElement>(resting)].filter((element) => element.style.opacity === "1" && !element.style.transform).map((element) => ({ selector, element })),
         ),
       ].map(({ selector, element }) => {
         const range = document.createRange();
