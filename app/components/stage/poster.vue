@@ -10,7 +10,7 @@ type Size = { width: number; height: number };
 // Must match each poster's rendered size, or the img reserves the wrong box; below is that scene's own phone breakpoint.
 const RENDERED: Record<PosterName, Size & { mobile?: Size & { below: number } }> = {
   hero: { width: 1920, height: 1080, mobile: { width: 1920, height: 1080, below: 1024 } },
-  lost: { width: 1920, height: 1080 },
+  lost: { width: 1920, height: 1080, mobile: { width: 1920, height: 1080, below: 1024 } },
   line: { width: 1920, height: 1080, mobile: { width: 800, height: 1000, below: 768 } },
   fence: { width: 1920, height: 1080 },
 };

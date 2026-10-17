@@ -38,6 +38,7 @@ const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
 
   const hero = STAGE_CAMERA.hero;
   const rest = restAt(hero, HERO_REST.wide);
+  const phone = restAt(hero, HERO_REST.narrow);
   const wide = matchMedia("(min-width: 1024px)");
   const fine = matchMedia("(hover: hover) and (pointer: fine)");
 
@@ -93,7 +94,8 @@ const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
   };
 
   const pose = (): Pick<CameraPreset, "position" | "target"> => {
-    if (lost) return hero;
+    // The centred hero pose is wider than a phone, so the 404 takes the home's phone rest, which keeps the pill inside the gutter.
+    if (lost) return wide.matches ? hero : phone;
     const glide = sineInOut(clamp01(progress));
     if (wide.matches) return { position: mix(rest.position, hero.position, glide), target: mix(rest.target, hero.target, glide) };
     return progress < RIDE.until ? restAt(hero, { ...HERO_REST.narrow, up: HERO_REST.narrow.up + RIDE.speed * progress }) : hero;
