@@ -120,9 +120,6 @@ const expand = (film: FilmSpec): Placed[] => {
         placed.push({ ...common, sound: "thud", stem: "ui", durMs: durMsOf(buffer), tolMs: 4, buffer, gain: common.gain * fromDb(PEAK_DB.thud) });
         break;
       }
-      case "marker":
-        placed.push({ ...common, sound: "marker", stem: "ui", durMs: 0, tolMs: 0, audible: false });
-        break;
       case "line": {
         const buffer = synth.line(cue.durMs, cue.cutMs);
         placed.push({ ...common, sound: `line.${cue.durMs}`, stem: "ui", durMs: durMsOf(buffer), tolMs: cue.durMs > 2000 ? 20 : 12, buffer, gain: common.gain * fromDb(PEAK_DB.line) });
