@@ -22,8 +22,11 @@ const TIER_NAME: Record<Tier, string> = { runs: "Runs", waits: "Waits for you", 
 const PLACEHOLDER = "Type something you'd ask an agent to do";
 const PRESS = "Press it yourself";
 const ZONE: Record<Tier, number> = { runs: -2.2, waits: 0.9, stops: 0 };
-// Two lanes beside the zone labels leave a phone card five letters a line, so every ask gets the whole lane and wraps to two.
-const PHONE_SLOTS = 1;
+// An ask cut short can't be read to where it stops, so there are only as many lanes as let every example wrap whole in two rows.
+const MAX_LANES = 4;
+// At 0.12 apart the longest example needs three rows in a desktop lane, so four lanes fit only at 0.06.
+const CARD_GAP = 0.06;
+const CARD_LIFT = 0.06;
 const FILM = {
   events: [
     ...EXAMPLES.slice(0, 4).map((text, i) => ({ at: i * LINE.every, send: text })),
@@ -79,7 +82,7 @@ const place = (): void => {
 };
 
 const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => {
-  const [{ createLine, openStage, readPalette }, { createChip }, { BufferGeometry, Float32BufferAttribute, LineSegments, Vector3 }] = await Promise.all([
+  const [{ createLine, openStage, readPalette }, { chipHeight, createChip, fits }, { BufferGeometry, Float32BufferAttribute, LineSegments, Vector3 }] = await Promise.all([
     import("~/utils/stage/island"),
     import("~/utils/stage/chip"),
     import("three"),
@@ -100,24 +103,62 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
   const chips = new Map<number, ReturnType<typeof createChip>>();
   const highlights = new Map<number, ReturnType<typeof createLine>>();
   const layout = { slotX: [0], slotWidth: 1.6, size: 0.09, width: 1, height: 1 };
+  let drawn = false;
+
+  const drop = (): void => {
+    chips.forEach((chip) => chip.dispose());
+    highlights.forEach((glow) => glow.dispose());
+    chips.clear();
+    highlights.clear();
+    rects.clear();
+  };
+
+  const corner = new Vector3();
+  // A travelling card's top-left corner projects wider as it nears the camera, so each label is cleared at the nearest depth that corner shares its rows.
+  const clear = (label: DOMRect, bounds: DOMRect, width: number, height: number): number => {
+    const top = chipHeight(layout.size, 2) + CARD_LIFT;
+    const below = 1 - (2 * (label.bottom - bounds.top)) / height;
+    let far: number = LINE.goneZ;
+    let near: number = LINE.spawnZ;
+    for (let i = 0; i < 24; i++) {
+      const z = (far + near) / 2;
+      if (corner.set(0, top, z).project(stage.camera).y > below) far = z;
+      else near = z;
+    }
+    const at = corner.set(0, top, near).project(stage.camera).x;
+    const step = corner.set(1, top, near).project(stage.camera).x - at;
+    return ((2 * (label.right - bounds.left + 16)) / width - 1 - at) / step;
+  };
 
   const resize = (width: number, height: number): void => {
     stage.resize(width, height);
     if (!width || !height) return;
+    // The first resize runs before any render, when the view matrix still lacks lookAt's pitch, so every layout projected flat.
+    stage.camera.updateMatrixWorld();
     const origin = new Vector3(0, 0, 0).project(stage.camera);
     const unit = new Vector3(1, 0, 0).project(stage.camera).x - origin.x;
     const perUnit = (unit * width) / 2;
     const left = (-1 - origin.x) / unit;
     const right = (1 - origin.x) / unit;
-    const gutter = (Math.max(0, ...[...(box.value?.querySelectorAll<HTMLElement>("[data-zone]") ?? [])].map((el) => el.offsetLeft + el.offsetWidth)) + 16) / perUnit;
-    slots = wide.matches ? 4 : PHONE_SLOTS;
-    const start = left + gutter;
-    const span = right - 0.15 - start;
-    layout.slotWidth = span / slots;
-    layout.slotX = Array.from({ length: slots }, (_, i) => start + layout.slotWidth * (i + 0.5));
+    const zones = [...(box.value?.querySelectorAll<HTMLElement>("[data-zone]") ?? [])];
+    const gutter = (Math.max(0, ...zones.map((el) => el.offsetLeft + el.offsetWidth)) + 16) / perUnit;
+    const before = { size: layout.size, slotWidth: layout.slotWidth };
     layout.size = (wide.matches ? 17 : 14) / perUnit;
+    const bounds = box.value?.getBoundingClientRect();
+    const start = wide.matches && bounds ? Math.max(left, ...zones.map((el) => clear(el.getBoundingClientRect(), bounds, width, height))) : left + gutter;
+    const span = right - 0.15 - start;
+    let lanes = MAX_LANES;
+    while (lanes > 1 && !EXAMPLES.every((ask) => fits({ text: ask, size: layout.size, maxWidth: span / lanes - CARD_GAP }))) lanes--;
+    layout.slotWidth = span / lanes;
+    layout.slotX = Array.from({ length: lanes }, (_, i) => start + layout.slotWidth * (i + 0.5));
     layout.width = width;
     layout.height = height;
+    // Chips bake their size and wrap at creation, so a new layout rebuilds them to match a fresh load at this size.
+    if (layout.size !== before.size || layout.slotWidth !== before.slotWidth) drop();
+    if (lanes === slots) return;
+    if (drawn) ledger.relane(lanes, clock());
+    else seed(lanes);
+    slots = lanes;
   };
 
   const point = new Vector3();
@@ -127,6 +168,7 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
   };
 
   const frame = (ms: number, dt: number): boolean => {
+    drawn = true;
     const lerping = stage.advance(dt);
     const calm = reduced.value && !filming;
 
@@ -146,12 +188,12 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
       seen.add(action.id);
       let chip = chips.get(action.id);
       if (!chip) {
-        chip = createChip(stage, { text: action.text, size: layout.size, maxWidth: layout.slotWidth - 0.12 });
+        chip = createChip(stage, { text: action.text, size: layout.size, maxWidth: layout.slotWidth - CARD_GAP });
         stage.scene.add(chip.group);
         chips.set(action.id, chip);
       }
       const x = layout.slotX[action.slot] ?? 0;
-      const y = chip.height / 2 + 0.06;
+      const y = chip.height / 2 + CARD_LIFT;
       chip.group.position.set(x, y, p.z);
       chip.set({ opacity: p.opacity, tint: p.tint, check: p.check, outline: p.outline, glass: stage.palette.glass, success: stage.palette.success });
 
@@ -201,8 +243,7 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
     theme: (instant) => stage.setPalette(readPalette(), instant),
     resize,
     dispose: () => {
-      chips.forEach((chip) => chip.dispose());
-      highlights.forEach((glow) => glow.dispose());
+      drop();
       grid.geometry.dispose();
       stage.dispose();
     },
@@ -245,10 +286,7 @@ const seed = (count: number): void => {
   });
 };
 
-seed(4);
-onMounted(() => {
-  if (!matchMedia("(min-width: 768px)").matches) seed(PHONE_SLOTS);
-});
+seed(MAX_LANES);
 
 const interact = (): void => {
   quiet = true;

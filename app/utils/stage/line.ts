@@ -112,6 +112,7 @@ export type Ledger = {
   release: (at: number, id?: number) => Action | undefined;
   press: (at: number, id: number) => Action | undefined;
   prune: (now: number) => void;
+  relane: (slots: number, at: number) => void;
 };
 
 const ORDER: Record<number, number[]> = { 4: [1, 2, 0, 3] };
@@ -152,5 +153,23 @@ export const createLedger = (reduced: () => boolean): Ledger => {
     }
   };
 
-  return { actions, send, release, press, prune };
+  const relane = (slots: number, at: number): void => {
+    const live = actions.filter((action) => active(action, at, reduced()));
+    const kept = live.slice(-slots);
+    const claimed = new Set<number>();
+    const stray: Action[] = [];
+    for (const action of live) {
+      if (!kept.includes(action)) {
+        action.retiredAt = at;
+        action.slot = Math.min(action.slot, slots - 1);
+      } else if (action.slot < slots && !claimed.has(action.slot)) claimed.add(action.slot);
+      else stray.push(action);
+    }
+    for (const action of stray) {
+      action.slot = (ORDER[slots] ?? [...Array(slots).keys()]).find((s) => !claimed.has(s)) ?? 0;
+      claimed.add(action.slot);
+    }
+  };
+
+  return { actions, send, release, press, prune, relane };
 };
