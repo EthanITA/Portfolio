@@ -226,6 +226,26 @@ export const renderFrames = async ({ url, dir, width, height, scale = 1, fps = 6
   }
 };
 
+export type SampleOptions<T> = { url: string; width: number; height: number; scale?: number; times: number[]; read: (ms: number) => T | Promise<T> };
+
+export const samplePage = async <T>({ url, width, height, scale = 1, times, read }: SampleOptions<T>): Promise<{ ms: number; value: T }[]> => {
+  const browser = await launch();
+  try {
+    const worker = await openPage({ browser, url, width, height, scale });
+    const samples = [];
+    for (const ms of times) {
+      await worker.page.evaluate(async (at) => {
+        await window.__seek(at);
+        await window.__ready();
+      }, ms);
+      samples.push({ ms, value: (await worker.page.evaluate(read, ms)) as T });
+    }
+    return samples;
+  } finally {
+    await browser.close();
+  }
+};
+
 export type Mismatch = { index: number; ms: number; first: string; second: string };
 
 export const checkFrames = async ({ frames, samples = 12, ...options }: Omit<FramesOptions, "dir" | "only"> & { frames: Frames; samples?: number }): Promise<Mismatch[]> => {
