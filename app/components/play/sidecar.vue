@@ -144,7 +144,7 @@ watch(
 <style scoped>
 .sidecar {
   @apply relative size-full;
-  container-type: size;
+  container: sidecar / size;
   opacity: var(--loop, 1);
 }
 
@@ -253,6 +253,24 @@ watch(
   .flight[data-kind="note"] {
     --from-x: 68cqw;
     --from-y: 94cqh;
+  }
+}
+
+/* On a short phone frame the review is the content and the terminal is context, sized to hold exactly one edit. */
+@container sidecar (max-width: 720px) and (max-height: 720px) {
+  .panes {
+    @apply gap-1 pb-3;
+    grid-template-rows: --spacing(30) 1px minmax(0, 1fr);
+  }
+
+  /* Tall enough that the options' 44 px coarse hit area clears the pane's clip above them. */
+  .bar {
+    @apply h-11;
+  }
+
+  /* The terminal's last row: the panes' 1rem inset plus its 7.5rem, less a row. */
+  .flight {
+    --to-y: --spacing(30);
   }
 }
 </style>
