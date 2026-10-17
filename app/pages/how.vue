@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Surface } from "@cela/design";
 import { spotlight } from "@cela/design/utils/motion";
-import { type JSAnimation, type ScrollObserver, animate, onScroll, splitText, stagger } from "animejs";
+import { type TextSplitter, splitText } from "animejs";
 
 import { BOARD } from "~/utils/site/board";
-import { SCRUB_SMOOTH, motionOn } from "~/utils/site/motion";
+import { motionOn } from "~/utils/site/motion";
 import { seo } from "~/utils/site/seo";
 
 type Rule = { rule: string; why: string };
@@ -49,6 +49,10 @@ const loop: Step[] = [
 ];
 
 const TYPE_MS = 16;
+// The lag of the site's SCRUB_SMOOTH scrubs, kept on the clock so a long frame or a background tab can't strand the runner.
+const RUNNER_MS = 125;
+
+type Receipt = { el: HTMLElement; node: number; next: number; chars: HTMLElement[]; at: number; shown: number };
 
 const cards = useTemplateRef<HTMLElement>("cards");
 const panel = useTemplateRef<HTMLElement>("panel");
@@ -58,13 +62,16 @@ const stepper = useTemplateRef<HTMLElement>("stepper");
 const rail = useTemplateRef<HTMLElement>("rail");
 const current = ref(0);
 
-let travel: JSAnimation | undefined;
-let scroller: ScrollObserver | undefined;
 let landing: IntersectionObserver | undefined;
 let landed = 0;
 let pending = 0;
-const typed = new Set<number>();
-const typing: JSAnimation[] = [];
+let receipts: Receipt[] = [];
+let splits: TextSplitter[] = [];
+let runner = 0;
+let last = 0;
+let frame = 0;
+let scrubbing = false;
+let sizes: ResizeObserver | undefined;
 
 const highlight = (gate: number): void => {
   const card = cards.value?.querySelector<HTMLElement>(`[data-rule="${gate}"]`);
@@ -84,10 +91,46 @@ const read = (): void => {
   current.value = rows.filter((row) => row.getBoundingClientRect().top <= line).length;
 };
 
+// The end clamps to the page's last scroll position, a pixel early since scrollHeight is rounded, so a stepper near the bottom still reaches 1.
+const goal = (el: HTMLElement): number => {
+  const top = el.getBoundingClientRect().top;
+  const end = Math.max(innerHeight / 2, top + scrollY + 1 - (document.documentElement.scrollHeight - innerHeight));
+  return Math.min(1, Math.max(0, (innerHeight - top) / Math.max(1, innerHeight - end)));
+};
+
+// Derived each frame from the drawn runner and the clock, so a dropped event can't leave a passed receipt short.
+const step = (now: number): void => {
+  frame = 0;
+  if (!stepper.value || !rail.value) return;
+  const to = goal(stepper.value);
+  runner = to + (runner - to) * Math.exp(-(last ? now - last : 1000 / 60) / RUNNER_MS);
+  if (Math.abs(to - runner) < 0.0005) runner = to;
+  rail.value.style.translate = `${runner * 100}% ${runner * 100}%`;
+  let busy = runner !== to;
+  for (const receipt of receipts) {
+    // Read's node sits at 0, so it waits for the stepper to enter rather than typing off screen at load.
+    if (!receipt.at && runner > 0 && runner >= receipt.node - 0.001) {
+      receipt.at = now;
+      receipt.el.dataset.typed = "";
+    }
+    if (!receipt.at) continue;
+    const count = runner >= receipt.next - 0.001 ? receipt.chars.length : Math.min(receipt.chars.length, 1 + Math.floor((now - receipt.at) / TYPE_MS));
+    for (; receipt.shown < count; receipt.shown++) receipt.chars[receipt.shown]?.style.removeProperty("opacity");
+    busy ||= receipt.shown < receipt.chars.length;
+  }
+  last = busy ? now : 0;
+  if (busy) frame = requestAnimationFrame(step);
+};
+
+const wake = (): void => {
+  if (scrubbing && !frame) frame = requestAnimationFrame(step);
+};
+
 // Counted from the rects on every scrolled frame: an observer on the line misses a jump that lands its gap between two cards.
 const onScrolled = (): void => {
   cancelAnimationFrame(pending);
   pending = requestAnimationFrame(read);
+  wake();
 };
 
 const land = (): void => {
@@ -99,22 +142,16 @@ watch(fence, (scene) => {
   if (scene && landed) scene.ripple(landed);
 });
 
-const type = (i: number): void => {
-  const receipt = stepper.value?.querySelector<HTMLElement>(`[data-receipt="${i}"]`);
-  if (!receipt || typed.has(i)) return;
-  typed.add(i);
-  const chars = [...receipt.querySelectorAll<HTMLElement>("[data-type]")].flatMap((part) => splitText(part, { chars: true }).chars as HTMLElement[]);
-  for (const char of chars) char.style.opacity = "0";
-  receipt.dataset.typed = "";
-  if (chars.length) typing.push(animate(chars, { opacity: [0, 1], duration: 1, delay: stagger(TYPE_MS) }));
-};
-
-// The runner reaches node i at i fifths of its travel, so each receipt types once as it gets there and never untypes.
-const reveal = (progress: number): void => {
-  loop.forEach((_, i) => {
-    if (progress >= i / (loop.length - 1) - 0.001) type(i);
+// The runner sits on node i at i fifths of its travel, and a receipt finishes the moment the runner reaches the next node.
+const prepare = (el: HTMLElement): Receipt[] =>
+  [...el.querySelectorAll<HTMLElement>("[data-receipt]")].map((receipt) => {
+    const i = Number(receipt.dataset.receipt);
+    const parts = [...receipt.querySelectorAll<HTMLElement>("[data-type]")].map((part) => splitText(part, { chars: true }));
+    splits.push(...parts);
+    const chars = parts.flatMap((part) => part.chars as HTMLElement[]);
+    for (const char of chars) char.style.opacity = "0";
+    return { el: receipt, node: i / (loop.length - 1), next: i + 1 < loop.length ? (i + 1) / (loop.length - 1) : Infinity, chars, at: 0, shown: 0 };
   });
-};
 
 onMounted(() => {
   read();
@@ -132,25 +169,23 @@ onMounted(() => {
     );
     landing.observe(heading.value);
   }
-  if (!stepper.value || !rail.value) return;
-  scroller = onScroll({ target: stepper.value, enter: "bottom top", leave: "min+=50% top", sync: SCRUB_SMOOTH });
-  travel = animate(rail.value, {
-    ease: "linear",
-    translateX: ["0%", "100%"],
-    translateY: ["0%", "100%"],
-    autoplay: scroller,
-    onUpdate: (self) => reveal(self.progress),
-  });
+  if (!stepper.value) return;
+  receipts = prepare(stepper.value);
+  runner = goal(stepper.value);
+  scrubbing = true;
+  sizes = new ResizeObserver(wake);
+  sizes.observe(document.body);
+  wake();
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("scroll", onScrolled);
   window.removeEventListener("resize", onScrolled);
   cancelAnimationFrame(pending);
+  cancelAnimationFrame(frame);
   landing?.disconnect();
-  typing.forEach((animation) => animation.revert());
-  travel?.revert();
-  scroller?.revert();
+  sizes?.disconnect();
+  splits.forEach((split) => split.revert());
 });
 </script>
 
