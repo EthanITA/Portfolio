@@ -51,7 +51,7 @@ import { links } from "~/utils/site/links";
 }
 
 .meta {
-  @apply typo-mono-meta flex flex-wrap gap-x-4 gap-y-1 text-subtle;
+  @apply typo-mono-meta flex flex-wrap gap-x-4 gap-y-1 text-muted;
 }
 
 @media (hover: hover) and (pointer: fine) {

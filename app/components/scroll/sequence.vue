@@ -5,7 +5,7 @@ import { createTimer, onScroll } from "animejs";
 
 import { createFrames, sequencePath, type Frames } from "~/utils/scroll/frames";
 import { MANIFEST } from "~/utils/scroll/manifest.gen";
-import { BEAT_RANGES, beatStyle, cardOpacity, fitFrame, frameAt, SEQUENCE, type Theme } from "~/utils/scroll/sequence";
+import { BEAT_RANGES, beatStyle, cardOpacity, fitFrame, frameAt, SEQUENCE } from "~/utils/scroll/sequence";
 import { createTiles, SCREENS, type Screen, type TileLayer, type Targets } from "~/utils/scroll/tiles";
 
 const { beats, closing } = defineProps<{ beats: string[]; closing: string }>();
@@ -24,16 +24,12 @@ const linesBox = useTemplateRef<HTMLElement>("linesBox");
 const state = ref<State>("poster");
 const phase = ref<Phase>("frames");
 const tilesReady = ref(false);
-const theme = ref<Theme>("light");
-const appliedTheme = ref<Theme>();
 const targets = shallowRef<Targets>({});
 
 defineExpose({ targets });
 
 const srcset = (index: number, format: "avif" | "webp"): string =>
-  [960, 1920].map((width) => `${sequencePath(`${theme.value}/${width}/${String(index).padStart(3, "0")}`, format)} ${width}w`).join(", ");
-
-const readTheme = (): Theme => (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
+  [960, 1920].map((width) => `${sequencePath(`${width}/${String(index).padStart(3, "0")}`, format)} ${width}w`).join(", ");
 
 const write = (element: HTMLElement, styles: { opacity?: string; transform?: string }): void => {
   for (const [property, value] of Object.entries(styles) as ["opacity" | "transform", string][]) {
@@ -58,7 +54,7 @@ const setup = (): void => {
   const grid = mobile ? ([12, 7] as const) : ([24, 14] as const);
   const cards = SCREENS.flatMap((screen) => [...document.querySelectorAll<HTMLElement>(`[data-flagship="${screen}"]`)]);
 
-  let frames: Frames = createFrames({ set: { theme: theme.value, width }, onChange: () => schedule() });
+  const frames: Frames = createFrames({ width, onChange: () => schedule() });
   let tiles: TileLayer | undefined;
   let progress = 0;
   let scroll = scrollY;
@@ -93,7 +89,6 @@ const setup = (): void => {
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.drawImage(drawable.bitmap, fit.x * pixelRatio, fit.y * pixelRatio, fit.width * pixelRatio, fit.height * pixelRatio);
       drawn = { bitmap: drawable.bitmap, fit: fitted };
-      appliedTheme.value = frames.set.theme;
       if (state.value === "poster") state.value = inView ? "live" : "paused";
     }
     const last = frames.best(LAST);
@@ -152,14 +147,13 @@ const setup = (): void => {
 
   const loadStills = async (): Promise<void> => {
     await frames.loadFloor();
-    const { theme: current } = frames.set;
     await Promise.all(
       SCREENS.map(async (screen) => {
-        const response = await fetch(sequencePath(`${current}/screens/${screen}-${mobile ? 800 : 1600}`, frames.format)).catch(() => undefined);
+        const response = await fetch(sequencePath(`screens/${screen}-${mobile ? 800 : 1600}`, frames.format)).catch(() => undefined);
         const blob = response?.ok ? await response.blob() : undefined;
         const bitmap = blob && (await createImageBitmap(blob).catch(() => undefined));
         if (!bitmap) return;
-        if (!disposed && tiles && current === frames.set.theme) tiles.setStill(screen, bitmap);
+        if (!disposed && tiles) tiles.setStill(screen, bitmap);
         bitmap.close();
       }),
     );
@@ -216,21 +210,6 @@ const setup = (): void => {
 
   idle(() => void (!disposed && frames.loadFloor()));
 
-  const themes = new MutationObserver(() => {
-    if (readTheme() === frames.set.theme) return;
-    theme.value = readTheme();
-    const previous = frames;
-    frames = createFrames({ set: { theme: theme.value, width }, onChange: () => schedule() });
-    previous.dispose();
-    drawn = { fit: "" };
-    breakFrame = undefined;
-    void frames.loadFloor();
-    if (!near) return;
-    void frames.loadAll();
-    void loadStills();
-  });
-  themes.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-
   teardown = () => {
     disposed = true;
     cancelAnimationFrame(pending);
@@ -241,7 +220,6 @@ const setup = (): void => {
     resize.disconnect();
     nearby.disconnect();
     visible.disconnect();
-    themes.disconnect();
     frames.dispose();
     tiles?.dispose();
     tilesReady.value = false;
@@ -251,7 +229,6 @@ const setup = (): void => {
 };
 
 onMounted(() => {
-  theme.value = readTheme();
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
   const mobile = matchMedia("(max-width: 767px)");
   const apply = (): void => {
@@ -279,7 +256,6 @@ onMounted(() => {
     :data-state="state"
     :data-phase="phase"
     :data-tiles="tilesReady"
-    :data-theme-applied="appliedTheme"
     data-progress="0.00"
     data-frame="0"
   >
@@ -288,7 +264,7 @@ onMounted(() => {
         <source media="(prefers-reduced-motion: reduce), (scripting: none)" type="image/avif" :srcset="srcset(LAST, 'avif')" sizes="100vw" />
         <source media="(prefers-reduced-motion: reduce), (scripting: none)" type="image/webp" :srcset="srcset(LAST, 'webp')" sizes="100vw" />
         <source type="image/avif" :srcset="srcset(0, 'avif')" sizes="100vw" />
-        <img :src="sequencePath(`${theme}/960/000`, 'webp')" :srcset="srcset(0, 'webp')" sizes="100vw" width="1920" height="1080" alt="" loading="lazy" decoding="async" />
+        <img :src="sequencePath('960/000', 'webp')" :srcset="srcset(0, 'webp')" sizes="100vw" width="1920" height="1080" alt="" loading="lazy" decoding="async" />
       </picture>
       <canvas ref="frameCanvas" class="frames" aria-hidden="true" />
       <div ref="linesBox" class="lines">

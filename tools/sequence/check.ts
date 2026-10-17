@@ -237,25 +237,23 @@ const edges = async (): Promise<Record<string, unknown>> => {
     return { page, errors };
   };
 
-  const theme = await open();
-  await theme.page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
-  await scrub(theme.page, 0.5);
-  await settle(theme.page);
-  const switched = await theme.page.evaluate(async () => {
-    const section = document.querySelector<HTMLElement>("[data-scene=sequence]")!;
-    const started = performance.now();
-    document.documentElement.dataset.theme = "dark";
-    while (section.dataset.themeApplied !== "dark" && performance.now() - started < 2000) await new Promise(requestAnimationFrame);
-    return { applied: section.dataset.themeApplied, ms: Math.round(performance.now() - started) };
-  });
-  report.theme = switched;
-  expect(switched.applied === "dark" && switched.ms <= 400, `theme toggle applied ${switched.applied} after ${switched.ms} ms`);
+  const stored = await open({ colorScheme: "dark" });
+  const requested: string[] = [];
+  stored.page.on("response", (response) => response.url().includes("/sequence/") && requested.push(`${response.status()} ${new URL(response.url()).pathname}`));
+  await stored.page.addInitScript(() => localStorage.setItem("cela-theme", "dark"));
+  await stored.page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
+  await scrub(stored.page, 0.5);
+  await settle(stored.page);
+  const theme = await stored.page.evaluate(() => document.documentElement.dataset.theme);
+  const off = requested.filter((request) => !/^200 \/sequence\/(1920|960|lq|screens)\//.test(request));
+  report.storedDark = { theme, requests: requested.length, off };
+  expect(theme !== "dark" && requested.length > 0 && !off.length, `a stored dark preference: ${JSON.stringify(report.storedDark)}`);
 
-  await scrub(theme.page, 1);
-  await settle(theme.page);
-  await scrub(theme.page, 0.86);
-  await settle(theme.page);
-  const back = await theme.page.evaluate(() => ({
+  await scrub(stored.page, 1);
+  await settle(stored.page);
+  await scrub(stored.page, 0.86);
+  await settle(stored.page);
+  const back = await stored.page.evaluate(() => ({
     phase: document.querySelector<HTMLElement>("[data-scene=sequence]")!.dataset.phase,
     cards: [...document.querySelectorAll<HTMLElement>("[data-flagship]")].map((card) => getComputedStyle(card).opacity),
   }));
@@ -263,11 +261,11 @@ const edges = async (): Promise<Record<string, unknown>> => {
   expect(back.phase === "break" && back.cards.every((opacity) => opacity === "0"), `scrubbing back to 0.86 left ${JSON.stringify(back)}`);
 
   // The nav island folds its links away mid-scroll, so the route change is dispatched rather than clicked.
-  await theme.page.locator('a[href="/sidecar"]').first().dispatchEvent("click");
-  await theme.page.waitForURL("**/sidecar");
-  await settle(theme.page);
-  report.unmount = { errors: theme.errors };
-  expect(!theme.errors.length, `errors around the theme toggle or unmount: ${theme.errors.join("; ")}`);
+  await stored.page.locator('a[href="/sidecar"]').first().dispatchEvent("click");
+  await stored.page.waitForURL("**/sidecar");
+  await settle(stored.page);
+  report.unmount = { errors: stored.errors };
+  expect(!stored.errors.length, `errors around the stored theme or unmount: ${stored.errors.join("; ")}`);
 
   const restored = await open();
   await restored.page.addInitScript(() => {
@@ -287,7 +285,7 @@ const edges = async (): Promise<Record<string, unknown>> => {
 
   const flaky = await open();
   let attempts = 0;
-  await flaky.page.route(/\/sequence\/light\/1920\/096\.avif/, (route) => {
+  await flaky.page.route(/\/sequence\/1920\/096\.avif/, (route) => {
     attempts++;
     return route.abort();
   });
@@ -329,9 +327,9 @@ const edges = async (): Promise<Record<string, unknown>> => {
 const setSize = async (dir: string): Promise<Record<string, number>> => {
   const totals: Record<string, number> = {};
   for (const file of await readdir(dir, { recursive: true })) {
-    const match = /^(light|dark)\/(1920|960|lq|screens)\/.*\.(avif|webp)$/.exec(file);
+    const match = /^(1920|960|lq|screens)\/.*\.(avif|webp)$/.exec(file);
     if (!match) continue;
-    const key = `${match[1]}/${match[2]}.${match[3]}`;
+    const key = `${match[1]}.${match[2]}`;
     totals[key] = (totals[key] ?? 0) + (await stat(join(dir, file))).size;
   }
   return totals;
@@ -340,8 +338,8 @@ const setSize = async (dir: string): Promise<Record<string, number>> => {
 try {
   const sizes = await setSize(join(root, "public/sequence"));
   for (const [key, bytes] of Object.entries(sizes)) {
-    if (key.includes("/1920.")) expect(bytes < 6_000_000, `${key} is ${bytes} bytes`);
-    if (key.includes("/960.")) expect(bytes < 2_500_000, `${key} is ${bytes} bytes`);
+    if (key.startsWith("1920.")) expect(bytes < 6_000_000, `${key} is ${bytes} bytes`);
+    if (key.startsWith("960.")) expect(bytes < 2_500_000, `${key} is ${bytes} bytes`);
   }
   const reports = [await run({ width: 1440, height: 900 }), await run({ width: 390, height: 844 }), await run({ width: 1440, height: 900, reduced: true })];
   console.log(JSON.stringify({ sizes, reports, edges: await edges(), failures }, undefined, 2));

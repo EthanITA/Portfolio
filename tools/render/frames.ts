@@ -150,11 +150,11 @@ const capture = async ({ worker, ms, timeout }: { worker: Worker; ms: number; ti
     worker.page.evaluate(async (at) => {
       await window.__seek(at);
       await window.__ready();
-      // Chrome skips raster invalidation for sub-pixel transform and near-1 opacity steps, so nudging the page forces every tile to repaint.
-      const previous = document.body.style.transform;
-      document.body.style.transform = "translateX(1px)";
+      // Chrome skips raster invalidation for sub-pixel steps, and moving the page only repositions composited layers, so hiding it repaints them all.
+      const previous = document.body.style.visibility;
+      document.body.style.visibility = "hidden";
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      document.body.style.transform = previous;
+      document.body.style.visibility = previous;
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     }, ms),
     timeout,
@@ -223,6 +223,26 @@ export const renderFrames = async ({ url, dir, width, height, scale = 1, fps = 6
     return { dir, pattern: Frame.pattern, fps, from, count, width: outWidth, height: outHeight, hashes };
   } finally {
     await Promise.all(browsers.map((browser) => browser.close()));
+  }
+};
+
+export type SampleOptions<T> = { url: string; width: number; height: number; scale?: number; times: number[]; read: (ms: number) => T | Promise<T> };
+
+export const samplePage = async <T>({ url, width, height, scale = 1, times, read }: SampleOptions<T>): Promise<{ ms: number; value: T }[]> => {
+  const browser = await launch();
+  try {
+    const worker = await openPage({ browser, url, width, height, scale });
+    const samples = [];
+    for (const ms of times) {
+      await worker.page.evaluate(async (at) => {
+        await window.__seek(at);
+        await window.__ready();
+      }, ms);
+      samples.push({ ms, value: (await worker.page.evaluate(read, ms)) as T });
+    }
+    return samples;
+  } finally {
+    await browser.close();
   }
 };
 

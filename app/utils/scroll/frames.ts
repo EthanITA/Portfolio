@@ -1,16 +1,13 @@
 import { MANIFEST } from "./manifest.gen";
-import { SEQUENCE, type Theme } from "./sequence";
+import { SEQUENCE } from "./sequence";
 
 export type FrameWidth = 1920 | 960;
 
 export type FrameFormat = "avif" | "webp";
 
-export type FrameSet = { theme: Theme; width: FrameWidth };
-
 export type Drawable = { bitmap: ImageBitmap; index: number; floor: boolean };
 
 export type Frames = {
-  readonly set: FrameSet;
   readonly format: FrameFormat;
   best: (index: number) => Drawable | undefined;
   focus: (index: number) => void;
@@ -19,7 +16,7 @@ export type Frames = {
   dispose: () => void;
 };
 
-export type FramesOptions = { set: FrameSet; onChange: () => void; ahead?: number; behind?: number };
+export type FramesOptions = { width: FrameWidth; onChange: () => void; ahead?: number; behind?: number };
 
 const CONCURRENCY = 6;
 const DECODES = 2;
@@ -46,7 +43,7 @@ const pool = async (indices: number[], work: (index: number) => Promise<void>): 
 };
 
 // Decoded 1920 frames are 8 MB each, so only a window around the scroll position stays decoded and the rest stay compressed.
-export const createFrames = ({ set, onChange, ahead = 8, behind = 4 }: FramesOptions): Frames => {
+export const createFrames = ({ width, onChange, ahead = 8, behind = 4 }: FramesOptions): Frames => {
   const controller = new AbortController();
   const blobs = new Map<number, Blob>();
   const decoded = new Map<number, ImageBitmap>();
@@ -126,11 +123,11 @@ export const createFrames = ({ set, onChange, ahead = 8, behind = 4 }: FramesOpt
 
   const detect = (): Promise<void> =>
     (probe ??= (async () => {
-      const avif = await fetchBlob(`${set.theme}/lq/${pad(first)}`);
+      const avif = await fetchBlob(`lq/${pad(first)}`);
       let bitmap = avif && (await decode(avif));
       if (!bitmap && !controller.signal.aborted) {
         format = "webp";
-        const webp = await fetchBlob(`${set.theme}/lq/${pad(first)}`);
+        const webp = await fetchBlob(`lq/${pad(first)}`);
         bitmap = webp && (await decode(webp));
       }
       if (!bitmap) return;
@@ -146,7 +143,7 @@ export const createFrames = ({ set, onChange, ahead = 8, behind = 4 }: FramesOpt
   const fetchFloor = async (): Promise<void> => {
     await detect();
     await pool(rest, async (index) => {
-      const blob = await fetchBlob(`${set.theme}/lq/${pad(index)}`);
+      const blob = await fetchBlob(`lq/${pad(index)}`);
       const low = blob && (await decode(blob));
       if (!low) return;
       if (controller.signal.aborted) return low.close();
@@ -158,7 +155,7 @@ export const createFrames = ({ set, onChange, ahead = 8, behind = 4 }: FramesOpt
   const fetchAll = async (): Promise<void> => {
     await detect();
     await pool(coarseToFine(), async (index) => {
-      const blob = await fetchBlob(`${set.theme}/${set.width}/${pad(index)}`);
+      const blob = await fetchBlob(`${width}/${pad(index)}`);
       if (!blob || controller.signal.aborted) return;
       blobs.set(index, blob);
       if (keep(index)) pump();
@@ -174,7 +171,6 @@ export const createFrames = ({ set, onChange, ahead = 8, behind = 4 }: FramesOpt
   };
 
   return {
-    set,
     get format() {
       return format;
     },

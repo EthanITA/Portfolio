@@ -13,7 +13,7 @@ const { positionals, values } = parseArgs({
     from: { type: "string", default: "0" },
     to: { type: "string" },
     workers: { type: "string" },
-    port: { type: "string", default: "3105" },
+    port: { type: "string" },
     out: { type: "string" },
     check: { type: "string", default: "0" },
     mp4: { type: "string" },
@@ -66,7 +66,7 @@ const render = async (route: string): Promise<void> => {
   const { pathname, search } = new URL(route, "http://film");
   const name = [basename(pathname), ...search.slice(1).split(/[^\w]+/).filter(Boolean)].join("-");
   const out = resolve(values.out ?? join(root, "films/out", name));
-  const server = await Render.serve({ route, port: Number(values.port), root });
+  const server = await Render.serve({ route, port: values.port ? Number(values.port) : undefined, root });
   const started = performance.now();
   let reported = 0;
   const options = {

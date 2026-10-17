@@ -1,4 +1,4 @@
-import { addComponentsDir, addImportsDir, createResolver, defineNuxtModule, extendPages } from "nuxt/kit";
+import { addComponentsDir, addDevServerHandler, addImportsDir, createResolver, defineNuxtModule, extendPages } from "nuxt/kit";
 import { basename } from "node:path";
 import { glob } from "node:fs/promises";
 
@@ -18,6 +18,8 @@ export default defineNuxtModule({
     // Nobody watches a film route in a browser, and a hot update mid-render would rebuild the timeline under the renderer.
     if (nuxt.options.dev) nuxt.options.vite.server = { ...nuxt.options.vite.server, hmr: false };
     nuxt.options.routeRules = { ...nuxt.options.routeRules, "/film/**": { ssr: false } };
+    // Several worktrees run film servers side by side, so the renderer asks whose tree a port serves before it trusts it.
+    if (nuxt.options.dev) addDevServerHandler({ route: "/__film/root", handler: () => nuxt.options.rootDir });
 
     addComponentsDir({ path: resolve("films/components"), prefix: "Film" });
     addImportsDir(resolve("films/composables"));
