@@ -206,7 +206,7 @@ export type Stage = {
   discard: (...materials: Material[]) => void;
   aim: (preset: CameraPreset) => void;
   setPalette: (next: Palette, instant?: boolean) => Promise<StageTheme>;
-  advance: (dt: number) => void;
+  advance: (dt: number) => boolean;
   resize: (width: number, height: number) => void;
   render: () => void;
   dispose: () => void;
@@ -296,12 +296,13 @@ export const createStage = ({ canvas, camera: preset, film, mobile, frame = 16 /
     return new Promise((done) => (lerp = { from, to: next, t: 0, done }));
   };
 
-  const advance = (dt: number): void => {
-    if (!lerp) return;
+  const advance = (dt: number): boolean => {
+    if (!lerp) return false;
     lerp.t = Math.min(1, lerp.t + dt / MOTION_DURATION.base);
     palette = mixPalette(lerp.from, lerp.to, MOTION_EASE.out(lerp.t));
     applyPalette();
     if (lerp.t === 1) settle();
+    return !!lerp;
   };
 
   // Cover framing: past the reference aspect the vertical fov narrows, so the canvas crops like an object-fit: cover poster.

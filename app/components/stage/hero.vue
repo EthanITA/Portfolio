@@ -60,24 +60,35 @@ const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
     follow?.y?.(y, ease.settlingDuration, ease);
   };
 
-  // The hero copy sits over the canvas, so the section hears the pointer; the box is read once per frame, never per event.
-  const area = root.value?.closest("section") ?? root.value;
+  // The canvas sits in a pinned holder under the hero copy, so the window hears the pointer and the box is cached, never read per event.
   const onMove = (event: PointerEvent): void => {
     pointer.over = event.pointerType === "mouse";
     pointer.x = event.clientX;
     pointer.y = event.clientY;
   };
-  const onLeave = (): void => {
-    pointer.over = false;
+  const onOut = (event: PointerEvent): void => {
+    if (!event.relatedTarget) pointer.over = false;
+  };
+  let box: DOMRect | undefined;
+  let measuredAt = -Infinity;
+  const remeasure = (): void => {
+    box = undefined;
   };
   if (follow) {
-    area?.addEventListener("pointermove", onMove, { passive: true });
-    area?.addEventListener("pointerleave", onLeave);
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("pointerout", onOut, { passive: true });
+    window.addEventListener("scroll", remeasure, { passive: true });
+    window.addEventListener("resize", remeasure);
   }
 
-  const track = (): void => {
-    const box = root.value?.getBoundingClientRect();
-    if (!pointer.over || !fine.matches || !box) return steer(0, 0, snappy);
+  const track = (ms: number): void => {
+    if (!pointer.over || !fine.matches) return steer(0, 0, snappy);
+    // Scroll and resize clear the box at once; the refresh catches a holder transform, like web's entrance, that neither reports.
+    if (!box || ms - measuredAt > 500) {
+      box = root.value?.getBoundingClientRect();
+      measuredAt = ms;
+    }
+    if (!box) return steer(0, 0, snappy);
     const x = ((pointer.x - box.left) / box.width) * 2 - 1;
     const y = 1 - ((pointer.y - box.top) / box.height) * 2;
     if (Math.abs(x) > 1 || Math.abs(y) > 1) return steer(0, 0, snappy);
@@ -85,8 +96,8 @@ const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
   };
 
   const frame = (ms: number, dt: number): boolean => {
-    stage.advance(dt);
-    if (follow) track();
+    const lerping = stage.advance(dt);
+    if (follow) track(ms);
     const glide = lost || !wide.matches ? 1 : sineInOut(clamp01(progress));
     const from = lost || !wide.matches ? hero : rest;
     const position = mix(from.position, hero.position, glide);
@@ -127,7 +138,8 @@ const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
     } else island.pose({ ms, broken: lost, breathe: calm });
 
     stage.render();
-    return true;
+    // From progress 1 calm is 0, so the frame stops changing and the sequence covers it; rendering it again is waste.
+    return lost || progress < 1 || lerping;
   };
 
   return {
@@ -135,21 +147,25 @@ const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
     theme: (instant) => stage.setPalette(readPalette(), instant),
     resize: stage.resize,
     dispose: () => {
-      area?.removeEventListener("pointermove", onMove);
-      area?.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerout", onOut);
+      window.removeEventListener("scroll", remeasure);
+      window.removeEventListener("resize", remeasure);
       follow?.revert();
       stage.dispose();
     },
   };
 };
 
-const { state, theme, seekable } = useScene({
+const { state, theme, wake, seekable } = useScene({
   mode,
   duration: REST_MS + MOTION_DURATION.breathe,
   root: () => root.value ?? undefined,
   canvas: () => canvas.value ?? undefined,
   setup,
 });
+
+watch(() => progress, wake);
 
 defineExpose({ ...seekable, restMs: REST_MS });
 </script>

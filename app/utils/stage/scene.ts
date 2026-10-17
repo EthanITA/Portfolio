@@ -35,6 +35,7 @@ export type Scene = {
   reduced: Ref<boolean>;
   clock: () => number;
   kick: () => Promise<void>;
+  wake: () => void;
   seekable: FilmSeekable;
 };
 
@@ -59,7 +60,8 @@ export const useScene = ({ mode, duration, root, box = root, canvas, setup, redu
   let last = 0;
   let raf = 0;
 
-  const running = (): boolean => !!runtime && inView && pageVisible && (!reduced.value || (!!reducedOnDemand && busy));
+  // A frame returning false parks the loop until wake, kick or a theme change, so a still scene renders nothing.
+  const running = (): boolean => !!runtime && inView && pageVisible && busy && (!reduced.value || !!reducedOnDemand);
 
   const stamp = (): void => {
     if (reduced.value && !film) state.value = "reduced";
@@ -123,10 +125,14 @@ export const useScene = ({ mode, duration, root, box = root, canvas, setup, redu
     return booting;
   };
 
-  const kick = async (): Promise<void> => {
-    await boot();
+  const wake = (): void => {
     busy = true;
     sync();
+  };
+
+  const kick = async (): Promise<void> => {
+    await boot();
+    wake();
   };
 
   const seekable: FilmSeekable = {
@@ -168,11 +174,13 @@ export const useScene = ({ mode, duration, root, box = root, canvas, setup, redu
         theme.value = next;
         return;
       }
+      busy = true;
       const instant = film || !running();
       void runtime.theme(instant).then((applied) => {
         if (!disposed) theme.value = applied;
       });
       if (instant) draw(0);
+      else sync();
     };
     const themes = new MutationObserver(onTheme);
     themes.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
@@ -232,5 +240,5 @@ export const useScene = ({ mode, duration, root, box = root, canvas, setup, redu
     runtime = undefined;
   });
 
-  return { state, theme, reduced, clock: () => clock, kick, seekable };
+  return { state, theme, reduced, clock: () => clock, kick, wake, seekable };
 };
