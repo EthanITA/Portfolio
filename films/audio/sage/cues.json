@@ -1,23 +1,60 @@
 {
   "film": "sage",
+  "mixSha256": "6ae3680abaf3f95d689a92048179bc7fe742bfae102bd07d94a4db76aaaaa44b",
   "durationMs": 40000,
   "durationSamples": 1920000,
   "sampleRate": 48000,
-  "sheet": "brief section 9, Sidecar retimed per direction.md section 8",
+  "sheet": "film-director's 120 bpm timing sheet",
   "mix": {
     "file": "mix.wav",
     "targetLufs": -16,
-    "bedGainDb": 3.12,
+    "bedGainDb": 2.667,
     "integratedLufs": -16,
     "truePeakDbtp": -2.9
   },
   "cues": [
     {
+      "id": "line-start",
+      "sound": "line.600",
+      "stem": "ui",
+      "atMs": 0,
+      "atSample": 0,
+      "durMs": 900,
+      "audible": true,
+      "onsetTolMs": 12,
+      "sheet": "0-3",
+      "marks": "the violet line draws under the title"
+    },
+    {
+      "id": "islandOpen",
+      "sound": "whoosh.still",
+      "stem": "ui",
+      "atMs": 2000,
+      "atSample": 96000,
+      "durMs": 500,
+      "audible": true,
+      "onsetTolMs": 40,
+      "sheet": "0-3",
+      "marks": "the island opens into the product window"
+    },
+    {
+      "id": "line-end-card",
+      "sound": "line.600",
+      "stem": "ui",
+      "atMs": 36000,
+      "atSample": 1728000,
+      "durMs": 900,
+      "audible": true,
+      "onsetTolMs": 12,
+      "sheet": "36-40",
+      "marks": "the violet line draws on the end card, on the closing hit"
+    },
+    {
       "id": "optionDown",
       "sound": "key.down",
       "stem": "ui",
-      "atMs": 3000,
-      "atSample": 144000,
+      "atMs": 4500,
+      "atSample": 216000,
       "durMs": 120,
       "audible": true,
       "onsetTolMs": 1,
@@ -28,21 +65,56 @@
       "id": "ask-1",
       "sound": "voice.person",
       "stem": "voice",
-      "atMs": 5800,
-      "atSample": 278400,
-      "durMs": 1564,
+      "atMs": 5500,
+      "atSample": 264000,
+      "durMs": 1534,
       "audible": true,
       "onsetTolMs": 10,
       "sheet": "3-9",
       "marks": "the spoken ask, words appear live",
-      "text": "I want to join the standup"
+      "text": "I want to join the standup",
+      "voice": "person",
+      "onsetMs": 5500,
+      "endMs": 7034,
+      "words": [
+        {
+          "text": "I",
+          "startMs": 5500,
+          "endMs": 5570
+        },
+        {
+          "text": "want",
+          "startMs": 5570,
+          "endMs": 5780
+        },
+        {
+          "text": "to",
+          "startMs": 5780,
+          "endMs": 5970
+        },
+        {
+          "text": "join",
+          "startMs": 5970,
+          "endMs": 6340
+        },
+        {
+          "text": "the",
+          "startMs": 6340,
+          "endMs": 6410
+        },
+        {
+          "text": "standup",
+          "startMs": 6410,
+          "endMs": 6980
+        }
+      ]
     },
     {
       "id": "release",
       "sound": "key.up",
       "stem": "ui",
-      "atMs": 8600,
-      "atSample": 412800,
+      "atMs": 7500,
+      "atSample": 360000,
       "durMs": 120,
       "audible": true,
       "onsetTolMs": 1,
@@ -53,21 +125,31 @@
       "id": "understood",
       "sound": "voice.sage",
       "stem": "voice",
-      "atMs": 9600,
-      "atSample": 460800,
-      "durMs": 826,
+      "atMs": 9500,
+      "atSample": 456000,
+      "durMs": 796,
       "audible": true,
       "onsetTolMs": 10,
       "sheet": "9-12",
       "marks": "Sage says Understood",
-      "text": "Understood"
+      "text": "Understood",
+      "voice": "sage",
+      "onsetMs": 9500,
+      "endMs": 10296,
+      "words": [
+        {
+          "text": "Understood",
+          "startMs": 9500,
+          "endMs": 10250
+        }
+      ]
     },
     {
       "id": "tick1",
       "sound": "tick.high",
       "stem": "ui",
-      "atMs": 14500,
-      "atSample": 696000,
+      "atMs": 14000,
+      "atSample": 672000,
       "durMs": 90,
       "audible": true,
       "onsetTolMs": 1,
@@ -78,8 +160,8 @@
       "id": "tick2",
       "sound": "tick.high",
       "stem": "ui",
-      "atMs": 17000,
-      "atSample": 816000,
+      "atMs": 16000,
+      "atSample": 768000,
       "durMs": 90,
       "audible": true,
       "onsetTolMs": 1,
@@ -90,8 +172,8 @@
       "id": "tick3",
       "sound": "tick.high",
       "stem": "ui",
-      "atMs": 19500,
-      "atSample": 936000,
+      "atMs": 18000,
+      "atSample": 864000,
       "durMs": 90,
       "audible": true,
       "onsetTolMs": 1,
@@ -102,20 +184,20 @@
       "id": "fillStart",
       "sound": "line.5000",
       "stem": "ui",
-      "atMs": 22300,
-      "atSample": 1070400,
-      "durMs": 4200,
+      "atMs": 20500,
+      "atSample": 984000,
+      "durMs": 3500,
       "audible": true,
       "onsetTolMs": 20,
-      "sheet": "22-30",
+      "sheet": "12-22",
       "marks": "the violet line fills and Return cuts it"
     },
     {
       "id": "returnKey",
       "sound": "click.soft",
       "stem": "ui",
-      "atMs": 26500,
-      "atSample": 1272000,
+      "atMs": 24000,
+      "atSample": 1152000,
       "durMs": 100,
       "audible": true,
       "onsetTolMs": 1,
@@ -126,8 +208,8 @@
       "id": "joined",
       "sound": "chime",
       "stem": "ui",
-      "atMs": 26560,
-      "atSample": 1274880,
+      "atMs": 24000,
+      "atSample": 1152000,
       "durMs": 1200,
       "audible": true,
       "onsetTolMs": 2,
@@ -138,33 +220,53 @@
       "id": "hold2",
       "sound": "key.down",
       "stem": "ui",
-      "atMs": 30000,
-      "atSample": 1440000,
+      "atMs": 28000,
+      "atSample": 1344000,
       "durMs": 120,
       "audible": true,
       "onsetTolMs": 1,
-      "sheet": "30-36",
+      "sheet": "22-30",
       "marks": "the right Option key goes down again"
     },
     {
       "id": "ask-2",
       "sound": "voice.person",
       "stem": "voice",
-      "atMs": 30400,
-      "atSample": 1459200,
-      "durMs": 1016,
+      "atMs": 28500,
+      "atSample": 1368000,
+      "durMs": 986,
       "audible": true,
       "onsetTolMs": 10,
-      "sheet": "30-36",
+      "sheet": "22-30",
       "marks": "the second spoken ask",
-      "text": "pay the invoice"
+      "text": "pay the invoice",
+      "voice": "person",
+      "onsetMs": 28500,
+      "endMs": 29486,
+      "words": [
+        {
+          "text": "pay",
+          "startMs": 28500,
+          "endMs": 28660
+        },
+        {
+          "text": "the",
+          "startMs": 28660,
+          "endMs": 28910
+        },
+        {
+          "text": "invoice",
+          "startMs": 28910,
+          "endMs": 29430
+        }
+      ]
     },
     {
       "id": "release2",
       "sound": "key.up",
       "stem": "ui",
-      "atMs": 31600,
-      "atSample": 1516800,
+      "atMs": 30000,
+      "atSample": 1440000,
       "durMs": 120,
       "audible": true,
       "onsetTolMs": 1,
@@ -172,23 +274,11 @@
       "marks": "the key is released"
     },
     {
-      "id": "scrollToPay",
-      "sound": "whoosh.still",
-      "stem": "ui",
-      "atMs": 32700,
-      "atSample": 1569600,
-      "durMs": 500,
-      "audible": true,
-      "onsetTolMs": 40,
-      "sheet": "30-36",
-      "marks": "the page scrolls to Pay"
-    },
-    {
       "id": "payOutlined",
       "sound": "thud",
       "stem": "ui",
-      "atMs": 33200,
-      "atSample": 1593600,
+      "atMs": 32000,
+      "atSample": 1536000,
       "durMs": 550,
       "audible": true,
       "onsetTolMs": 4,
@@ -199,151 +289,601 @@
       "id": "handback",
       "sound": "voice.sage",
       "stem": "voice",
-      "atMs": 33500,
-      "atSample": 1608000,
+      "atMs": 33000,
+      "atSample": 1584000,
       "durMs": 2636,
       "audible": true,
       "onsetTolMs": 10,
       "sheet": "30-36",
       "marks": "Sage hands Pay back",
-      "text": "Stopped at Pay. It's yours to press."
+      "text": "Stopped at Pay. It's yours to press.",
+      "voice": "sage",
+      "onsetMs": 33000,
+      "endMs": 35636,
+      "words": [
+        {
+          "text": "Stopped",
+          "startMs": 33000,
+          "endMs": 33410
+        },
+        {
+          "text": "at",
+          "startMs": 33410,
+          "endMs": 33530
+        },
+        {
+          "text": "Pay.",
+          "startMs": 33568,
+          "endMs": 33980
+        },
+        {
+          "text": "It's",
+          "startMs": 34345,
+          "endMs": 34500
+        },
+        {
+          "text": "yours",
+          "startMs": 34500,
+          "endMs": 34680
+        },
+        {
+          "text": "to",
+          "startMs": 34680,
+          "endMs": 34890
+        },
+        {
+          "text": "press.",
+          "startMs": 34944,
+          "endMs": 35390
+        }
+      ]
     },
     {
-      "id": "push-notch",
-      "sound": "whoosh.still",
-      "stem": "ui",
-      "atMs": 3000,
-      "atSample": 144000,
-      "durMs": 1200,
+      "id": "narrator-1",
+      "sound": "voice.narrator",
+      "stem": "voice",
+      "atMs": 755,
+      "atSample": 36240,
+      "durMs": 1762,
       "audible": true,
-      "onsetTolMs": 40,
+      "onsetTolMs": 10,
+      "sheet": "0-3",
+      "marks": "the narrator, line 1",
+      "text": "A Mac assistant in the notch.",
+      "voice": "narrator",
+      "onsetMs": 755,
+      "endMs": 2517,
+      "fromMs": 0,
+      "untilMs": 2650,
+      "words": [
+        {
+          "text": "A",
+          "startMs": 755,
+          "endMs": 825
+        },
+        {
+          "text": "Mac",
+          "startMs": 825,
+          "endMs": 1124
+        },
+        {
+          "text": "assistant",
+          "startMs": 1124,
+          "endMs": 1502
+        },
+        {
+          "text": "in",
+          "startMs": 1502,
+          "endMs": 1895
+        },
+        {
+          "text": "the",
+          "startMs": 1895,
+          "endMs": 1985
+        },
+        {
+          "text": "notch.",
+          "startMs": 1985,
+          "endMs": 2475
+        }
+      ],
+      "anchor": {
+        "word": "notch",
+        "beatMs": 2000
+      }
+    },
+    {
+      "id": "narrator-2",
+      "sound": "voice.narrator",
+      "stem": "voice",
+      "atMs": 3295,
+      "atSample": 158160,
+      "durMs": 1958,
+      "audible": true,
+      "onsetTolMs": 10,
+      "sheet": "0-3",
+      "marks": "the narrator, line 2",
+      "text": "No app to open. Just hold a key.",
+      "voice": "narrator",
+      "onsetMs": 3295,
+      "endMs": 5253,
+      "fromMs": 2000,
+      "untilMs": 5300,
+      "words": [
+        {
+          "text": "No",
+          "startMs": 3295,
+          "endMs": 3535
+        },
+        {
+          "text": "app",
+          "startMs": 3535,
+          "endMs": 3665
+        },
+        {
+          "text": "to",
+          "startMs": 3680,
+          "endMs": 3775
+        },
+        {
+          "text": "open.",
+          "startMs": 3775,
+          "endMs": 4195
+        },
+        {
+          "text": "Just",
+          "startMs": 4320,
+          "endMs": 4485
+        },
+        {
+          "text": "hold",
+          "startMs": 4485,
+          "endMs": 4785
+        },
+        {
+          "text": "a",
+          "startMs": 4785,
+          "endMs": 4815
+        },
+        {
+          "text": "key.",
+          "startMs": 4869,
+          "endMs": 5205
+        }
+      ],
+      "anchor": {
+        "word": "hold",
+        "beatMs": 4500
+      }
+    },
+    {
+      "id": "narrator-3",
+      "sound": "voice.narrator",
+      "stem": "voice",
+      "atMs": 7485,
+      "atSample": 359280,
+      "durMs": 1554,
+      "audible": true,
+      "onsetTolMs": 10,
       "sheet": "3-9",
-      "marks": "the camera pushes in on the notch"
+      "marks": "the narrator, line 3",
+      "text": "Three languages, live.",
+      "voice": "narrator",
+      "onsetMs": 7485,
+      "endMs": 9039,
+      "fromMs": 6700,
+      "untilMs": 9300,
+      "words": [
+        {
+          "text": "Three",
+          "startMs": 7485,
+          "endMs": 7695
+        },
+        {
+          "text": "languages,",
+          "startMs": 7695,
+          "endMs": 8445
+        },
+        {
+          "text": "live.",
+          "startMs": 8465,
+          "endMs": 8935
+        }
+      ],
+      "anchor": {
+        "word": "Three",
+        "beatMs": 7500
+      }
     },
     {
-      "id": "push-card",
-      "sound": "whoosh.still",
-      "stem": "ui",
-      "atMs": 22000,
-      "atSample": 1056000,
-      "durMs": 1200,
+      "id": "narrator-4",
+      "sound": "voice.narrator",
+      "stem": "voice",
+      "atMs": 10785,
+      "atSample": 517680,
+      "durMs": 2224,
       "audible": true,
-      "onsetTolMs": 40,
+      "onsetTolMs": 10,
+      "sheet": "9-12",
+      "marks": "the narrator, line 4",
+      "text": "Then it does the steps. One by one.",
+      "voice": "narrator",
+      "onsetMs": 10785,
+      "endMs": 13009,
+      "fromMs": 9800,
+      "untilMs": 18450,
+      "words": [
+        {
+          "text": "Then",
+          "startMs": 10785,
+          "endMs": 10965
+        },
+        {
+          "text": "it",
+          "startMs": 10965,
+          "endMs": 11095
+        },
+        {
+          "text": "does",
+          "startMs": 11147,
+          "endMs": 11305
+        },
+        {
+          "text": "the",
+          "startMs": 11305,
+          "endMs": 11485
+        },
+        {
+          "text": "steps.",
+          "startMs": 11485,
+          "endMs": 11995
+        },
+        {
+          "text": "One",
+          "startMs": 12113,
+          "endMs": 12325
+        },
+        {
+          "text": "by",
+          "startMs": 12325,
+          "endMs": 12525
+        },
+        {
+          "text": "one.",
+          "startMs": 12525,
+          "endMs": 12945
+        }
+      ],
+      "anchor": {
+        "word": "steps",
+        "beatMs": 11500
+      }
+    },
+    {
+      "id": "narrator-5",
+      "sound": "voice.narrator",
+      "stem": "voice",
+      "atMs": 18775,
+      "atSample": 901200,
+      "durMs": 3113,
+      "audible": true,
+      "onsetTolMs": 10,
+      "sheet": "12-22",
+      "marks": "the narrator, line 5",
+      "text": "Changing something? It asks. You get five seconds.",
+      "voice": "narrator",
+      "onsetMs": 18775,
+      "endMs": 21888,
+      "fromMs": 17800,
+      "untilMs": 23850,
+      "words": [
+        {
+          "text": "Changing",
+          "startMs": 18775,
+          "endMs": 19135
+        },
+        {
+          "text": "something?",
+          "startMs": 19135,
+          "endMs": 19835
+        },
+        {
+          "text": "It",
+          "startMs": 19851,
+          "endMs": 19985
+        },
+        {
+          "text": "asks.",
+          "startMs": 19985,
+          "endMs": 20465
+        },
+        {
+          "text": "You",
+          "startMs": 20580,
+          "endMs": 20745
+        },
+        {
+          "text": "get",
+          "startMs": 20745,
+          "endMs": 20915
+        },
+        {
+          "text": "five",
+          "startMs": 20915,
+          "endMs": 21195
+        },
+        {
+          "text": "seconds.",
+          "startMs": 21195,
+          "endMs": 21855
+        }
+      ],
+      "anchor": {
+        "word": "asks",
+        "beatMs": 20000
+      }
+    },
+    {
+      "id": "narrator-6",
+      "sound": "voice.narrator",
+      "stem": "voice",
+      "atMs": 23985,
+      "atSample": 1151280,
+      "durMs": 1207,
+      "audible": true,
+      "onsetTolMs": 10,
       "sheet": "22-30",
-      "marks": "the camera pushes in on the card"
+      "marks": "the narrator, line 6",
+      "text": "Return, and you're in.",
+      "voice": "narrator",
+      "onsetMs": 23985,
+      "endMs": 25192,
+      "fromMs": 23200,
+      "untilMs": 28300,
+      "words": [
+        {
+          "text": "Return,",
+          "startMs": 23985,
+          "endMs": 24485
+        },
+        {
+          "text": "and",
+          "startMs": 24602,
+          "endMs": 24765
+        },
+        {
+          "text": "you're",
+          "startMs": 24765,
+          "endMs": 24915
+        },
+        {
+          "text": "in.",
+          "startMs": 24915,
+          "endMs": 25145
+        }
+      ],
+      "anchor": {
+        "word": "Return",
+        "beatMs": 24000
+      }
     },
     {
-      "id": "push-pay",
-      "sound": "whoosh.still",
-      "stem": "ui",
-      "atMs": 31600,
-      "atSample": 1516800,
-      "durMs": 1200,
+      "id": "narrator-7",
+      "sound": "voice.narrator",
+      "stem": "voice",
+      "atMs": 31425,
+      "atSample": 1508400,
+      "durMs": 1198,
       "audible": true,
-      "onsetTolMs": 40,
+      "onsetTolMs": 10,
       "sheet": "30-36",
-      "marks": "the camera pushes in on the pay"
+      "marks": "the narrator, line 7",
+      "text": "Money? It stops.",
+      "voice": "narrator",
+      "onsetMs": 31425,
+      "endMs": 32623,
+      "fromMs": 30400,
+      "untilMs": 32800,
+      "words": [
+        {
+          "text": "Money?",
+          "startMs": 31425,
+          "endMs": 31845
+        },
+        {
+          "text": "It",
+          "startMs": 31848,
+          "endMs": 31985
+        },
+        {
+          "text": "stops.",
+          "startMs": 31985,
+          "endMs": 32585
+        }
+      ],
+      "anchor": {
+        "word": "stops",
+        "beatMs": 32000
+      }
     },
     {
-      "id": "pull-back",
-      "sound": "whoosh.still",
-      "stem": "ui",
-      "atMs": 35400,
-      "atSample": 1699200,
-      "durMs": 600,
+      "id": "narrator-end",
+      "sound": "voice.narrator",
+      "stem": "voice",
+      "atMs": 37065,
+      "atSample": 1779120,
+      "durMs": 1446,
       "audible": true,
-      "onsetTolMs": 40,
-      "sheet": "30-36",
-      "marks": "the camera pulls back to the end card"
-    },
-    {
-      "id": "line-end-card",
-      "sound": "line.600",
-      "stem": "ui",
-      "atMs": 36600,
-      "atSample": 1756800,
-      "durMs": 900,
-      "audible": true,
-      "onsetTolMs": 12,
+      "onsetTolMs": 10,
       "sheet": "36-40",
-      "marks": "the violet line draws on the end card"
+      "marks": "the narrator closes over the end card, spoken only",
+      "text": "That click stays yours.",
+      "voice": "narrator",
+      "onsetMs": 37065,
+      "endMs": 38511,
+      "fromMs": 36200,
+      "untilMs": 39700,
+      "words": [
+        {
+          "text": "That",
+          "startMs": 37065,
+          "endMs": 37305
+        },
+        {
+          "text": "click",
+          "startMs": 37342,
+          "endMs": 37578
+        },
+        {
+          "text": "stays",
+          "startMs": 37578,
+          "endMs": 37985
+        },
+        {
+          "text": "yours.",
+          "startMs": 37985,
+          "endMs": 38455
+        }
+      ],
+      "anchor": {
+        "word": "yours",
+        "beatMs": 38000
+      }
     }
   ],
   "typing": [],
   "ducks": [
     {
       "reason": "joined",
-      "fromMs": 26560,
-      "toMs": 27060,
+      "fromMs": 24000,
+      "toMs": 24500,
       "depthDb": -2.5,
       "attackMs": 40,
       "releaseMs": 600
     },
     {
       "reason": "payOutlined",
-      "fromMs": 33200,
-      "toMs": 33500,
+      "fromMs": 32000,
+      "toMs": 32300,
       "depthDb": -2,
       "attackMs": 30,
       "releaseMs": 500
     },
     {
       "reason": "voice ask-1",
-      "fromMs": 5800,
-      "toMs": 7364,
+      "fromMs": 5500,
+      "toMs": 7034,
       "depthDb": -6,
       "attackMs": 120,
       "releaseMs": 400
     },
     {
       "reason": "voice understood",
-      "fromMs": 9600,
-      "toMs": 10426,
+      "fromMs": 9500,
+      "toMs": 10296,
       "depthDb": -6,
       "attackMs": 120,
       "releaseMs": 400
     },
     {
       "reason": "voice ask-2",
-      "fromMs": 30400,
-      "toMs": 31416,
+      "fromMs": 28500,
+      "toMs": 29486,
       "depthDb": -6,
       "attackMs": 120,
       "releaseMs": 400
     },
     {
       "reason": "voice handback",
-      "fromMs": 33500,
-      "toMs": 36136,
+      "fromMs": 33000,
+      "toMs": 35636,
+      "depthDb": -6,
+      "attackMs": 120,
+      "releaseMs": 400
+    },
+    {
+      "reason": "voice narrator-1",
+      "fromMs": 755,
+      "toMs": 2517,
+      "depthDb": -6,
+      "attackMs": 120,
+      "releaseMs": 400
+    },
+    {
+      "reason": "voice narrator-2",
+      "fromMs": 3295,
+      "toMs": 5253,
+      "depthDb": -6,
+      "attackMs": 120,
+      "releaseMs": 400
+    },
+    {
+      "reason": "voice narrator-3",
+      "fromMs": 7485,
+      "toMs": 9039,
+      "depthDb": -6,
+      "attackMs": 120,
+      "releaseMs": 400
+    },
+    {
+      "reason": "voice narrator-4",
+      "fromMs": 10785,
+      "toMs": 13009,
+      "depthDb": -6,
+      "attackMs": 120,
+      "releaseMs": 400
+    },
+    {
+      "reason": "voice narrator-5",
+      "fromMs": 18775,
+      "toMs": 21888,
+      "depthDb": -6,
+      "attackMs": 120,
+      "releaseMs": 400
+    },
+    {
+      "reason": "voice narrator-6",
+      "fromMs": 23985,
+      "toMs": 25192,
+      "depthDb": -6,
+      "attackMs": 120,
+      "releaseMs": 400
+    },
+    {
+      "reason": "voice narrator-7",
+      "fromMs": 31425,
+      "toMs": 32623,
+      "depthDb": -6,
+      "attackMs": 120,
+      "releaseMs": 400
+    },
+    {
+      "reason": "voice narrator-end",
+      "fromMs": 37065,
+      "toMs": 38511,
       "depthDb": -6,
       "attackMs": 120,
       "releaseMs": 400
     }
   ],
   "bed": {
-    "bpm": 108,
-    "barMs": 2222.22,
-    "downbeatMs": 3000,
-    "closeMs": 36333,
+    "grid": {
+      "bpm": 120,
+      "beatMs": 500,
+      "barMs": 2000,
+      "originMs": 0,
+      "beats": 80
+    },
+    "closeMs": 36000,
+    "breakdown": {
+      "fromMs": 32000,
+      "toMs": 34000
+    },
     "sections": [
       {
-        "bar": -1,
-        "atMs": 778,
-        "layers": [
-          "hat"
-        ]
-      },
-      {
         "bar": 0,
-        "atMs": 3000,
-        "layers": [
-          "kick",
-          "hat"
-        ]
-      },
-      {
-        "bar": 3,
-        "atMs": 9667,
+        "beat": 0,
+        "atMs": 0,
         "layers": [
           "kick",
           "hat",
@@ -351,56 +891,187 @@
         ]
       },
       {
-        "bar": 4,
-        "atMs": 11889,
+        "bar": 1,
+        "beat": 4,
+        "atMs": 2000,
         "layers": [
           "kick",
           "hat",
           "bass",
-          "pluck"
-        ]
-      },
-      {
-        "bar": 9,
-        "atMs": 23000,
-        "layers": [
-          "kick",
-          "hat",
-          "bass",
-          "pluck",
-          "stab"
-        ]
-      },
-      {
-        "bar": 11,
-        "atMs": 27444,
-        "layers": [
-          "kick",
-          "hat",
-          "bass",
-          "pluck",
           "clap",
-          "stab"
-        ]
-      },
-      {
-        "bar": 12,
-        "atMs": 29667,
-        "layers": [
-          "kick",
-          "hat",
-          "bass",
           "pluck"
         ]
       },
       {
-        "bar": 14,
-        "atMs": 34111,
+        "bar": 16,
+        "beat": 64,
+        "atMs": 32000,
+        "layers": [
+          "kick",
+          "bass"
+        ]
+      },
+      {
+        "bar": 17,
+        "beat": 68,
+        "atMs": 34000,
         "layers": [
           "kick",
           "hat",
-          "bass"
+          "bass",
+          "clap",
+          "pluck"
         ]
+      }
+    ],
+    "accents": [
+      {
+        "atMs": 2500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 3500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 4500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 5500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 6500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 7500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 8500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 9500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 10500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 11500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 12500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 13500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 14000,
+        "kind": "stab"
+      },
+      {
+        "atMs": 14500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 15500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 16000,
+        "kind": "stab"
+      },
+      {
+        "atMs": 16500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 17500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 18000,
+        "kind": "stab"
+      },
+      {
+        "atMs": 18500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 19500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 20500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 21500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 22500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 23500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 24000,
+        "kind": "stab"
+      },
+      {
+        "atMs": 24500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 25500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 26500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 27500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 28500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 29500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 30500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 31500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 34500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 35500,
+        "kind": "clap"
+      },
+      {
+        "atMs": 36000,
+        "kind": "close"
       }
     ]
   }
