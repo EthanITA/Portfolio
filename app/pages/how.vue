@@ -48,11 +48,10 @@ const loop: Step[] = [
   { step: "Ship", receipt: "merged into main" },
 ];
 
-const TYPE_MS = 16;
 // The lag of the site's SCRUB_SMOOTH scrubs, kept on the clock so a long frame or a background tab can't strand the runner.
 const RUNNER_MS = 125;
 
-type Receipt = { el: HTMLElement; node: number; next: number; chars: HTMLElement[]; at: number; shown: number };
+type Receipt = { el: HTMLElement; node: number; next: number; chars: HTMLElement[]; shown: number };
 
 const cards = useTemplateRef<HTMLElement>("cards");
 const panel = useTemplateRef<HTMLElement>("panel");
@@ -98,7 +97,19 @@ const goal = (el: HTMLElement): number => {
   return Math.min(1, Math.max(0, (innerHeight - top) / Math.max(1, innerHeight - end)));
 };
 
-// Derived each frame from the drawn runner and the clock, so a dropped event can't leave a passed receipt short.
+// A receipt types across the runner's travel from its node to the next, so a slow scroll is the typewriter and a fling types in the smoothing's tail.
+const type = (receipt: Receipt): void => {
+  const length = receipt.chars.length;
+  const through = runner >= receipt.next ? 1 : (runner - receipt.node) / (receipt.next - receipt.node);
+  const count = Math.min(length, Math.max(0, Math.ceil(length * through)));
+  if (count === receipt.shown) return;
+  for (let k = count; k < receipt.shown; k++) receipt.chars[k]?.style.setProperty("opacity", "0");
+  for (let k = receipt.shown; k < count; k++) receipt.chars[k]?.style.removeProperty("opacity");
+  receipt.shown = count;
+  receipt.el.toggleAttribute("data-typed", count > 0);
+};
+
+// Everything is read off the runner, so no queued work or dropped event can leave a receipt it has passed short.
 const step = (now: number): void => {
   frame = 0;
   if (!stepper.value || !rail.value) return;
@@ -106,20 +117,10 @@ const step = (now: number): void => {
   runner = to + (runner - to) * Math.exp(-(last ? now - last : 1000 / 60) / RUNNER_MS);
   if (Math.abs(to - runner) < 0.0005) runner = to;
   rail.value.style.translate = `${runner * 100}% ${runner * 100}%`;
-  let busy = runner !== to;
-  for (const receipt of receipts) {
-    // Read's node sits at 0, so it waits for the stepper to enter rather than typing off screen at load.
-    if (!receipt.at && runner > 0 && runner >= receipt.node - 0.001) {
-      receipt.at = now;
-      receipt.el.dataset.typed = "";
-    }
-    if (!receipt.at) continue;
-    const count = runner >= receipt.next - 0.001 ? receipt.chars.length : Math.min(receipt.chars.length, 1 + Math.floor((now - receipt.at) / TYPE_MS));
-    for (; receipt.shown < count; receipt.shown++) receipt.chars[receipt.shown]?.style.removeProperty("opacity");
-    busy ||= receipt.shown < receipt.chars.length;
-  }
-  last = busy ? now : 0;
-  if (busy) frame = requestAnimationFrame(step);
+  receipts.forEach(type);
+  const settled = runner === to;
+  last = settled ? 0 : now;
+  if (!settled) frame = requestAnimationFrame(step);
 };
 
 const wake = (): void => {
@@ -142,7 +143,7 @@ watch(fence, (scene) => {
   if (scene && landed) scene.ripple(landed);
 });
 
-// The runner sits on node i at i fifths of its travel, and a receipt finishes the moment the runner reaches the next node.
+// The runner sits on node i at i fifths of its travel; a receipt is whole at the next node, and Ship, the last, at the end itself.
 const prepare = (el: HTMLElement): Receipt[] =>
   [...el.querySelectorAll<HTMLElement>("[data-receipt]")].map((receipt) => {
     const i = Number(receipt.dataset.receipt);
@@ -150,7 +151,7 @@ const prepare = (el: HTMLElement): Receipt[] =>
     splits.push(...parts);
     const chars = parts.flatMap((part) => part.chars as HTMLElement[]);
     for (const char of chars) char.style.opacity = "0";
-    return { el: receipt, node: i / (loop.length - 1), next: i + 1 < loop.length ? (i + 1) / (loop.length - 1) : Infinity, chars, at: 0, shown: 0 };
+    return { el: receipt, node: i / (loop.length - 1), next: Math.min(1, (i + 1) / (loop.length - 1)), chars, shown: 0 };
   });
 
 onMounted(() => {
@@ -175,7 +176,8 @@ onMounted(() => {
   scrubbing = true;
   sizes = new ResizeObserver(wake);
   sizes.observe(document.body);
-  wake();
+  // Drawn before the first paint, so a scroll restored at the bottom shows five whole receipts with nothing replayed.
+  step(performance.now());
 });
 
 onBeforeUnmount(() => {
@@ -298,7 +300,7 @@ onBeforeUnmount(() => {
   }
 }
 
-/* 11rem is rule 8's card (183 px from md up), so the section still reaches the panel's bottom as that card crosses the centre. */
+/* 11rem sits 7 px under rule 8's card (183 px from md up), so the section outlasts the panel's bottom as that card crosses the centre. */
 .rules {
   @apply m-0 flex list-none flex-col gap-4 p-0 md:col-start-2 md:pb-[calc(50svh-11rem)];
 }
