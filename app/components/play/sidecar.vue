@@ -171,6 +171,10 @@ watch(
   @apply flex h-12 flex-none items-center justify-center border-b border-border;
 }
 
+.bar :deep(.segmented-option) {
+  @apply hit-area;
+}
+
 .faces {
   @apply relative min-h-0 flex-1;
 }
@@ -200,7 +204,7 @@ watch(
 }
 
 .send {
-  @apply pointer-events-auto absolute right-0 bottom-0 inline-flex h-9 cursor-pointer items-center gap-2 rounded-full border-0 bg-primary px-4 typo-caption-strong text-primary-content shadow-lg;
+  @apply pointer-events-auto absolute right-0 bottom-0 hit-area inline-flex h-9 cursor-pointer items-center gap-2 rounded-full border-0 bg-primary px-4 typo-caption-strong text-primary-content shadow-lg;
   opacity: var(--tray, 1);
   translate: 0 calc((1 - var(--tray, 1)) * 8px);
 }

@@ -161,7 +161,7 @@ const onSubmit = (): void => {
                 <span class="step-text">{{ step.text }}</span>
               </div>
             </template>
-            <div v-else-if="state.slot === 'confirming' && state.card" class="card" data-film-anchor="card">
+            <div v-else-if="state.slot === 'confirming' && state.card" class="confirm" data-film-anchor="card">
               <div class="row header">
                 <i class="ring-slot" />
                 <span class="question" data-card>{{ state.card.question }}</span>
@@ -297,7 +297,8 @@ const onSubmit = (): void => {
   translate: 0 calc((1 - var(--ic, 1)) * -4px);
 }
 
-.card {
+/* Not .card, which @cela/design styles globally as a raised panel and would paint white under the white question. */
+.confirm {
   @apply flex flex-col gap-2.5;
 }
 
