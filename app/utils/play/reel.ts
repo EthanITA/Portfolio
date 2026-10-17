@@ -81,6 +81,9 @@ export type ReelHandle<S> = {
 
 export const HANDOVER_MS = 280;
 
+// Show me starts this far before the beat's action, so the eye lands before the typing does.
+export const SHOW_LEAD_MS = 500;
+
 export const CARET_MS = 530;
 
 export const useCaret = ({ visible, reduced }: { visible: Readonly<Ref<boolean>>; reduced: Readonly<Ref<boolean>> }): Ref<number> => {
@@ -342,7 +345,7 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor, 
     const beat = shown.find((one) => one.id === id);
     if (mode === "film" || !beat) return;
     invite.dismiss();
-    restart(reduced.value ? beat.moment : beat.from);
+    restart(reduced.value ? beat.moment : Math.max(reel.loop.from, beat.from - SHOW_LEAD_MS));
   };
 
   const tween: ReelHandle<S>["tween"] = (name, value, { duration = 300, ease = MOTION_EASE.out } = {}) => {
