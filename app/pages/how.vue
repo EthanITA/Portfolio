@@ -183,6 +183,8 @@ onBeforeUnmount(() => {
         <h2 id="gates-title" ref="heading" v-enter.words class="heading">Eight rules, eight gates</h2>
         <p v-enter class="body">
           <span class="fine">Hover a gate for its rule. Click a change to stop it yourself.</span>
+          <!-- Both lines are in the HTML, and a line break between inline siblings compiles to nothing, so the text twin would join them. -->
+          {{ " " }}
           <span class="coarse">Tap a gate for its rule. Tap a change to stop it yourself.</span>
         </p>
       </div>
@@ -211,6 +213,8 @@ onBeforeUnmount(() => {
             <span class="node" aria-hidden="true" />
             <div class="label">
               <span class="word">{{ item.step }}</span>
+              <!-- A line break between inline siblings compiles to nothing, so the text twin would read "Readwhat I typed". -->
+              {{ " " }}
               <span v-if="item.receipt" class="receipt" :class="{ task: item.task }" :data-receipt="i">
                 <span v-if="item.task" class="box" role="img" aria-label="In progress" />
                 <span data-type>{{ item.receipt }}</span>

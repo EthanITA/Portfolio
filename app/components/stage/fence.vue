@@ -268,9 +268,13 @@ defineExpose({ ...seekable, restMs: REST_MS, ripple });
     <StagePoster v-if="!film" name="fence" :theme="theme" />
     <canvas ref="canvas" class="canvas" />
     <div v-if="!film" ref="gates" class="gates">
-      <span v-for="spot in SPOTS" :key="spot.n" class="gate" :data-gate="spot.n" :style="spot.style" @pointerenter="hover(spot.n)">
-        <span class="number">{{ spot.n }}</span>
-      </span>
+      <template v-for="spot in SPOTS" :key="spot.n">
+        <span class="gate" :data-gate="spot.n" :style="spot.style" @pointerenter="hover(spot.n)">
+          <span class="number">{{ spot.n }}</span>
+        </span>
+        <!-- A line break between inline siblings compiles to nothing, so the text twin would read "12345678". -->
+        {{ " " }}
+      </template>
     </div>
     <button
       v-for="item in views"
