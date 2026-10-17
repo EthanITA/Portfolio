@@ -3,6 +3,7 @@ import type { SceneMode } from "#shared/types/seekable";
 import type { DiffLine, SidecarState, TreeRow } from "~/utils/play/sidecar";
 
 import { Kbd } from "@cela/design";
+import { prefersReducedMotion } from "@cela/design/utils/motion";
 import { Sidecar } from "~/utils/play/sidecar";
 
 const { state, mode, focus = false } = defineProps<{ state: SidecarState; mode: SceneMode; focus?: boolean }>();
@@ -35,6 +36,21 @@ const history = computed(() =>
     .map((decision, index) => ({ key: index, label: decision.label }))
     .reverse()
     .slice(0, 4),
+);
+
+const diff = useTemplateRef<HTMLElement>("diff");
+
+// Only a short phone frame overflows the diff, so elsewhere the hunk is already in view and nothing moves.
+watch(
+  () => [state.inView, state.selected] as const,
+  ([id]) => {
+    const box = diff.value;
+    if (mode === "film" || !box) return;
+    const hunk = id ? box.querySelector<HTMLElement>(`[data-hunk="${id}"]`) : undefined;
+    const top = hunk ? hunk.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - Number.parseFloat(getComputedStyle(box).paddingTop) : 0;
+    box.scrollTo({ top: Math.max(0, top), behavior: prefersReducedMotion() ? "auto" : "smooth" });
+  },
+  { flush: "post" },
 );
 
 const pendingOf = (row: TreeRow): number => Sidecar.pendingFiles(state, row.files).length;
@@ -124,7 +140,7 @@ const entranceOf = (row: TreeRow): string => {
             <button class="action" data-tone="primary" :disabled="!isFilePending" type="button" @click="emit('under', file.path, true)">Approve file</button>
           </span>
         </header>
-        <div class="diff">
+        <div ref="diff" class="diff">
           <div class="hunks" data-film-anchor="hunks">
             <div
               v-for="hunk in file.hunks"
@@ -465,6 +481,48 @@ button.name {
 
   .history {
     @apply hidden;
+  }
+}
+
+/* A phone frame too short for the stacked layout gives the diff every pixel it can, because the hunks are the demo. */
+@container sidecar (max-width: 720px) and (max-height: 720px) {
+  .review {
+    @apply gap-1.5 p-1.5;
+  }
+
+  .files > .head {
+    @apply hidden;
+  }
+
+  /* Two rows, so the files landing later scroll inside the tree instead of pushing the diff down. */
+  .tree {
+    @apply max-h-16.25 py-1;
+  }
+
+  .head[data-layout="stacked"] {
+    @apply flex-row items-center gap-2 py-1.5;
+  }
+
+  .head[data-layout="stacked"] > .line:first-child {
+    @apply flex-1;
+  }
+
+  /* The two buttons leave the path a few pixels, and the tree just above already marks the selected file. */
+  .head[data-layout="stacked"] .path {
+    @apply hidden;
+  }
+
+  .churn {
+    @apply whitespace-nowrap;
+  }
+
+  .all {
+    @apply py-1;
+  }
+
+  /* The top inset matches the arrows' overhang above the hunk, so they stay inside the scroll box. */
+  .diff {
+    @apply overflow-y-auto overscroll-contain pt-2.5;
   }
 }
 </style>
