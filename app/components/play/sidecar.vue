@@ -76,6 +76,7 @@ watch(
         <div class="window" data-window>
           <Surface class="pane" pad="none" variant="raised">
             <div class="bar">
+              <!-- Remounted per face in film, because Segmented tweens its highlight on its own clock and a seek must land settled. -->
               <Segmented :key="mode === 'film' ? state.face : 'live'" :model-value="state.face" :options="FACES" @update:model-value="onFace" />
             </div>
             <div class="faces">
