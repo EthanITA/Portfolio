@@ -42,7 +42,7 @@ import { links } from "~/utils/site/links";
   @apply m-0 flex list-none flex-wrap gap-2 p-0;
 
   & .chip-look {
-    @apply transition-colors duration-(--duration-fast) ease-out;
+    @apply min-h-11 px-3.5 transition-colors duration-(--duration-fast) ease-out;
   }
 
   & .chip-look:focus-visible {

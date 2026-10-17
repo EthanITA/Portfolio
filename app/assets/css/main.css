@@ -19,9 +19,9 @@
   @apply mx-auto w-full max-w-5xl px-5 sm:px-8;
 }
 
-/* Chip's look for links and static labels: the Chip component is a toggle button, which a link must not nest. */
+/* Chip's tokens on a span or a link: Chip always renders a toggle button, wrong for a static label and invalid inside a link. */
 @utility chip-look {
-  @apply typo-caption-medium inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-raised px-3.5 text-muted no-underline;
+  @apply typo-meta-strong inline-flex w-fit items-center gap-1.5 rounded-full border border-border bg-raised px-2.5 py-1 text-muted no-underline;
 }
 
 @utility status-dot {
