@@ -104,7 +104,7 @@ export default defineNuxtConfig({
   // Cloudflare Pages answers a folder index with a 308 to its trailing slash, and every canonical is slashless.
   nitro: { prerender: { autoSubfolderIndex: false, crawlLinks: true, ignore: ["/film"], routes: ["/"] } },
   ogImage: { defaults: { height: 630, width: 1200 }, zeroRuntime: true },
-  routeRules: { "/404.html": { robots: false } },
+  routeRules: { "/200.html": { robots: false }, "/404.html": { robots: false } },
   robots: {
     groups: [{ allow: ["/"], userAgent: aiCrawlers }],
   },
