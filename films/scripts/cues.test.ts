@@ -11,7 +11,7 @@ import sidecar from "./sidecar.ts";
 
 type Line = { stem: string; voice: string; text: string; onsetMs: number; endMs: number; words: { text: string; startMs: number; endMs: number }[]; anchor?: { word: string; beatMs: number } };
 
-type Fixture = { durationMs: number; mixSha256?: string; bed: { grid: Record<string, number>; closeMs: number; accents: { atMs: number; kind: string }[] }; cues: Line[] };
+type Fixture = { durationMs: number; mixSha256?: string; bed: { grid: Record<string, number>; closeMs: number; breakdown: { fromMs: number; toMs: number }; accents: { atMs: number; kind: string }[] }; cues: Line[] };
 
 const WORD = 250;
 const MIX = "5e1f".repeat(16);
@@ -20,7 +20,12 @@ const MIX = "5e1f".repeat(16);
 const fixture = (script: FilmScript): Fixture => ({
   durationMs: script.duration,
   mixSha256: MIX,
-  bed: { grid: { ...GRID, beats: script.duration / GRID.beatMs }, closeMs: script.close, accents: [{ atMs: 4000, kind: "clap" }, { atMs: script.close, kind: "close" }] },
+  bed: {
+    grid: { ...GRID, beats: script.duration / GRID.beatMs },
+    closeMs: script.close,
+    breakdown: { fromMs: 2000, toMs: script.rules.find((rule) => rule.anchor === "seam")?.at ?? 4000 },
+    accents: [{ atMs: 4000, kind: "clap" }, { atMs: script.close, kind: "close" }],
+  },
   cues: script.lines.map((text, index) => {
     const onsetMs = 1000 + index * 4000;
     const words = text.split(" ").map((word, position) => ({ text: word, startMs: onsetMs + position * WORD, endMs: onsetMs + (position + 1) * WORD }));
@@ -108,6 +113,21 @@ describe("readSheet", () => {
         sheet.bed.closeMs += 300;
       }).join("\n"),
       /bed\.closeMs is 32300/,
+    );
+  });
+
+  it("ties Sidecar's breakdown to the seam rule and leaves films without one alone", () => {
+    one(
+      problems(sidecar, (sheet) => {
+        sheet.bed.breakdown.toMs = 36_500;
+      }),
+      /bed\.breakdown\.toMs is 36500, while the seam rule draws at 37000/,
+    );
+    assert.deepEqual(
+      problems(shell, (sheet) => {
+        sheet.bed.breakdown.toMs = 36_500;
+      }),
+      [],
     );
   });
 

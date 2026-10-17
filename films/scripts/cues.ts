@@ -103,6 +103,9 @@ export const readSheet = ({ script, json }: { script: FilmScript; json: unknown 
   if (durationMs !== script.duration) problems.push(`durationMs is ${String(durationMs)}, the film runs ${script.duration} ms`);
   const closeMs = number(bed, "closeMs") ?? 0;
   if (Math.abs(closeMs - script.close) > CLOSE) problems.push(`bed.closeMs is ${closeMs}, more than ${CLOSE} ms from the film's close at ${script.close}`);
+  const seam = script.rules.find((rule) => rule.anchor === "seam");
+  const breakdown = number(record(bed?.breakdown), "toMs");
+  if (seam && breakdown !== seam.at) problems.push(`bed.breakdown.toMs is ${String(breakdown)}, while the seam rule draws at ${seam.at}`);
 
   const accents = list(bed?.accents).flatMap((value): Accent[] => {
     const data = record(value);
