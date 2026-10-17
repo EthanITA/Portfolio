@@ -180,6 +180,11 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor, 
   let rewinding = false;
   let fade: JSAnimation | undefined;
   let live: Visitor<S> | undefined;
+  let moving: JSAnimation[] = [];
+
+  const own = (animation: JSAnimation): void => {
+    moving = [...moving.filter((one) => !one.completed), animation];
+  };
 
   const sync = (ms: number, force = false): void => {
     const next = Reels.signature(sorted, ms);
@@ -315,6 +320,9 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor, 
     handover = undefined;
     live?.stop();
     live = undefined;
+    // A visitor's tween still running would keep writing its variable over the rebuilt timeline.
+    for (const one of moving) one.cancel();
+    moving = [];
     driver.value = "demo";
     const el = root.value;
     if (!el) return;
@@ -344,13 +352,13 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor, 
       el.style.setProperty(`--${name}`, String(Array.isArray(value) ? value[1] : value));
       return;
     }
-    animate(el, { [`--${name}`]: value, duration, ease, composition: "none" });
+    own(animate(el, { [`--${name}`]: value, duration, ease, composition: "none" }));
   };
 
   const draw: ReelHandle<S>["draw"] = (selector, to, { duration = 180, ease = MOTION_EASE.out } = {}) => {
     const path = root.value?.querySelector(selector);
     if (!path) return;
-    animate(svg.createDrawable(path), { draw: to, duration: reduced.value ? 0 : duration, ease, composition: "none" });
+    own(animate(svg.createDrawable(path), { draw: to, duration: reduced.value ? 0 : duration, ease, composition: "none" }));
   };
 
   onMounted(() => {
@@ -370,6 +378,7 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor, 
   onBeforeUnmount(() => {
     handover?.pause();
     live?.stop();
+    for (const one of moving) one.cancel();
     timeline?.pause();
     timeline = undefined;
   });
