@@ -63,10 +63,10 @@ const facts = ["Based in Milan", "Italian native, English at work"];
     <section class="section wrap" aria-labelledby="now">
       <h2 id="now" v-enter.words class="heading">Now</h2>
       <ul class="chips">
-        <li v-for="fact in facts" :key="fact" v-enter.stagger class="chip-look">{{ fact }}</li>
-        <li v-enter.stagger><a class="chip-look link" :href="links.linkedin" rel="me noopener" target="_blank">LinkedIn</a></li>
-        <li v-enter.stagger><a class="chip-look link" :href="links.github" rel="me noopener" target="_blank">GitHub</a></li>
-        <li v-enter.stagger><NuxtLink class="chip-look link" to="/cv">CV</NuxtLink></li>
+        <li v-for="fact in facts" :key="fact" v-enter.stagger class="chip-look chip">{{ fact }}</li>
+        <li v-enter.stagger><a class="chip-look chip link" :href="links.linkedin" rel="me noopener" target="_blank">LinkedIn</a></li>
+        <li v-enter.stagger><a class="chip-look chip link" :href="links.github" rel="me noopener" target="_blank">GitHub</a></li>
+        <li v-enter.stagger><NuxtLink class="chip-look chip link" to="/cv">CV</NuxtLink></li>
       </ul>
     </section>
   </div>
@@ -109,9 +109,11 @@ const facts = ["Based in Milan", "Italian native, English at work"];
   @apply m-0 flex list-none flex-wrap gap-2 p-0;
 }
 
-.link {
-  @apply min-h-6;
+.chip {
+  @apply min-h-11 px-4;
+}
 
+.link {
   &:focus-visible {
     @apply focus-ring;
   }

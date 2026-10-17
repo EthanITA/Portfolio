@@ -160,7 +160,7 @@ onBeforeUnmount(() => {
           </p>
           <ul v-else class="bars">
             <li v-for="bar in item.show.bars" :key="bar.value" class="bar">
-              <span class="track" aria-hidden="true"><span class="fill" :data-fill="bar.share" :style="{ transform: `scaleX(${bar.share})` }" /></span>
+              <span class="track" aria-hidden="true"><span class="fill" :data-fill="bar.share" :style="{ '--share': bar.share }" /></span>
               <span class="value">{{ bar.value }}</span>
               <span v-if="bar.note" class="note">{{ bar.note }}</span>
             </li>
@@ -201,7 +201,7 @@ onBeforeUnmount(() => {
 }
 
 .dot {
-  @apply absolute top-3.5 left-3 size-3 -translate-x-1/2 rounded-full bg-primary ring-4 ring-canvas sm:top-4.5;
+  @apply absolute top-4.5 left-3 size-3 -translate-x-1/2 rounded-full bg-primary ring-4 ring-canvas;
 }
 
 .item[data-side="left"] .dot {
@@ -213,7 +213,7 @@ onBeforeUnmount(() => {
 }
 
 .when {
-  @apply font-mono text-4xl font-medium tracking-tight text-fg tabular-nums sm:text-5xl;
+  @apply font-mono text-5xl font-medium tracking-tight text-fg tabular-nums;
 
   &[data-lit="true"] {
     @apply text-primary;
@@ -241,7 +241,7 @@ onBeforeUnmount(() => {
 }
 
 .count {
-  @apply m-0 flex items-baseline gap-2;
+  @apply m-0 flex flex-col gap-1;
 }
 
 .figure {
@@ -270,6 +270,7 @@ onBeforeUnmount(() => {
 
 .fill {
   @apply absolute inset-0 origin-left rounded-full bg-primary;
+  transform: scaleX(var(--share));
 }
 
 .item[data-side="left"] .fill {
