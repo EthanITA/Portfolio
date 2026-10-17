@@ -18,6 +18,7 @@ export default {
     "Pipe a diff in. A commit message comes out.",
     "That click stays yours.",
   ],
+  violet: ["Enter", "not", "asks", "yours"],
   keys: SHELL_SCRIPT.keys,
   island: [
     { at: 0, until: 3000, shape: "line", draw: 400 },

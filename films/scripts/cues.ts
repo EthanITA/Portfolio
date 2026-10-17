@@ -13,7 +13,7 @@ export type Sheet = { closeMs: number; accents: Accent[]; lines: Spoken[] };
 
 export const SHEETS = { sage, shell, sidecar };
 
-const NARRATOR = "narrator";
+export const NARRATOR = "narrator";
 const FRAME = 1000 / 60;
 const LEAD = 30;
 const CLOSE = 20;
@@ -43,7 +43,7 @@ const word = (value: unknown): Word | undefined => {
 };
 
 // Anchors name the spoken word, while the words carry the line's punctuation, so the two meet without it.
-const bare = (value: string): string => value.replace(/\p{P}/gu, "").toLowerCase();
+export const bare = (value: string): string => value.replace(/\p{P}/gu, "").toLowerCase();
 
 const spoken = ({ cue, script, problems }: { cue: Data | undefined; script: FilmScript; problems: string[] }): Spoken | undefined => {
   const line = text(cue, "text") ?? "";
