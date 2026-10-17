@@ -31,6 +31,7 @@ const VOICE_THRESHOLD_DB = -28;
 const VOICE_RATIO = 3;
 const VOICE_DRIVE = 1.6;
 const VOICE_PREROLL = samplesAt(6);
+export const VOICE_TAIL_MS = 30;
 
 type Stem = "ui" | "voice";
 
@@ -45,6 +46,8 @@ export type Placed = {
   audible: boolean;
   tolMs: number;
   text?: string;
+  voice?: string;
+  until?: number;
   group?: string;
   buffer?: Stereo;
   gain: number;
@@ -131,7 +134,7 @@ const expand = (film: FilmSpec): Placed[] => {
         break;
       }
       case "voice":
-        placed.push({ ...common, sound: `voice.${cue.voice}`, stem: "voice", durMs: 0, tolMs: 10, text: cue.text, gain: common.gain });
+        placed.push({ ...common, sound: `voice.${cue.voice}`, stem: "voice", durMs: 0, tolMs: 10, text: cue.text, voice: cue.voice, until: cue.until, gain: common.gain });
         break;
     }
   }
@@ -172,7 +175,37 @@ const level = (raw: Float32Array): Float32Array => {
   return normalizeTo(y.map((v) => Math.tanh(VOICE_DRIVE * v) / Math.tanh(VOICE_DRIVE)), 1);
 };
 
-export const prepareVoice = async (file: string): Promise<{ clip: Stereo; onset: number }> => {
+export type Pauses = { overMs: number; keepMs: number };
+
+export const NARRATOR_PAUSES: Pauses = { overMs: 180, keepMs: 120 };
+
+const closePauses = (x: Float32Array, { overMs, keepMs }: Pauses): Float32Array => {
+  const hop = samplesAt(5);
+  const rms = frameRms(x, hop);
+  const quiet = Math.max(...rms) * fromDb(-38);
+  const half = Math.floor(samplesAt(keepMs) / 2);
+  const pieces: Float32Array[] = [];
+  let copied = 0;
+  let run = -1;
+  rms.forEach((v, i) => {
+    if (v < quiet) {
+      if (run < 0) run = i;
+      return;
+    }
+    if (run > 0 && (i - run) * hop > samplesAt(overMs)) {
+      pieces.push(x.slice(copied, run * hop + half));
+      copied = i * hop - half;
+    }
+    run = -1;
+  });
+  pieces.push(x.slice(copied));
+  pieces.forEach((piece, k) => fadeEdges(piece, k ? samplesAt(5) : 0, k < pieces.length - 1 ? samplesAt(5) : 0));
+  const out = new Float32Array(pieces.reduce((n, p) => n + p.length, 0));
+  pieces.reduce((at, p) => (out.set(p, at), at + p.length), 0);
+  return out;
+};
+
+export const prepareVoice = async (file: string, pauses?: Pauses): Promise<{ clip: Stereo; onset: number }> => {
   const raw = await decodeMono(file);
   const hop = samplesAt(2);
   const rms = frameRms(raw, hop);
@@ -183,11 +216,11 @@ export const prepareVoice = async (file: string): Promise<{ clip: Stereo; onset:
   if (first < 0) throw new Error(`${file} holds no speech`);
   const onset = first * hop;
   const from = Math.max(0, onset - VOICE_PREROLL);
-  const to = Math.min(raw.length, (lastFrame + 1) * hop + samplesAt(60));
+  const to = Math.min(raw.length, (lastFrame + 1) * hop + samplesAt(VOICE_TAIL_MS));
   const segment = new Float32Array(VOICE_PREROLL + (to - onset));
   segment.set(raw.subarray(onset, to), VOICE_PREROLL);
   segment.set(raw.subarray(from, onset), VOICE_PREROLL - (onset - from));
-  const mono = level(segment);
+  const mono = level(pauses ? closePauses(segment, pauses) : segment);
   const spoken = frameRms(mono, hop);
   const loud = Math.max(...spoken);
   const active = spoken.filter((v) => v > loud * fromDb(-40));
@@ -311,7 +344,7 @@ export const compose = async (name: FilmName, bed: boolean, options: ComposeOpti
       const file = await findSource(sources, `voice-${p.id}`);
       if (!file && !bed) continue;
       if (!file) throw new Error(`no voice source for ${p.id}; run generate-voice ${name}`);
-      const { clip, onset } = await prepareVoice(file);
+      const { clip, onset } = await prepareVoice(file, p.voice === "narrator" ? NARRATOR_PAUSES : undefined);
       add(voice, clip, at - onset, p.gain);
       p.durMs = msAt(clip.l.length - onset);
     } else if (p.buffer && p.audible) {
@@ -447,6 +480,8 @@ const cuesJson = (name: FilmName, built: Built, bedGain: number, loudness: Loudn
     sheet: p.sheet,
     marks: p.marks,
     ...(p.text && { text: p.text }),
+    ...(p.voice && { voice: p.voice }),
+    ...(p.until && { untilMs: p.until }),
     ...(p.group && { group: p.group }),
   })),
   typing: built.film.cues

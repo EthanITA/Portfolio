@@ -8,7 +8,7 @@ import sidecarFilm from "../../../films/scripts/sidecar";
 import type { ClickVariant, KeyVariant, TickVariant, WhooshDirection } from "./lib/synth";
 
 export type FilmName = "sidecar" | "sage" | "shell";
-export type VoiceName = "person" | "sage";
+export type VoiceName = "person" | "sage" | "narrator";
 
 type Base = { id: string; at: number; marks: string; sheet: string; gainDb?: number };
 
@@ -20,7 +20,7 @@ export type CueSpec =
   | (Base & { sound: "thud" })
   | (Base & { sound: "line"; durMs: number; cutMs?: number })
   | (Base & { sound: "whoosh"; durMs: number; fromHz: number; toHz: number; direction: WhooshDirection })
-  | (Base & { sound: "voice"; voice: VoiceName; text: string })
+  | (Base & { sound: "voice"; voice: VoiceName; text: string; until?: number })
   | (Base & { sound: "typing"; endMs: number; text: string; seed: number; presses?: number[] });
 
 export type FilmSpec = {
@@ -39,7 +39,14 @@ export const VOICES: Record<VoiceName, { voice: string; direction: string }> = {
     voice: "marin",
     direction: "A calm, warm assistant voice. Quiet, close to the microphone, unhurried and kind, with no sales energy.",
   },
+  narrator: {
+    voice: "ash",
+    direction:
+      "A builder showing a friend what they made last night. Quick, bright and sure of it, close to the microphone, a smile in the voice, a small lift on the last word of each line and a beat of air between lines. Never an announcer, never a movie trailer: no whisper, no breathiness, no uptalk, no stretched vowels.",
+  },
 };
+
+export const spokenForm = (text: string): string => text.replace(/ \? /g, " a question mark ").replace("⌘Z", "Command Z").replace(/\b50\b/g, "fifty");
 
 export const MUSIC_SKELETON =
   "Instrumental ambient underscore for a short product film. Warm, quiet and spacious. Soft analog-style synth pads in D major, a slow sub-bass pulse at 60 beats per minute like a calm heartbeat, and very sparse glass-bell tones that appear once every few bars. No drums, no percussion hits, no vocals, no lyrics, no risers, no impacts, no crescendo, no drop, nothing cinematic or trailer-like. Constant gentle dynamics that stay low in the mix so a voice and small interface sounds can sit on top. It fades in softly, holds steady, and resolves to a single sustained D major chord that rings out and fades to silence.";
@@ -96,6 +103,48 @@ const camera = (film: FilmScript): CueSpec[] => {
 const endCard = (film: FilmScript): CueSpec => ({
   id: "line-end-card", at: film.island.at(-1)?.draw ?? film.end.at, sound: "line", durMs: 600, marks: "the violet line draws on the end card", sheet: "",
 });
+
+const NARRATOR: Record<FilmName, Array<[at: number, until: number, text: string]>> = {
+  shell: [
+    [3300, 7600, "Forget the flags. Type ? and say what you want."],
+    [7900, 9600, "Only looks? It runs."],
+    [13600, 16400, "Changes something? It waits for your Enter."],
+    [18200, 19000, "Or not."],
+    [22400, 24800, "Can't be undone? It asks first."],
+    [27600, 30600, "Pipe a diff in. A commit message comes out."],
+    [33000, 34400, "That click stays yours."],
+  ],
+  sage: [
+    [900, 2800, "A Mac assistant in the notch."],
+    [3100, 5500, "No app to open. Just hold a key."],
+    [7800, 9300, "English, Italian or Chinese."],
+    [10800, 13600, "Then it does the steps. One by one."],
+    [22400, 26000, "Changing something? It asks. You get five seconds."],
+    [26900, 28300, "Return, and you're in."],
+    [32000, 33200, "Money? It stops."],
+    [37200, 38800, "That click stays yours."],
+  ],
+  sidecar: [
+    [1300, 3400, "A companion window for Claude Code."],
+    [4000, 7600, "No scrolling diffs. Each change lands in your list."],
+    [10300, 12600, "Approve a hunk. Reject two lines."],
+    [13600, 15000, "Claude hears about it."],
+    [18400, 21200, "It built a page? Select anything on it."],
+    [22000, 25000, "Send a note. It lands in the conversation."],
+    [28200, 31400, "Changed your mind? ⌘Z takes back 50 decisions."],
+    [34800, 38200, "Claude does the work. You decide what lands."],
+    [41800, 43600, "That click stays yours."],
+  ],
+};
+
+const narratorCues = (film: FilmName): CueSpec[] =>
+  withSheets(
+    film,
+    NARRATOR[film].map(([at, until, text], i, all): CueSpec => {
+      const last = i === all.length - 1;
+      return { id: last ? "narrator-end" : `narrator-${i + 1}`, at, until, sound: "voice", voice: "narrator", text, marks: last ? "the narrator closes over the end card, spoken only" : `the narrator, line ${i + 1}`, sheet: "" };
+    }),
+  );
 
 const sageCues = (): CueSpec[] => {
   const { moments: m, words, fill } = SAGE_SCRIPT;
@@ -181,18 +230,18 @@ export const FILMS: Record<FilmName, FilmSpec> = {
     name: "sidecar",
     durationMs: 45000,
     music: { source: "synth", take: 1, gainDb: 0, fadeInMs: 1200, fadeOutMs: 3000, startMs: 0 },
-    cues: sidecarCues(),
+    cues: [...sidecarCues(), ...narratorCues("sidecar")],
   },
   sage: {
     name: "sage",
     durationMs: 40000,
     music: { source: "synth", take: 1, gainDb: 0, fadeInMs: 1200, fadeOutMs: 3000, startMs: 0 },
-    cues: sageCues(),
+    cues: [...sageCues(), ...narratorCues("sage")],
   },
   shell: {
     name: "shell",
     durationMs: 35000,
     music: { source: "synth", take: 1, gainDb: 0, fadeInMs: 1200, fadeOutMs: 3000, startMs: 0 },
-    cues: shellCues(),
+    cues: [...shellCues(), ...narratorCues("shell")],
   },
 };

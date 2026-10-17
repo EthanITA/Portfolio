@@ -3,13 +3,17 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { SAGE_SCRIPT } from "../../../app/utils/play/script/sage";
 import { MAX_TRUE_PEAK, ROOT, TARGET_LUFS, compose, rawBed } from "./build";
-import { FILMS, type FilmName } from "./films";
+import { FILMS, type FilmName, spokenForm } from "./films";
 import { SAMPLE_RATE, type Stereo, blank, decode, durationOf, measure, run, samplesAt, toDb } from "./lib/audio";
 import type { BedPlan } from "./lib/bed";
 import { biquad } from "./lib/dsp";
 import { room } from "./lib/synth";
 
-type CueRow = { id: string; sound: string; stem: "ui" | "voice"; atMs: number; durMs: number; audible: boolean; onsetTolMs: number; text?: string };
+type CueRow = { id: string; sound: string; stem: "ui" | "voice"; atMs: number; durMs: number; audible: boolean; onsetTolMs: number; text?: string; voice?: string; untilMs?: number };
+
+const NARRATOR_CLEAR_MS = 300;
+
+const FILM_HEADERS: Record<FilmName, string> = { shell: "- AI Shell, ", sage: "- Sage, ", sidecar: "- Sidecar, " };
 type DuckRow = { reason: string; fromMs: number; toMs: number; depthDb: number; attackMs: number; releaseMs: number };
 type CuesFile = { durationMs: number; durationSamples: number; mix: { bedGainDb: number }; cues: CueRow[]; ducks: DuckRow[]; bed?: BedPlan };
 
@@ -226,6 +230,8 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
 
   const highpass = biquad("highpass", MIX_BAND_HZ);
   const mixHigh = mono(mix).map((v) => highpass(v));
+  const highpassNoVoice = biquad("highpass", MIX_BAND_HZ);
+  const mixNoVoiceHigh = mono(mix).map((v, i) => highpassNoVoice(v - voice[i]!));
   const mixMisses: string[] = [];
   const quiet: string[] = [];
   let mixChecked = 0;
@@ -236,7 +242,7 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
     const f = biquad("highpass", MIX_BAND_HZ);
     const at = samplesAt(c.atMs);
     const source = p?.buffer ? mono(p.buffer).map((v) => v * p.gain) : voice.slice(at, at + MATCH_SAMPLES);
-    const m = match(mixHigh, source.map((v) => f(v)).subarray(0, MATCH_SAMPLES), at);
+    const m = match(p?.buffer ? mixNoVoiceHigh : mixHigh, source.map((v) => f(v)).subarray(0, MATCH_SAMPLES), at);
     if (!AUDIBLE_IN_MIX.test(c.sound)) {
       if (Math.abs(m.lag) > 2 || m.ncc < 0.1) quiet.push(c.id);
       continue;
@@ -293,9 +299,19 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
     const voiceDucks = cues.ducks.filter((d) => d.reason.startsWith("voice "));
     const shallow: string[] = [];
     for (const d of voiceDucks) {
+      let musicEnergy = 0;
+      let bedEnergy = 0;
       let worst = -Infinity;
-      for (let ms = Math.ceil(d.fromMs / 20) * 20 + 20; ms + 40 <= d.toMs; ms += 20) if (rmsDb(bed, samplesAt(ms), samplesAt(ms) + hop) > -90) worst = Math.max(worst, ratioAt(ms));
-      if (worst > Math.min(-6, d.depthDb) + 0.5) shallow.push(`  ${d.reason} bed only ${worst.toFixed(1)} dB down, recorded ${d.depthDb} dB`);
+      for (let ms = Math.ceil(d.fromMs / 20) * 20 + 20; ms + 40 <= d.toMs; ms += 20) {
+        const bedDb = rmsDb(bed, samplesAt(ms), samplesAt(ms) + hop);
+        if (bedDb <= -90) continue;
+        musicEnergy += 10 ** (rmsDb(music, samplesAt(ms), samplesAt(ms) + hop) / 10);
+        bedEnergy += 10 ** ((bedDb + gainDb) / 10);
+        if (bedDb > -60) worst = Math.max(worst, ratioAt(ms));
+      }
+      const overall = 10 * Math.log10(musicEnergy / bedEnergy);
+      const floor = Math.min(-6, d.depthDb);
+      if (overall > floor + 0.5 || worst > floor + 2) shallow.push(`  ${d.reason} bed only ${overall.toFixed(1)} dB down over the line and ${worst.toFixed(1)} dB at its shallowest window, recorded ${d.depthDb} dB`);
     }
     report(
       voiceDucks.every((d) => d.depthDb <= -6 && d.attackMs === 120 && d.releaseMs === 400) && shallow.length === 0,
@@ -308,6 +324,42 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
   const copy = await readFile(COPY, "utf8");
   const spoken = cues.cues.filter((c) => c.stem === "voice");
   report(spoken.every((c) => c.text && copy.includes(c.text)), "voiced strings are copy.md strings", spoken.length ? spoken.map((c) => `"${c.text}"`).join(", ") : "no voice in this film");
+
+  const narrator = spoken.filter((c) => c.voice === "narrator");
+  if (narrator.length) {
+    const flat = (s: string): string => s.toLowerCase().replace(/[^a-z0-9' ]/g, "").replace(/\s+/g, " ").trim();
+    const start = copy.indexOf(FILM_HEADERS[name]);
+    const stops = [...Object.values(FILM_HEADERS).map((h) => copy.indexOf(h, start + 1)), copy.indexOf("\n## ", start)].filter((i) => i > start);
+    const block = copy.slice(start, Math.min(...stops));
+    const windows = new Map([...block.matchAll(/^\s+\d+\. ([\d.]+) to ([\d.]+) "(.+?)"/gm)].map((m) => [m[3]!, [Math.round(Number(m[1]) * 1000), Math.round(Number(m[2]) * 1000)] as const]));
+    const misread: string[] = [];
+    for (const c of narrator) {
+      const source = JSON.parse(await readFile(join(dir, "sources", `voice-${c.id}.json`), "utf8")) as { transcript: string };
+      if (flat(source.transcript) !== flat(spokenForm(c.text!))) misread.push(`  ${c.id} was heard as "${source.transcript}"`);
+    }
+    report(misread.length === 0, "each narrator take says its copy.md line with the three spoken swaps", `${narrator.length} lines`);
+    misread.forEach((l) => console.log(l));
+
+    const misfits = narrator.flatMap((c) => {
+      const window = windows.get(c.text!);
+      const end = c.atMs + c.durMs;
+      if (!window) return [`  ${c.id} "${c.text}" has no window in copy.md`];
+      if (c.atMs !== window[0] || c.untilMs !== window[1]) return [`  ${c.id} sits at ${c.atMs} to ${c.untilMs} and copy.md says ${window[0]} to ${window[1]}`];
+      return end <= window[1] ? [] : [`  ${c.id} ends at ${Math.round(end)} ms and its window ends at ${window[1]} ms`];
+    });
+    report(misfits.length === 0, "each narrator take starts on its window and ends inside it", `${narrator.length} lines`);
+    misfits.forEach((l) => console.log(l));
+
+    const others = spoken.filter((c) => c.voice !== "narrator");
+    const crowded = narrator.flatMap((n) =>
+      others.flatMap((o) => {
+        const gap = Math.max(n.atMs - (o.atMs + o.durMs), o.atMs - (n.atMs + n.durMs));
+        return gap >= NARRATOR_CLEAR_MS ? [] : [`  ${n.id} is ${Math.round(gap)} ms from ${o.id}`];
+      }),
+    );
+    report(crowded.length === 0, `the narrator stays ${NARRATOR_CLEAR_MS} ms clear of every other voice`, others.length ? `${others.length} other voice lines` : "no other voice in this film");
+    crowded.forEach((l) => console.log(l));
+  }
 
   if (name === "sage") {
     const misfits = SAGE_SCRIPT.voice.flatMap((window) => {
