@@ -2,7 +2,7 @@ import type { Beat, Channel, Reel, Visitor } from "./reel";
 import type { Typed } from "./script/typed";
 
 import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
-import { PIPE_LINE, SHELL_SCRIPT } from "./script/shell";
+import { ASK_DIST, ASK_FIND, ASK_PUSH, PIPE_LINE, SHELL_SCRIPT } from "./script/shell";
 
 export type Folder = "design" | "shell";
 
@@ -57,6 +57,19 @@ const RECORDS = {
   },
   pipe: { line: PIPE_LINE, folder: "design", output: ["feat(state-message): delay loading message fade-in to prevent flashes"] },
 } satisfies Record<string, Asked | Piped>;
+
+export type RatedAsk = { ask: string; tier: Tier; reason?: string; command: string };
+
+const rated = ({ tier, reason, command }: Asked): Omit<RatedAsk, "ask"> => ({ tier, command, ...(reason ? { reason } : {}) });
+
+// The five suggest records captured from the real CLI (ai-shell-capture.md), the short find included for tight spaces.
+export const RATED_ASKS: RatedAsk[] = [
+  { ask: ASK_FIND, ...rated(RECORDS.find) },
+  { ask: "? find the five biggest files in here", tier: "safe", command: "find . -type f -exec stat -f '%z %N' {} + | sort -rn | head -5" },
+  { ask: ASK_DIST, ...rated(RECORDS.dist) },
+  { ask: ASK_PUSH, ...rated(RECORDS.push) },
+  { ask: "? commit the staged changes with a generated message", ...rated(RECORDS.commit) },
+];
 
 const VERBS = ["delete", "remove", "rm", "erase", "wipe", "clean", "push", "force", "overwrite"];
 
