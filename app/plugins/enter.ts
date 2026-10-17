@@ -31,17 +31,18 @@ const resolve = (el: HTMLElement, value: EnterValue, staggered: boolean): EnterO
   return { ...base, delay: (base.delay ?? 0) + Math.min(index, STAGGER_CAP) * STAGGER_STEP };
 };
 
-const kind = ({ modifiers }: DirectiveBinding<EnterValue>): string => (modifiers.title ? "title" : "");
+const kind = ({ modifiers }: DirectiveBinding<EnterValue>): string => (modifiers.wide ? "wide" : "");
 
 const begin = (el: HTMLElement, { modifiers, value }: DirectiveBinding<EnterValue>): void => {
-  // Off a wide fine-pointer screen a title is the LCP, so it paints at once.
-  if (modifiers.title && !("motionTitle" in document.documentElement.dataset)) {
+  // Off a wide fine-pointer screen these are the LCP, so they paint at once.
+  if (modifiers.wide && !("motionWide" in document.documentElement.dataset)) {
     el.dataset.entered = "";
     return;
   }
   const opts = resolve(el, value, !!modifiers.stagger);
   if (modifiers.words) opts.words = true;
   if (modifiers.line) opts.line = true;
+  if (modifiers.scale) opts.scale = true;
   if (modifiers.now) {
     started.add(el);
     enter(el, opts);

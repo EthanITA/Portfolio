@@ -11,7 +11,7 @@ const markdown = (page: PageSeo): { title: string; href: string; description: st
 });
 
 // Runs before first paint: a stored dark choice never flashes light, and entrances hide only when they will play.
-const headScript = `(function(){var d=document.documentElement;try{d.dataset.theme=localStorage.getItem("cela-theme")==="dark"?"dark":"light"}catch(e){d.dataset.theme="light"}d.dataset.motion=matchMedia("(prefers-reduced-motion: reduce)").matches?"off":"on";if(d.dataset.motion==="on"&&matchMedia("(hover: hover) and (pointer: fine) and (min-width: 1024px)").matches)d.dataset.motionTitle="";setTimeout(function(){if(!("ready" in d.dataset))d.dataset.motion="off"},3000)})()`;
+const headScript = `(function(){var d=document.documentElement;try{d.dataset.theme=localStorage.getItem("cela-theme")==="dark"?"dark":"light"}catch(e){d.dataset.theme="light"}d.dataset.motion=matchMedia("(prefers-reduced-motion: reduce)").matches?"off":"on";if(d.dataset.motion==="on"&&matchMedia("(hover: hover) and (pointer: fine) and (min-width: 1024px)").matches)d.dataset.motionWide="";setTimeout(function(){if(!("ready" in d.dataset))d.dataset.motion="off"},3000)})()`;
 
 const aiCrawlers = [
   "GPTBot",
@@ -64,6 +64,7 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
+      link: [{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }],
       script: [{ innerHTML: headScript, tagPriority: "critical" }],
     },
   },
@@ -80,6 +81,12 @@ export default defineNuxtConfig({
   },
   // The CV links madong.me absolutely on purpose: the printed PDF has no page origin to resolve "/" against.
   linkChecker: { failOnError: true, skipInspections: ["absolute-site-urls"] },
+  hooks: {
+    // Scenes, playgrounds and three load when they intersect, so no prerendered page may prefetch them, reduced motion included.
+    "build:manifest": (manifest) => {
+      for (const meta of Object.values(manifest)) meta.prefetch = false;
+    },
+  },
   modules: ["@nuxtjs/seo", "@nuxt/fonts", "@pinia/nuxt"],
   nitro: { prerender: { crawlLinks: true, ignore: ["/film"], routes: ["/"] } },
   ogImage: { defaults: { height: 630, width: 1200 }, zeroRuntime: true },
