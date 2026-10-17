@@ -2,14 +2,12 @@
 import { Surface } from "@cela/design";
 import { type JSAnimation, type ScrollObserver, animate, onScroll } from "animejs";
 
-import type { Product } from "~/utils/site/films";
 import { links } from "~/utils/site/links";
 import { motionOn } from "~/utils/site/motion";
+import { flagships } from "~/utils/site/products";
 import { seo } from "~/utils/site/seo";
-import type { Run } from "~/utils/site/text";
 import { PHONE_REST_BAND } from "~/utils/stage/camera";
 
-type Flagship = { slug: Product; name: string; text: Run[]; to: string; link: string };
 type Count = { to: number; after?: string; decimals?: number };
 type Work = { name: string; text: string; count?: Count; label: string };
 
@@ -24,34 +22,6 @@ defineOgImage("Card", {
 });
 
 const beats = ["Agents do the work.", "Every step, up to the click you can't take back.", "That click stays yours."];
-
-const flagships: Flagship[] = [
-  {
-    slug: "sidecar",
-    name: "Sidecar",
-    text: ["Sidecar sits next to Claude Code. You review what it changed, line by line, and when you comment on a page it built, the comment lands back in the conversation."],
-    to: "/sidecar",
-    link: "See Sidecar",
-  },
-  {
-    slug: "sage",
-    name: "Sage",
-    text: ["A Mac assistant in the notch. Hold a key, say what you want in English, Italian or Chinese, and it does the steps, asking before anything it can't undo."],
-    to: "/sage",
-    link: "See Sage",
-  },
-  {
-    slug: "shell",
-    name: "AI Shell",
-    text: [
-      "Type ",
-      { code: "?" },
-      " and say what you want. It writes the shell command, runs it when it only looks, and stops with a note before anything that deletes, overwrites or sends data off the machine.",
-    ],
-    to: "/shell",
-    link: "See AI Shell",
-  },
-];
 
 const work: Work[] = [
   { name: "Klarna", text: "Software engineer on the Klarna app.", count: { to: 100, after: "M+" }, label: "monthly active users" },
