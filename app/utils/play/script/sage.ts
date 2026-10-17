@@ -32,12 +32,12 @@ const moments = {
 } as const;
 
 const words = {
-  ask: { text: ASK, at: word(moments.wordsStart, ASK, 300) },
+  ask: { text: ASK, at: word(moments.wordsStart, ASK, 260) },
   second: { text: SECOND_ASK, at: word(moments.words2Start, SECOND_ASK, 400) },
 };
 
 const voice = [
-  { line: ASK, at: moments.wordsStart, until: 7600 },
+  { line: ASK, at: moments.wordsStart, until: 7400 },
   { line: SECOND_ASK, at: moments.words2Start, until: moments.release2 },
 ];
 
