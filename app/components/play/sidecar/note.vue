@@ -15,7 +15,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="note" data-note>
+  <div class="note" data-film-anchor="note" data-note>
     <Surface class="card" pad="none" variant="glass">
       <div ref="field">
         <Textarea
