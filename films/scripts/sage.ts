@@ -23,6 +23,7 @@ export default {
   ],
   violet: ["asks", "Return", "stops", "yours"],
   keys: SAGE_SCRIPT.keys,
+  waits: [{ key: "enter", at: SAGE_SCRIPT.moments.fillStart, until: SAGE_SCRIPT.moments.returnKey }],
   island: [{ at: LINE - 600, shape: "island", draw: LINE, y: 0.25 }],
   rules: [],
   stops: [{ at: SAGE_SCRIPT.moments.payOutlined, until: FOLD }],

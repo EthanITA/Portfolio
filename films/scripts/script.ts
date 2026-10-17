@@ -25,6 +25,8 @@ export type Rule = { anchor: string; at: number };
 
 export type Stop = { at: number; until: number };
 
+export type Wait = { key: string; at: number; until: number };
+
 export type FilmScript = {
   name: "sidecar" | "sage" | "shell";
   duration: number;
@@ -34,6 +36,7 @@ export type FilmScript = {
   lines: string[];
   violet: string[];
   keys: readonly Key[];
+  waits: Wait[];
   island: IslandShot[];
   rules: Rule[];
   stops: Stop[];
