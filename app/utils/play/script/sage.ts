@@ -3,42 +3,46 @@ import type { Key } from "./typed.ts";
 export const ASK = "I want to join the standup";
 export const SECOND_ASK = "pay the invoice";
 
-const word = (at: number, text: string, every: number): number[] => text.split(" ").map((_, index) => at + index * every);
-
 const moments = {
-  optionDown: 3000,
-  wordsStart: 5800,
-  release: 8600,
-  understood: 9600,
-  goal: 12_000,
-  step1: 12_600,
-  tick1: 14_500,
-  step2: 15_000,
-  tick2: 17_000,
-  step3: 17_500,
-  tick3: 19_500,
-  cardIn: 22_000,
-  fillStart: 22_300,
-  returnKey: 26_500,
-  joined: 26_500,
-  fold: 28_400,
-  hold2: 30_000,
-  words2Start: 30_400,
-  release2: 31_600,
-  pageIn: 32_400,
-  scrollToPay: 32_700,
-  payOutlined: 33_200,
-  handBack: 33_200,
+  optionDown: 4500,
+  wordsStart: 5500,
+  release: 7500,
+  understood: 9500,
+  goal: 11_000,
+  step1: 11_500,
+  tick1: 14_000,
+  step2: 14_500,
+  tick2: 16_000,
+  step3: 16_500,
+  tick3: 18_000,
+  cardIn: 20_000,
+  fillStart: 20_500,
+  returnKey: 24_000,
+  joined: 24_000,
+  fold: 26_000,
+  hold2: 28_000,
+  words2Start: 28_500,
+  release2: 30_000,
+  pageIn: 30_500,
+  scrollToPay: 31_000,
+  payOutlined: 32_000,
+  handBack: 32_000,
 } as const;
 
+// Word starts and lengths of the trimmed takes, as aligned in films/audio/sage/sources/words.json, so the island types with the voice.
+const takes = {
+  ask: { starts: [0, 70, 280, 470, 840, 910], ms: 1534 },
+  second: { starts: [0, 160, 410], ms: 986 },
+};
+
 const words = {
-  ask: { text: ASK, at: word(moments.wordsStart, ASK, 260) },
-  second: { text: SECOND_ASK, at: word(moments.words2Start, SECOND_ASK, 400) },
+  ask: { text: ASK, at: takes.ask.starts.map((ms) => moments.wordsStart + ms) },
+  second: { text: SECOND_ASK, at: takes.second.starts.map((ms) => moments.words2Start + ms) },
 };
 
 const voice = [
-  { line: ASK, at: moments.wordsStart, until: 7400 },
-  { line: SECOND_ASK, at: moments.words2Start, until: moments.release2 },
+  { line: ASK, at: moments.wordsStart, until: moments.wordsStart + takes.ask.ms },
+  { line: SECOND_ASK, at: moments.words2Start, until: moments.words2Start + takes.second.ms },
 ];
 
 const keys: Key[] = [
@@ -49,9 +53,10 @@ const keys: Key[] = [
 
 export const SAGE_SCRIPT = {
   duration: 40_000,
-  still: 24_800,
-  // The live loop opens two seconds before Option goes down, so the folded island is seen waiting with its hint.
-  loop: { from: 1000, to: 37_500 },
+  // Half the countdown line, so the still shows the card waiting on Return.
+  still: 23_000,
+  // The live loop opens before Option goes down, so the folded island is seen waiting with its hint.
+  loop: { from: 2000, to: 36_000 },
   fill: 5000,
   moments,
   words,

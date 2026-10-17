@@ -37,6 +37,7 @@ export type SidecarState = {
   redo: Decision[];
   confirming?: string;
   spot?: string;
+  inView?: string;
   composing: boolean;
   draft: string;
   tray: string[];
@@ -55,7 +56,7 @@ const remove = (line: number, text: string): DiffLine => ({ mark: "remove", line
 const TOY_LINE = "A toy version that matches words. Sage and AI Shell ask a separate model to rate every step, never the one that wrote it.";
 
 // Real lines of this repo's own pages, so the review shows the site reviewing itself.
-const EDITS = {
+export const EDITS = {
   index: {
     path: "app/pages/index.vue",
     result: "Updated app/pages/index.vue with 4 additions and 2 removals",
@@ -412,6 +413,8 @@ export const motionOf = (before: SidecarState, after: SidecarState): Motion[] =>
 
 const at = (ms: number, apply: (state: SidecarState) => void): Beat<SidecarState> => ({ at: ms, apply: (state) => apply(state) });
 
+const IN_VIEW_LEAD = 600;
+
 const typing = ({ text, at: presses }: Typed): Beat<SidecarState>[] =>
   presses.map((ms, index) => at(ms, (state) => (state.draft = text.slice(0, index + 1))));
 
@@ -424,6 +427,8 @@ const beats: Beat<SidecarState>[] = [
   at(m.edit3, (state) => Sidecar.edit(state, "css")),
   at(m.row3, (state) => Sidecar.land(state, "css")),
   at(m.acceptHunk, (state) => Sidecar.hunk(state, "index-149", true)),
+  // A short phone frame shows one hunk at a time, so the review brings the third one in before it is rejected.
+  at(m.rejectHunk - IN_VIEW_LEAD, (state) => (state.inView = "index-174")),
   at(m.rejectHunk, (state) => Sidecar.hunk(state, "index-174", false)),
   at(m.tellStart, (state) => {
     const decision = state.undo.at(-1);
@@ -440,7 +445,9 @@ const beats: Beat<SidecarState>[] = [
   at(m.noteLands, Sidecar.landFlight),
   at(m.review, (state) => (state.face = "review")),
   at(m.undo, Sidecar.undo),
+  at(m.undoAgain, Sidecar.undo),
   at(m.redo, Sidecar.redo),
+  at(m.redoAgain, Sidecar.redo),
 ];
 
 const derive = (): Channel[] => {

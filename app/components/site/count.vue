@@ -6,10 +6,10 @@ import { motionOn } from "~/utils/site/motion";
 
 const COUNT_MS = 800;
 
-const { to, after = "", decimals = 0 } = defineProps<{ to: number; after?: string; decimals?: number }>();
+const { to, before = "", after = "", decimals = 0 } = defineProps<{ to: number; before?: string; after?: string; decimals?: number }>();
 
 const el = useTemplateRef<HTMLElement>("el");
-const format = (n: number): string => `${n.toFixed(decimals)}${after}`;
+const format = (n: number): string => `${before}${n.toFixed(decimals)}${after}`;
 
 let observer: IntersectionObserver | undefined;
 

@@ -88,4 +88,15 @@ const { rows } = defineProps<{ rows: TermRow[] }>();
 .input {
   @apply mx-3 mb-3 flex h-9 flex-none items-center rounded-field border border-border px-3 font-mono typo-caption text-muted;
 }
+
+/* On a short phone frame the empty prompt gives its height to the rows, so the latest edit stays readable. */
+@container sidecar (max-width: 720px) and (max-height: 720px) {
+  .screen {
+    @apply px-3 py-2;
+  }
+
+  .input {
+    @apply hidden;
+  }
+}
 </style>
