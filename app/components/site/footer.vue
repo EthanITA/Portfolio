@@ -31,6 +31,10 @@ const { endsOnContact = false } = defineProps<{ endsOnContact?: boolean }>();
 
 .joined {
   @apply mt-0;
+
+  & .inner {
+    @apply pt-0;
+  }
 }
 
 .rule {

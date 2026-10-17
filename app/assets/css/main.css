@@ -25,7 +25,7 @@
   }
 }
 
-/* 65ch follows this face's zero, 0.73em wide, so max-w-prose read 95 half-ems against section 7's 70. */
+/* 65ch follows this face's zero, 0.73em wide, so max-w-prose read 95 half-ems against the site's 70. */
 @theme {
   --max-width-prose: 35em;
 }
