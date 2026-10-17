@@ -1,0 +1,9 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "marin",
+  "text": "Stopped at Pay. It's yours to press.",
+  "transcript": "Stopped at Pay. It's yours to press.",
+  "id": "gen-1792183668-kEg9W42uPqkThJHuCETo",
+  "cost": 0,
+  "bytes": 127200
+}

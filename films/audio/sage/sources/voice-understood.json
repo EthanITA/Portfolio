@@ -1,0 +1,9 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "marin",
+  "text": "Understood",
+  "transcript": "Understood",
+  "id": "gen-1792183630-zJYZNwBER7YxMCYliM65",
+  "cost": 0,
+  "bytes": 160800
+}
