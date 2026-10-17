@@ -325,8 +325,9 @@ button.name {
   @apply focus-ring;
 }
 
+/* The top inset matches the arrows' overhang above the hunk, so the clip never shaves the first one. */
 .diff {
-  @apply flex min-h-0 flex-1 flex-col overflow-hidden p-2;
+  @apply flex min-h-0 flex-1 flex-col overflow-hidden p-2 pt-2.5;
 }
 
 .hunks {
@@ -400,9 +401,8 @@ button.name {
     @apply py-1;
   }
 
-  /* The top inset matches the arrows' overhang above the hunk, so they stay inside the scroll box. */
   .diff {
-    @apply overflow-y-auto overscroll-contain pt-2.5;
+    @apply overflow-y-auto overscroll-contain;
   }
 }
 </style>
