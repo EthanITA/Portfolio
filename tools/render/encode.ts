@@ -111,7 +111,7 @@ export const poster = async ({ frames, index, out, width }: { frames: Frames; in
   const source = join(frames.dir, Frame.name(index));
   const codec: Record<string, string[]> = {
     ".jpg": ["-c:v", "mjpeg", "-q:v", "2", "-pix_fmt", "yuvj420p"],
-    ".webp": ["-c:v", "libwebp", "-quality", "86", "-pix_fmt", "yuv420p"],
+    ".webp": ["-c:v", "libwebp", "-lossless", "1", "-compression_level", "6"],
     ".avif": ["-c:v", "libaom-av1", "-still-picture", "1", "-crf", "22", "-cpu-used", "4", "-pix_fmt", "yuv420p", "-f", "avif"],
     ".png": ["-c:v", "png"],
   };
