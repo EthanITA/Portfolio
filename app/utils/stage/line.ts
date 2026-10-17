@@ -114,7 +114,7 @@ export type Ledger = {
   prune: (now: number) => void;
 };
 
-const ORDER: Record<number, number[]> = { 2: [0, 1], 4: [1, 2, 0, 3] };
+const ORDER: Record<number, number[]> = { 4: [1, 2, 0, 3] };
 
 export const createLedger = (reduced: () => boolean): Ledger => {
   const actions: Action[] = [];

@@ -208,6 +208,7 @@ export type Stage = {
   setPalette: (next: Palette, instant?: boolean) => Promise<StageTheme>;
   advance: (dt: number) => boolean;
   resize: (width: number, height: number) => void;
+  showWidth: (amount: number) => void;
   warm: () => Promise<void>;
   render: () => void;
   dispose: () => void;
@@ -312,15 +313,31 @@ const assemble = ({ canvas, camera: preset, film, mobile, frame = 16 / 9, fog: d
     return !!lerp;
   };
 
+  let size = { width: 0, height: 0 };
+  let widthShown = 0;
+
   // Cover framing: past the reference aspect the vertical fov narrows, so the canvas crops like an object-fit: cover poster.
+  const project = (): void => {
+    const aspect = size.width / size.height;
+    const half = Math.tan((fov * Math.PI) / 360);
+    camera.aspect = aspect;
+    if (aspect > frame) camera.fov = (Math.atan((half * frame) / aspect) * 360) / Math.PI;
+    // A cover crop would cut the hero's right-third pill under 16:9, so its rest widens to the frame's width like its contained poster.
+    else camera.fov = aspect < frame && widthShown ? (Math.atan(half * (1 + widthShown * (frame / aspect - 1))) * 360) / Math.PI : fov;
+    camera.updateProjectionMatrix();
+  };
+
   const resize = (width: number, height: number): void => {
     if (!width || !height) return;
     renderer.setSize(width, height, false);
-    const aspect = width / height;
-    const half = Math.tan((fov * Math.PI) / 360);
-    camera.aspect = aspect;
-    camera.fov = aspect > frame ? (Math.atan((half * frame) / aspect) * 360) / Math.PI : fov;
-    camera.updateProjectionMatrix();
+    size = { width, height };
+    project();
+  };
+
+  const showWidth = (amount: number): void => {
+    if (amount === widthShown) return;
+    widthShown = amount;
+    if (size.width) project();
   };
 
   // Without the parallel-compile extension compileAsync logs a THREE warning, and a plain compile still links off the main thread.
@@ -362,6 +379,7 @@ const assemble = ({ canvas, camera: preset, film, mobile, frame = 16 / 9, fog: d
     setPalette,
     advance,
     resize,
+    showWidth,
     warm,
     render,
     dispose,
