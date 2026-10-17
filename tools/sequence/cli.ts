@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { availableParallelism, tmpdir } from "node:os";
+import { createServer } from "node:net";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { chromium } from "playwright";
@@ -29,7 +30,7 @@ const { positionals, values } = parseArgs({
   options: {
     work: { type: "string", default: join(tmpdir(), "madong-sequence") },
     stills: { type: "string" },
-    port: { type: "string", default: "3104" },
+    port: { type: "string" },
     themes: { type: "string", default: THEMES.join(",") },
   },
 });
@@ -38,6 +39,14 @@ const work = resolve(values.work);
 const themes = values.themes.split(",").filter((theme): theme is Theme => (THEMES as readonly string[]).includes(theme));
 const pad = (index: number): string => String(index).padStart(3, "0");
 const mb = (bytes: number): string => `${(bytes / 1_000_000).toFixed(2)} MB`;
+
+const freePort = (): Promise<number> =>
+  new Promise((done) => {
+    const probe = createServer().listen(0, () => {
+      const address = probe.address();
+      probe.close(() => done(typeof address === "object" && address ? address.port : 0));
+    });
+  });
 
 // Same BT.709 tagging as tools/render, so the baked --canvas background decodes to the page colour.
 const scale = (width: number): string[] => ["-vf", `scale=${width}:-2:out_color_matrix=bt709:flags=lanczos`, "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "iec61966-2-1"];
@@ -92,7 +101,8 @@ const stills = async (): Promise<void> => {
 
 const render = async (): Promise<Quads> => {
   const route = "/film/sequence";
-  const server = await Render.serve({ route, port: Number(values.port), root });
+  // Render.serve reuses whatever answers on its port, so a fixed one can render another worktree's dev server.
+  const server = await Render.serve({ route, port: values.port ? Number(values.port) : await freePort(), root });
   try {
     for (const theme of themes) {
       const started = performance.now();
