@@ -17,6 +17,7 @@ export const NARRATOR = "narrator";
 const FRAME = 1000 / 60;
 const LEAD = 30;
 const CLOSE = 20;
+const CLEAR = 200;
 
 type Data = Record<string, unknown>;
 
@@ -140,6 +141,20 @@ export const readSheet = ({ script, json }: { script: FilmScript; json: unknown 
     const next = lines[index + 1];
     if (next && next.onsetMs < line.endMs) problems.push(`line "${next.text}" starts at ${next.onsetMs} ms, before "${line.text}" ends at ${line.endMs}`);
   });
+  const spans = voices.flatMap((cue) => {
+    const timed = list(cue?.words)
+      .map(word)
+      .filter((item): item is Word => Boolean(item));
+    const first = timed[0]?.startMs ?? number(cue, "onsetMs");
+    const last = timed.at(-1)?.endMs ?? number(cue, "endMs");
+    return typeof first === "number" && typeof last === "number" ? [{ text: text(cue, "text") ?? "", voice: text(cue, "voice") ?? "", first, last }] : [];
+  });
+  for (const earlier of spans) {
+    for (const later of spans) {
+      if (earlier.voice === later.voice || later.first < earlier.first || later.first - earlier.last >= CLEAR) continue;
+      problems.push(`"${later.text}" (${later.voice}) starts ${later.first - earlier.last} ms after "${earlier.text}" (${earlier.voice}) ends, under ${CLEAR} ms`);
+    }
+  }
 
   return { sheet: { closeMs, accents, lines }, problems };
 };

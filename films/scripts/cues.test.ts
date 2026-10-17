@@ -292,13 +292,21 @@ describe("readSheet", () => {
   it("leaves a voice that speaks no line out, and reads Sage's hand-back as a line in its own voice", () => {
     const handBack = "Stopped at Pay. It's yours to press.";
     const sheet = fixture(sage);
-    sheet.cues.push({ stem: "voice", voice: "person", text: "I want to join the standup", onsetMs: 5800, endMs: 7700, words: [] });
+    sheet.cues.push({ stem: "voice", voice: "person", text: "I want to join the standup", onsetMs: 7300, endMs: 8700, words: [] });
     const cue = sheet.cues.find((item) => item.text === handBack);
     if (cue) cue.voice = "sage";
     const { sheet: read, problems: found } = readSheet({ script: sage, json: sheet });
     assert.deepEqual(found, []);
     assert.equal(read.lines.find((item) => item.text === handBack)?.voice, "sage");
     assert.equal(read.lines.length, sage.lines.length);
+  });
+
+  it("keeps 200 ms between one speaker's last word and another's first, and lets the narrator follow itself", () => {
+    const ask = (onsetMs: number) => (sheet: Fixture) => {
+      sheet.cues.push({ stem: "voice", voice: "person", text: "I want to join the standup", onsetMs, endMs: onsetMs + 1400, words: [{ text: "I", startMs: onsetMs, endMs: onsetMs + 1400 }] });
+    };
+    one(problems(sage, ask(7100)), /"I want to join the standup" \(person\) starts 100 ms after "No app to open\. Just hold a key\." \(narrator\) ends, under 200 ms/);
+    assert.deepEqual(problems(sage, ask(7200)), []);
   });
 
   it("refuses a narrator cue that speaks no line", () => {
