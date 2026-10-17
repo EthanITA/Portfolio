@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
-import { type JSAnimation, type ScrollObserver, animate, onScroll, stagger, svg } from "animejs";
+import { type JSAnimation, animate, stagger, svg } from "animejs";
 
 import { screen } from "~/utils/scroll/frames";
 import type { Product } from "~/utils/site/films";
-import { SCRUB_SMOOTH, motionOn } from "~/utils/site/motion";
+import { motionOn } from "~/utils/site/motion";
+import { type Scrub, useScrub } from "~/utils/site/scrub";
 
 export type Bar = { value: number; share: number; note?: string };
 
@@ -32,7 +33,7 @@ const lit = ref(items.length - 1);
 let points: { x: number; y: number }[] = [];
 let stops: number[] = [];
 let draw: JSAnimation | undefined;
-let scroller: ScrollObserver | undefined;
+let scrub: Scrub | undefined;
 let resize: ResizeObserver | undefined;
 
 const year = (when: string): number | undefined => (/^\d{4}$/.test(when) ? Number(when) : undefined);
@@ -115,22 +116,34 @@ onMounted(async () => {
   reached.value = items.map(() => false);
   lit.value = -1;
   for (const fill of root.value.querySelectorAll<HTMLElement>("[data-fill]")) fill.style.transform = "scaleX(0)";
-  scroller = onScroll({ target: root.value, enter: "center top", leave: "min+=50% bottom", sync: SCRUB_SMOOTH });
-  draw = animate(line, { draw: ["0 0", "0 1"], ease: "linear", autoplay: scroller, onUpdate: (self) => reach(self.progress) });
+  const timeline = root.value;
+  const drawn = animate(line, { draw: ["0 0", "0 1"], ease: "linear", autoplay: false });
+  draw = drawn;
+  // From 0, so a restored scroll draws the head in instead of landing every node at once.
+  scrub = useScrub({
+    goal: () => {
+      const rect = timeline.getBoundingClientRect();
+      return Math.min(Math.max((innerHeight / 2 - rect.top) / rect.height, 0), 1);
+    },
+    update: (progress) => {
+      drawn.seek(progress * drawn.duration);
+      reach(progress);
+    },
+    from: 0,
+  });
   resize = new ResizeObserver(async () => {
     trace();
     await nextTick();
     measure();
-    // onScroll resolves its target a frame after creation, and the observer's first callback can land before that.
-    if (scroller?.target) scroller.refresh();
+    scrub?.wake();
   });
-  resize.observe(root.value);
+  resize.observe(timeline);
 });
 
 onBeforeUnmount(() => {
   resize?.disconnect();
+  scrub?.stop();
   draw?.revert();
-  scroller?.revert();
 });
 </script>
 
