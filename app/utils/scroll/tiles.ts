@@ -269,7 +269,8 @@ export const createTiles = async ({ canvas, grid, pixelRatio, onLost }: TileOpti
     });
   };
 
-  renderer.compile(scene, camera);
+  // A cold shader cache links for hundreds of ms; the async compile polls instead of blocking the main thread.
+  await renderer.compileAsync(scene, camera);
 
   return {
     setFrame: (bitmap) => swap(ground.material, bitmap),
