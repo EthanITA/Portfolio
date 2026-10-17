@@ -234,7 +234,7 @@ onBeforeUnmount(() => {
 }
 
 .title {
-  @apply m-0 flex max-w-4xl flex-col gap-2 text-4xl font-bold tracking-tight max-lg:short:text-3xl xl:text-5xl;
+  @apply m-0 flex max-w-4xl flex-col gap-2 text-4xl font-bold tracking-tight text-balance max-lg:short:text-3xl xl:text-5xl;
 }
 
 /* From lg the island's left cap sits at a fixed share of the hero's width, so the H1 stops one gutter short of it. */
@@ -253,7 +253,7 @@ onBeforeUnmount(() => {
 }
 
 .roles {
-  @apply typo-body-lg max-w-xl text-muted max-lg:short:typo-body;
+  @apply typo-body-lg max-w-prose text-pretty text-muted max-lg:short:typo-body;
 }
 
 .actions {
@@ -284,7 +284,7 @@ onBeforeUnmount(() => {
 }
 
 .small {
-  @apply typo-caption max-w-xl text-muted;
+  @apply typo-caption max-w-prose text-muted;
 }
 
 /* The bleed lines the text up with the heading, and the clip drops the hairlines cells draw past the edge. */

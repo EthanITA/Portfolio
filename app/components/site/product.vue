@@ -51,7 +51,7 @@ const next = computed(() => nextFlagship(slug));
 }
 
 .sub {
-  @apply typo-heading-xl text-balance text-muted;
+  @apply typo-heading-xl max-w-prose text-balance text-muted;
 }
 
 .lead {
