@@ -38,7 +38,7 @@ const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
 
   const hero = STAGE_CAMERA.hero;
   const rest = restAt(hero, HERO_REST.wide);
-  const wide = matchMedia("(min-width: 768px)");
+  const wide = matchMedia("(min-width: 1024px)");
   const fine = matchMedia("(hover: hover) and (pointer: fine)");
 
   // MOTION_SPRING goes through animejs's deprecated createSpring, which warns on every call; these are its gentle and snappy values.
@@ -103,6 +103,8 @@ const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
     const lerping = stage.advance(dt);
     if (follow) track(ms);
     const { position, target } = pose();
+    // The rest shows the whole frame width like its poster, then glides into the cover crop the sequence's frame 0 is drawn at.
+    stage.showWidth(!lost && wide.matches ? 1 - sineInOut(clamp01(progress)) : 0);
     const reforming = !lost && !wide.matches && progress >= RIDE.until;
     const shown = reforming ? MOTION_EASE.out(window01(progress, RIDE.from, RIDE.to - RIDE.from)) : 1;
     // Breath and tilt fade out at the end of the glide so the handoff lands on the sequence's still frame 0.
@@ -180,7 +182,7 @@ defineExpose({ ...seekable, restMs: REST_MS });
 
 <template>
   <div ref="root" class="hero" data-scene="hero" :data-state="state" :data-theme-applied="theme" :data-lost="lost">
-    <StagePoster v-if="mode === 'live'" :name="lost ? 'lost' : 'hero'" :theme="theme" eager />
+    <StagePoster v-if="mode === 'live'" :name="lost ? 'lost' : 'hero'" :theme="theme" :show-width="!lost" eager />
     <canvas ref="canvas" class="canvas" />
   </div>
 </template>
