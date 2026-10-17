@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { describe, it } from "node:test";
 import { readSheet, SHEETS } from "./cues.ts";
 import sage from "./sage.ts";
@@ -47,8 +50,15 @@ describe("readSheet", () => {
     for (const script of [shell, sage, sidecar]) assert.deepEqual(problems(script), []);
   });
 
-  it("refuses every committed cues.json until sound exports the 120 bpm grid", () => {
-    for (const script of [shell, sage, sidecar]) assert.match(readSheet({ script, json: SHEETS[script.name], mixSha256: MIX }).problems.join("\n"), /bed\.grid\.bpm/);
+  it("accepts every committed cues.json against the sha256 of its own mix.wav", async () => {
+    for (const script of [shell, sage, sidecar]) {
+      const mixSha256 = createHash("sha256")
+        .update(await readFile(join(import.meta.dirname, "../audio", script.name, "mix.wav")))
+        .digest("hex");
+      const { sheet, problems: found } = readSheet({ script, json: SHEETS[script.name], mixSha256 });
+      assert.deepEqual(found, [], script.name);
+      assert.equal(sheet.lines.length, script.lines.length, script.name);
+    }
   });
 
   it("refuses a sheet measured on another mix, or on none it names", () => {
