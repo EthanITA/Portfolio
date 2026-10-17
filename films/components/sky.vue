@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { readSheet, SHEETS } from "~~/films/scripts/cues";
 import { WINDOW, type FilmScript } from "~~/films/scripts/script";
-import { Sky, STEPS, type Line, type Pose, type Size, type Widths } from "~~/films/utils/sky";
+import { Glyphs, type Mover } from "~~/films/utils/glyphs";
+import { Sky, STEPS, type Line, type Size, type Widths } from "~~/films/utils/sky";
 
 const { script } = defineProps<{ script: FilmScript }>();
-
-type Mover = { element: HTMLElement; at: number; leave: number; swell: boolean };
 
 const spoken = readSheet({ script, json: SHEETS[script.name] }).sheet.lines;
 const { onFrame, defer, cut } = useFilmContext();
@@ -19,31 +18,6 @@ let movers: Mover[] = [];
 
 const box = { left: `${WINDOW[cut].x}px`, width: `${WINDOW[cut].width}px`, bottom: `calc(100% - ${WINDOW[cut].y}px)` };
 
-const glyphs = (word: HTMLElement): number[] => {
-  const node = word.firstChild;
-  if (!(node instanceof Text)) return [];
-  const left = word.getBoundingClientRect().left;
-  const range = document.createRange();
-  let start = 0;
-  return Sky.letters(word.textContent ?? "").map((letter) => {
-    range.setStart(node, start);
-    range.setEnd(node, start + letter.length);
-    start += letter.length;
-    return range.getBoundingClientRect().left - left;
-  });
-};
-
-// Unicode-range subsets load per glyph, so each face is asked for with the text it has to set.
-const fonts = (ruler: HTMLElement): Promise<unknown> => {
-  const texts = new Map<string, string>();
-  for (const word of ruler.querySelectorAll<HTMLElement>("[data-word], .film-sky-chip")) {
-    const { fontWeight, fontSize, fontFamily } = getComputedStyle(word);
-    const font = `${fontWeight} ${fontSize} ${fontFamily}`;
-    texts.set(font, `${texts.get(font) ?? ""}${word.textContent ?? ""}`);
-  }
-  return Promise.all([...texts].map(([font, text]) => document.fonts.load(font, text)));
-};
-
 const read = (ruler: HTMLElement): Partial<Record<Size, Widths>>[] =>
   spoken.map((_, index) =>
     Object.fromEntries(
@@ -51,7 +25,7 @@ const read = (ruler: HTMLElement): Partial<Record<Size, Widths>>[] =>
         const line = ruler.querySelector<HTMLElement>(`[data-size="${step.size}"] [data-line="${index}"]`);
         if (!line) return [];
         const words = [...line.querySelectorAll<HTMLElement>("[data-word]")];
-        words.forEach((word, position) => offsets.set(`${step.size}:${index}:${position}`, glyphs(word)));
+        words.forEach((word, position) => offsets.set(`${step.size}:${index}:${position}`, Glyphs.offsets(word)));
         return [[step.size, { words: words.map((word) => word.getBoundingClientRect().width), space: line.querySelector("[data-space]")?.getBoundingClientRect().width ?? 0 }]];
       }),
     ),
@@ -59,17 +33,12 @@ const read = (ruler: HTMLElement): Partial<Record<Size, Widths>>[] =>
 
 const build = async (): Promise<void> => {
   if (!ruler.value) return;
-  await fonts(ruler.value);
+  await Glyphs.load(ruler.value, "[data-word], .film-sky-chip");
   const planned = Sky.plan({ lines: spoken, measured: read(ruler.value), cut, fold: script.rig.until, violet: script.violet });
   lines.value = planned.lines;
   problems.value = planned.problems;
   await nextTick();
-  movers = [...(sky.value?.querySelectorAll<HTMLElement>("[data-at]") ?? [])].map((element) => ({
-    element,
-    at: Number(element.dataset.at),
-    leave: Number(element.dataset.leave),
-    swell: "swell" in element.dataset,
-  }));
+  if (sky.value) movers = Glyphs.movers(sky.value);
 };
 
 const letterAt = ({ line, word, letter }: { line: number; word: number; letter: number }): string => {
@@ -77,16 +46,10 @@ const letterAt = ({ line, word, letter }: { line: number; word: number; letter: 
   return `${offsets.get(`${size}:${line}:${word}`)?.[letter] ?? 0}px`;
 };
 
-const apply = (element: HTMLElement, { opacity, y, blur, scale }: Pose): void => {
-  element.style.opacity = String(opacity);
-  element.style.transform = y || scale !== 1 ? `translateY(${y}em) scale(${scale})` : "";
-  element.style.filter = blur ? `blur(${blur}px)` : "none";
-};
-
 onMounted(() => defer(build()));
 
 onFrame((ms) => {
-  for (const { element, ...timing } of movers) apply(element, Sky.pose({ ms, ...timing }));
+  for (const { element, ...timing } of movers) Glyphs.apply(element, Sky.pose({ ms, ...timing }));
 });
 </script>
 
