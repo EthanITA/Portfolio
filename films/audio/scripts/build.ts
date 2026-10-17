@@ -20,6 +20,10 @@ const VOICE_ACTIVE_RMS = 0.1;
 const MIN_KEY_GAP_MS = 55;
 const DUCK_MARGIN_DB = 11;
 const DUCK_DEEPEST_DB = -12;
+const DUCK_VOICE_DB = -6;
+const DUCK_ATTACK_MS = 120;
+const DUCK_RELEASE_MS = 400;
+const EDGE_FADE_MS = 2;
 const SPEECH_LOW_HZ = 300;
 const SPEECH_HIGH_HZ = 3400;
 const CARVES: Array<[number, number, number]> = [[650, 0.7, -12], [2200, 0.7, -12]];
@@ -49,10 +53,13 @@ export type Placed = {
 
 const sum = (xs: number[]): number => xs.reduce((a, b) => a + b, 0);
 
-export type PressOptions = { startMs: number; endMs: number; text: string; seed: number; everyMs?: number };
+export type PressOptions = { startMs: number; endMs: number; text: string; seed: number; presses?: number[] };
 
-export const pressTimes = ({ startMs, endMs, text, seed, everyMs }: PressOptions): number[] => {
-  if (everyMs) return Array.from({ length: text.length }, (_, i) => startMs + Math.round(i * everyMs));
+export const pressTimes = ({ startMs, endMs, text, seed, presses }: PressOptions): number[] => {
+  if (presses) {
+    if (presses.length !== text.length) throw new Error(`"${text}" has ${text.length} characters but ${presses.length} press times`);
+    return presses;
+  }
   const rand = rng(seed);
   const gaps = Array.from({ length: text.length - 1 }, (_, i) => (1 + (rand() - 0.5) * 0.5) * (text[i] === " " ? 1.4 : 1));
   const total = sum(gaps);
@@ -69,9 +76,9 @@ const expand = (film: FilmSpec): Placed[] => {
     const common = { id: cue.id, atMs: cue.at, marks: cue.marks, sheet: cue.sheet, audible: true, gain: fromDb(cue.gainDb ?? 0), offset: 0 };
     switch (cue.sound) {
       case "typing": {
-        const times = pressTimes({ startMs: cue.at, endMs: cue.endMs, text: cue.text, seed: seed(cue.id), everyMs: cue.everyMs });
+        const times = pressTimes({ startMs: cue.at, endMs: cue.endMs, text: cue.text, seed: seed(cue.id), presses: cue.presses });
         const rand = rng(seed(`${cue.id}/gap`));
-        const jitter = cue.everyMs ? 40 : 0;
+        const jitter = cue.presses ? 40 : 0;
         let last = -Infinity;
         let gap = MIN_KEY_GAP_MS;
         times.forEach((t, i) => {
@@ -113,8 +120,11 @@ const expand = (film: FilmSpec): Placed[] => {
         placed.push({ ...common, sound: "thud", stem: "ui", durMs: durMsOf(buffer), tolMs: 4, buffer, gain: common.gain * fromDb(PEAK_DB.thud) });
         break;
       }
+      case "marker":
+        placed.push({ ...common, sound: "marker", stem: "ui", durMs: 0, tolMs: 0, audible: false });
+        break;
       case "line": {
-        const buffer = synth.line(cue.durMs);
+        const buffer = synth.line(cue.durMs, cue.cutMs);
         placed.push({ ...common, sound: `line.${cue.durMs}`, stem: "ui", durMs: durMsOf(buffer), tolMs: cue.durMs > 2000 ? 20 : 12, buffer, gain: common.gain * fromDb(PEAK_DB.line) });
         break;
       }
@@ -216,7 +226,9 @@ const fitBed = (src: Stereo, startMs: number, total: number, fadeInMs: number, f
   return out;
 };
 
-type Duck = { from: number; to: number; depthDb: number; attackMs: number; releaseMs: number };
+type Duck = { from: number; to: number; depthDb: number; attackMs: number; releaseMs: number; reason: string };
+
+export type DuckRow = { reason: string; fromMs: number; toMs: number; depthDb: number; attackMs: number; releaseMs: number };
 
 const duckCurve = (total: number, ducks: Duck[]): Float32Array => {
   const g = new Float32Array(total).fill(1);
@@ -244,6 +256,7 @@ export type Built = {
   placed: Placed[];
   stems: Record<"music" | "ui" | "voice", Stereo>;
   hasBed: boolean;
+  ducks: DuckRow[];
 };
 
 const levelVoiceStem = async (voice: Stereo, work: string): Promise<void> => {
@@ -306,8 +319,8 @@ export const compose = async (name: FilmName, bed: boolean, options: ComposeOpti
       p.durMs = msAt(clip.l.length - onset);
     } else if (p.buffer && p.audible) {
       add(ui, p.buffer, at, p.gain);
-      if (p.sound === "chime") ducks.push({ from: at, to: at + samplesAt(500), depthDb: -2.5, attackMs: 40, releaseMs: 600 });
-      if (p.sound === "thud") ducks.push({ from: at, to: at + samplesAt(300), depthDb: -2, attackMs: 30, releaseMs: 500 });
+      if (p.sound === "chime") ducks.push({ from: at, to: at + samplesAt(500), depthDb: -2.5, attackMs: 40, releaseMs: 600, reason: p.id });
+      if (p.sound === "thud") ducks.push({ from: at, to: at + samplesAt(300), depthDb: -2, attackMs: 30, releaseMs: 500, reason: p.id });
     }
   }
 
@@ -318,16 +331,10 @@ export const compose = async (name: FilmName, bed: boolean, options: ComposeOpti
     ui.l[i]! += wet.l[i]! * 0.32;
     ui.r[i]! += wet.r[i]! * 0.32;
   }
+  for (const stem of [ui, voice]) for (const channel of [stem.l, stem.r]) fadeEdges(channel, samplesAt(EDGE_FADE_MS), samplesAt(EDGE_FADE_MS));
 
   const music = blank(total);
-  const source = options.source ?? film.music.source;
-  const bedFile = bed && source === "lyria" ? await findSource(sources, `music.take${options.take ?? film.music.take}`) : undefined;
-  if (bed && source === "lyria" && !bedFile) throw new Error(`no music source for ${name}; run generate-music ${name}`);
-  const fitted = bed
-    ? source === "synth"
-      ? fadedSynth(name, film)
-      : fitBed(await decode(bedFile!), film.music.startMs, total, film.music.fadeInMs, film.music.fadeOutMs)
-    : undefined;
+  const fitted = bed ? await rawBed(name, options) : undefined;
   if (fitted) {
     const carved = { l: carve(fitted.l), r: carve(fitted.r) };
     const speech: Duck[] = [];
@@ -335,9 +342,9 @@ export const compose = async (name: FilmName, bed: boolean, options: ComposeOpti
       const from = samplesAt(p.atMs);
       const to = from + samplesAt(p.durMs);
       const needed = bandDb(voice, from, to) - DUCK_MARGIN_DB - (bandDb(carved, from, to) + toDb(options.bedGainHint ?? 1) + film.music.gainDb);
-      const window = { from: from - samplesAt(150), to: to + samplesAt(200), attackMs: 140, releaseMs: 520 };
+      const window = { from, to, attackMs: DUCK_ATTACK_MS, releaseMs: DUCK_RELEASE_MS, reason: `voice ${p.id}` };
       speech.push({ ...window, depthDb: -200 });
-      if (needed < 0) ducks.push({ ...window, depthDb: Math.max(DUCK_DEEPEST_DB, needed) });
+      ducks.push({ ...window, depthDb: Math.max(DUCK_DEEPEST_DB, Math.min(DUCK_VOICE_DB, needed)) });
     }
     const whole = duckCurve(total, ducks);
     const open = duckCurve(total, speech);
@@ -347,7 +354,17 @@ export const compose = async (name: FilmName, bed: boolean, options: ComposeOpti
       music.r[i] = (fitted.r[i]! * open[i]! + carved.r[i]! * (1 - open[i]!)) * whole[i]! * g;
     }
   }
-  return { film, placed, stems: { music, ui, voice }, hasBed: Boolean(fitted) };
+  const rows = ducks.map((d) => ({ reason: d.reason, fromMs: msAt(d.from), toMs: msAt(d.to), depthDb: Number(d.depthDb.toFixed(2)), attackMs: d.attackMs, releaseMs: d.releaseMs }));
+  return { film, placed, stems: { music, ui, voice }, hasBed: Boolean(fitted), ducks: rows };
+};
+
+export const rawBed = async (name: FilmName, options: ComposeOptions = {}): Promise<Stereo> => {
+  const film = FILMS[name];
+  const source = options.source ?? film.music.source;
+  if (source === "synth") return fadedSynth(name, film);
+  const file = await findSource(join(ROOT, name, "sources"), `music.take${options.take ?? film.music.take}`);
+  if (!file) throw new Error(`no music source for ${name}; run generate-music ${name}`);
+  return fitBed(await decode(file), film.music.startMs, samplesAt(film.durationMs), film.music.fadeInMs, film.music.fadeOutMs);
 };
 
 const fadedSynth = (name: FilmName, film: FilmSpec): Stereo => {
@@ -437,7 +454,8 @@ const cuesJson = (name: FilmName, built: Built, bedGain: number, loudness: Loudn
   })),
   typing: built.film.cues
     .filter((c): c is Extract<CueSpec, { sound: "typing" }> => c.sound === "typing")
-    .map((c) => ({ id: c.id, text: c.text, startMs: c.at, endMs: c.endMs, presses: pressTimes({ startMs: c.at, endMs: c.endMs, text: c.text, seed: hash(`${name}/${c.id}`), everyMs: c.everyMs }) })),
+    .map((c) => ({ id: c.id, text: c.text, startMs: c.at, endMs: c.endMs, presses: pressTimes({ startMs: c.at, endMs: c.endMs, text: c.text, seed: hash(`${name}/${c.id}`), presses: c.presses }) })),
+  ducks: built.ducks,
 });
 
 const main = async (): Promise<void> => {

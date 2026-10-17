@@ -1,14 +1,15 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
-import { MAX_TRUE_PEAK, ROOT, TARGET_LUFS, compose } from "./build";
-import { FILMS, type FilmName } from "./films";
+import { MAX_TRUE_PEAK, ROOT, TARGET_LUFS, compose, rawBed } from "./build";
+import { FILMS, READ_BY_FILM, type FilmName } from "./films";
 import { SAMPLE_RATE, type Stereo, blank, decode, durationOf, measure, run, samplesAt, toDb } from "./lib/audio";
 import { biquad } from "./lib/dsp";
 import { room } from "./lib/synth";
 
 type CueRow = { id: string; sound: string; stem: "ui" | "voice"; atMs: number; durMs: number; audible: boolean; onsetTolMs: number; text?: string };
-type CuesFile = { durationMs: number; durationSamples: number; cues: CueRow[] };
+type DuckRow = { reason: string; fromMs: number; toMs: number; depthDb: number; attackMs: number; releaseMs: number };
+type CuesFile = { durationMs: number; durationSamples: number; mix: { bedGainDb: number }; cues: CueRow[]; ducks: DuckRow[] };
 
 const COPY = "/Users/madong/.claude/jobs/e4337bca/tmp/site/copy.md";
 const MATCH_SAMPLES = 4800;
@@ -259,9 +260,36 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
   const loudestGap = Math.max(...gaps.map(([a, b]) => Math.max(rmsDb(ui, a, b), rmsDb(voice, a, b))));
   report(loudestGap <= -80, "silence outside cues", `${gaps.length} gaps, loudest cue-stem level in them ${loudestGap.toFixed(1)} dBFS`);
 
+  const missing = READ_BY_FILM[name].filter((id) => !cues.cues.some((c) => c.id === id));
+  report(missing.length === 0, "every id film reads is in cues.json", missing.length ? `missing ${missing.join(", ")}` : `${READ_BY_FILM[name].length} ids`);
+
   if (stems.music) {
     const level = rmsDb(mono(stems.music), samplesAt(3000), samplesAt(spec.durationMs - 5000));
     report(level > -45, "bed is present under the film", `${level.toFixed(1)} dBFS rms between 3 s and the last 5 s`);
+
+    const bed = mono(await rawBed(name));
+    const music = mono(stems.music);
+    const gainDb = cues.mix.bedGainDb;
+    const hop = samplesAt(20);
+    const ratioAt = (ms: number): number => rmsDb(music, samplesAt(ms), samplesAt(ms) + hop) - rmsDb(bed, samplesAt(ms), samplesAt(ms) + hop) - gainDb;
+    const touched = (ms: number): boolean => cues.ducks.some((d) => ms >= d.fromMs - d.attackMs - 20 && ms <= d.toMs + d.releaseMs);
+    let untouchedWorst = 0;
+    for (let ms = 0; ms + 20 <= spec.durationMs; ms += 20) if (!touched(ms) && rmsDb(bed, samplesAt(ms), samplesAt(ms) + hop) > -90) untouchedWorst = Math.max(untouchedWorst, Math.abs(ratioAt(ms)));
+    report(untouchedWorst <= 0.1, "the bed is untouched away from the ducks", `largest change ${untouchedWorst.toFixed(3)} dB over every 20 ms window outside ${cues.ducks.length} ducks`);
+
+    const voiceDucks = cues.ducks.filter((d) => d.reason.startsWith("voice "));
+    const shallow: string[] = [];
+    for (const d of voiceDucks) {
+      let worst = -Infinity;
+      for (let ms = Math.ceil(d.fromMs / 20) * 20 + 20; ms + 40 <= d.toMs; ms += 20) worst = Math.max(worst, ratioAt(ms));
+      if (worst > Math.min(-6, d.depthDb) + 0.5) shallow.push(`  ${d.reason} bed only ${worst.toFixed(1)} dB down, recorded ${d.depthDb} dB`);
+    }
+    report(
+      voiceDucks.every((d) => d.depthDb <= -6 && d.attackMs === 120 && d.releaseMs === 400) && shallow.length === 0,
+      "the bed sits at least 6 dB down under every voice line",
+      voiceDucks.length ? voiceDucks.map((d) => `${d.reason} ${d.depthDb} dB`).join(", ") : "no voice in this film",
+    );
+    shallow.forEach((l) => console.log(l));
   }
 
   const copy = await readFile(COPY, "utf8");

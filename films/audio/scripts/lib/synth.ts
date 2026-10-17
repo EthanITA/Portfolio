@@ -109,18 +109,21 @@ export const thud = (): Stereo => {
   const muted = biquad("lowpass", 380);
   const x = new Float32Array(n);
   let phase = 0;
+  let upper = 0;
   for (let i = 0; i < n; i++) {
     const t = i / SAMPLE_RATE;
     phase += (2 * Math.PI * (52 + 40 * Math.exp(-t / 0.03))) / SAMPLE_RATE;
     const body = Math.cos(phase) * Math.exp(-t / 0.11) * Math.min(1, t / 0.0015);
+    upper += (2 * Math.PI * (180 + 24 * Math.exp(-t / 0.04))) / SAMPLE_RATE;
+    const small = Math.cos(upper) * Math.exp(-t / 0.075) * Math.min(1, t / 0.0015) * 0.75;
     const knock = lp(rand() * 2 - 1) * Math.exp(-t / 0.012) * 0.5;
-    x[i] = muted(body + knock);
+    x[i] = muted(body + small + knock);
   }
   fadeEdges(x, 0, seconds(0.15));
   return centered(normalizeTo(x, 1));
 };
 
-export const line = (durMs: number): Stereo => {
+export const line = (durMs: number, cutMs?: number): Stereo => {
   const long = durMs > 2000;
   const glide = seconds(durMs / 1000);
   const ring = seconds(long ? 0.45 : 0.3);
@@ -142,6 +145,11 @@ export const line = (durMs: number): Stereo => {
     const tail = i < glide ? 1 : Math.exp(-(i - glide) / SAMPLE_RATE / (long ? 0.16 : 0.1));
     const head = Math.min(1, i / attack);
     x[i] = soft(tone * rise * tail * smooth(head));
+  }
+  if (cutMs) {
+    const cut = x.slice(0, seconds(cutMs / 1000));
+    fadeEdges(cut, 0, seconds(0.06));
+    return centered(normalizeTo(cut, 1));
   }
   fadeEdges(x, 0, seconds(0.05));
   return centered(normalizeTo(x, 1));
