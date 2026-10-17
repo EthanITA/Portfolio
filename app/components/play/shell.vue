@@ -129,7 +129,7 @@ const onInput = (event: Event): void => {
           autocomplete="off"
           class="twin-input"
           enterkeyhint="send"
-          :placeholder="HINT"
+          placeholder="type ?"
           spellcheck="false"
           :value="state.line"
           @input="onInput"
