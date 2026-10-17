@@ -50,7 +50,8 @@ onMounted(() => {
 });
 
 onFrame((ms) => {
-  if (!stage || !island || !line) return;
+  // Transmission makes every SwiftShader frame expensive, and a canvas faded to nothing shows none of it.
+  if (!stage || !island || !line || !canvas.value || !Number(getComputedStyle(canvas.value).opacity)) return;
   const shot = shots.findLast((candidate) => candidate.at <= ms);
   island.group.visible = shot?.shape === "island";
   line.group.visible = shot?.shape === "line";
