@@ -1,9 +1,20 @@
-import { cuesOf } from "./cues.ts";
-import type { FilmScript } from "./script.ts";
+import type { FilmScript, Key } from "./script.ts";
 
-const cue = cuesOf("shell");
-const line = cue.at("line-end-card");
-const enter = (id: string): { keys: string; at: number; until: number } => ({ keys: "return", at: cue.at(id) - 200, until: cue.at(id) + 1000 });
+// SHELL_SCRIPT's moments and keys from app/utils/play/script/shell.ts on overhaul/play; becomes that import once it lands on feat/overhaul.
+const PLAY = {
+  moments: { outputFind: 7700, typeDist: 10_300, stagedDist: 13_300, killDist: 18_000, askedPush: 22_000, clear: 26_400, answerPipe: 30_900 },
+  keys: [
+    { key: "enter", at: 5900 },
+    { key: "enter", at: 11_500 },
+    { key: "ctrl U", at: 18_000 },
+    { key: "enter", at: 20_200 },
+    { key: "N", at: 25_000 },
+    { key: "enter", at: 29_700 },
+  ] satisfies Key[],
+};
+
+const m = PLAY.moments;
+const LINE = 32_600;
 
 export default {
   name: "shell",
@@ -11,29 +22,30 @@ export default {
   poster: 3000,
   title: { text: "AI Shell", at: 600, until: 3000 },
   captions: [
-    { text: "Looks: runs", at: cue.at("label-looks"), until: cue.at("ask-2-typing-00") - 200 },
-    { text: "Changes: waits for Enter", at: cue.at("label-changes"), until: cue.at("line-cleared") - 200 },
-    { text: "Can't be undone: asks first", at: cue.at("label-danger"), until: cue.at("screen-clears") - 200 },
-    { text: "One answer from a pipe", at: cue.at("label-pipe"), until: line },
+    { text: "Looks: runs", at: m.outputFind, until: m.typeDist - 200 },
+    { text: "Changes: waits for Enter", at: m.stagedDist, until: m.killDist - 200 },
+    { text: "Can't be undone: asks first", at: m.askedPush, until: m.clear - 200 },
+    { text: "One answer from a pipe", at: m.answerPipe, until: LINE },
   ],
-  presses: [enter("enter-1"), enter("enter-2"), enter("enter-3"), enter("enter-4")],
+  keys: PLAY.keys,
   island: [
     { at: 0, until: 3000, shape: "line", draw: 400 },
-    { at: line - 600, shape: "island", draw: line, y: 0.25 },
+    { at: LINE - 600, shape: "island", draw: LINE, y: 0.25 },
   ],
+  rules: [],
   rig: {
     at: 2400,
-    until: line - 800,
+    until: 31_600,
     shots: [
-      { at: cue.at("push-ask-1"), duration: 2000, scale: 1.35, anchor: "line" },
+      { at: 3200, duration: 2000, scale: 1.35, anchor: "line" },
       { at: 8400, duration: 1800, scale: 1 },
-      { at: cue.at("push-ask-2"), duration: 2000, scale: 1.35, anchor: "line" },
+      { at: 10_700, duration: 2000, scale: 1.35, anchor: "line" },
       { at: 16_000, duration: 1800, scale: 1 },
-      { at: cue.at("push-ask-3"), duration: 2000, scale: 1.35, anchor: "line" },
+      { at: 18_700, duration: 2000, scale: 1.35, anchor: "line" },
       { at: 24_800, duration: 1800, scale: 1 },
-      { at: cue.at("push-ask-4"), duration: 2000, scale: 1.35, anchor: "line" },
-      { at: cue.at("pull-back"), duration: 600, scale: 0.96 },
+      { at: 27_400, duration: 2000, scale: 1.35, anchor: "line" },
+      { at: 31_000, duration: 600, scale: 0.96 },
     ],
   },
-  end: { text: "AI Shell · madong.me/shell", at: line + 200 },
+  end: { text: "AI Shell · madong.me/shell", at: LINE + 200 },
 } satisfies FilmScript;
