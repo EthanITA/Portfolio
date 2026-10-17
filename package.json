@@ -6,6 +6,7 @@
   "scripts": {
     "build": "nuxt build",
     "cv:pdf": "tsx tools/cv/pdf.ts",
+    "icons": "tsx tools/icons/render.ts",
     "dev": "nuxt dev --port 3100 --host localhost",
     "generate": "nuxt generate",
     "postinstall": "nuxt prepare",
