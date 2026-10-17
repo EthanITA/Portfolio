@@ -34,10 +34,11 @@ const restRight = (hero: CameraPreset): CameraPreset => {
 };
 
 const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
-  const { createIsland, createStage, readPalette, STAGE_CAMERA } = await import("~/utils/stage/island");
-  const stage = createStage({ canvas: surface, camera: STAGE_CAMERA.hero, film, mobile });
+  const { createIsland, openStage, readPalette, STAGE_CAMERA } = await import("~/utils/stage/island");
+  const stage = await openStage({ canvas: surface, camera: STAGE_CAMERA.hero, film, mobile });
   const island = createIsland(stage);
   stage.scene.add(island.group);
+  await stage.warm();
 
   const hero = STAGE_CAMERA.hero;
   const rest = restRight(hero);

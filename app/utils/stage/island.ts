@@ -22,6 +22,7 @@ import {
   Sprite,
   SpriteMaterial,
   SRGBColorSpace,
+  Texture,
   WebGLRenderer,
 } from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
@@ -208,11 +209,14 @@ export type Stage = {
   setPalette: (next: Palette, instant?: boolean) => Promise<StageTheme>;
   advance: (dt: number) => boolean;
   resize: (width: number, height: number) => void;
+  warm: () => Promise<void>;
   render: () => void;
   dispose: () => void;
 };
 
-export const createStage = ({ canvas, camera: preset, film, mobile, frame = 16 / 9, fog: depth }: StageOptions): Stage => {
+const nextTask = (): Promise<void> => new Promise((done) => setTimeout(done));
+
+const assemble = ({ canvas, camera: preset, film, mobile, frame = 16 / 9, fog: depth }: StageOptions): Stage & { light: () => void } => {
   // Asked for here so a device without WebGL2 throws quietly to the poster, where three would log a console error first.
   const context = canvas.getContext("webgl2", { antialias: true, preserveDrawingBuffer: film });
   if (!context) throw new Error("WebGL2 unavailable");
@@ -229,15 +233,19 @@ export const createStage = ({ canvas, camera: preset, film, mobile, frame = 16 /
   const fog = depth && new Fog(palette.canvas.clone(), ...depth);
   if (fog) scene.fog = fog;
 
-  const pmrem = new PMREMGenerator(renderer);
-  const room = new RoomEnvironment();
-  const environment = pmrem.fromScene(room, 0.04).texture;
-  room.traverse((node) => {
-    if (!(node instanceof Mesh)) return;
-    node.geometry.dispose();
-    [node.material].flat().forEach((m) => m.dispose());
-  });
-  scene.environment = environment;
+  let pmrem: PMREMGenerator | undefined;
+  let environment: Texture | undefined;
+  const light = (): void => {
+    pmrem = new PMREMGenerator(renderer);
+    const room = new RoomEnvironment();
+    environment = pmrem.fromScene(room, 0.04).texture;
+    room.traverse((node) => {
+      if (!(node instanceof Mesh)) return;
+      node.geometry.dispose();
+      [node.material].flat().forEach((m) => m.dispose());
+    });
+    scene.environment = environment;
+  };
   scene.environmentIntensity = palette.env;
 
   const key = new DirectionalLight(0xffffff, 1.1);
@@ -316,6 +324,13 @@ export const createStage = ({ canvas, camera: preset, film, mobile, frame = 16 /
     camera.updateProjectionMatrix();
   };
 
+  // Without the parallel-compile extension compileAsync logs a THREE warning, and a plain compile still links off the main thread.
+  const warm = async (): Promise<void> => {
+    if (renderer.extensions.has("KHR_parallel_shader_compile")) await renderer.compileAsync(scene, camera);
+    else renderer.compile(scene, camera);
+    await nextTask();
+  };
+
   const render = (): void => {
     if (!canvas.width || !canvas.height) return;
     renderer.render(scene, camera);
@@ -328,8 +343,8 @@ export const createStage = ({ canvas, camera: preset, film, mobile, frame = 16 /
     });
     tracked.forEach((_, m) => m.dispose());
     tracked.clear();
-    environment.dispose();
-    pmrem.dispose();
+    environment?.dispose();
+    pmrem?.dispose();
     renderer.dispose();
     // Browsers cap live contexts at 16 and keep a detached one until GC, so page round trips would evict the oldest with a warning.
     if (!context.isContextLost()) renderer.forceContextLoss();
@@ -348,9 +363,26 @@ export const createStage = ({ canvas, camera: preset, film, mobile, frame = 16 /
     setPalette,
     advance,
     resize,
+    warm,
     render,
     dispose,
+    light,
   };
+};
+
+export const createStage = (options: StageOptions): Stage => {
+  const stage = assemble(options);
+  stage.light();
+  return stage;
+};
+
+// A live scene boots while the visitor reads, so the environment's cube render and blur get a task of their own.
+export const openStage = async (options: StageOptions): Promise<Stage> => {
+  const stage = assemble(options);
+  await nextTask();
+  stage.light();
+  await nextTask();
+  return stage;
 };
 
 export const breath = (ms: number): number => {
