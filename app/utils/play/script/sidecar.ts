@@ -41,7 +41,8 @@ const keys: Key[] = [
 export const SIDECAR_SCRIPT = {
   duration: 45_000,
   still: 17_500,
-  loop: { from: 3000, to: 36_000 },
+  // The live loop opens with the window in and the first file's hunks pending, so the first thing seen is a decision to make.
+  loop: { from: 3900, to: 36_000 },
   toast: 2200,
   moments,
   presses,

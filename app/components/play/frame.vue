@@ -3,11 +3,12 @@ import type { SceneMode } from "#shared/types/seekable";
 import type { ComponentPublicInstance } from "vue";
 import type { Driver } from "~/utils/play/reel";
 
-import { Chip, Surface } from "@cela/design";
+import { Surface } from "@cela/design";
+import { useInvite } from "~/utils/play/invite";
 
-const { mode, label, driver } = defineProps<{ mode: SceneMode; label: string; driver: Driver }>();
+const { mode, label, driver, inviteAt = "bottom" } = defineProps<{ mode: SceneMode; label: string; driver: Driver; inviteAt?: "top" | "bottom" }>();
 
-const emit = defineEmits<{ take: []; demo: []; key: [event: KeyboardEvent]; keyup: [event: KeyboardEvent]; leave: [] }>();
+const emit = defineEmits<{ take: []; key: [event: KeyboardEvent]; keyup: [event: KeyboardEvent]; leave: [] }>();
 
 const visible = defineModel<boolean>("visible", { default: false });
 
@@ -17,12 +18,17 @@ const frameEl = (): HTMLElement | undefined => {
   return el instanceof HTMLElement ? el : undefined;
 };
 
-const PASSIVE_KEYS = new Set(["Tab", "Shift", "Meta", "Control", "Alt", "CapsLock", "Escape"]);
+const invite = useInvite();
+const inviting = computed(() => driver === "demo" && !invite.seen.value);
 
-const onPointerDown = (event: PointerEvent): void => {
-  if (event.target instanceof Element && event.target.closest("[data-play-chip]")) return;
-  emit("take");
-};
+watch(
+  () => driver,
+  (next) => {
+    if (next === "visitor") invite.dismiss();
+  },
+);
+
+const PASSIVE_KEYS = new Set(["Tab", "Shift", "Meta", "Control", "Alt", "CapsLock", "Escape"]);
 
 const onKeyDown = (event: KeyboardEvent): void => {
   if (driver === "demo" && !PASSIVE_KEYS.has(event.key) && !event.metaKey) emit("take");
@@ -33,11 +39,6 @@ const onKeyDown = (event: KeyboardEvent): void => {
 const onFocusOut = (event: FocusEvent): void => {
   if (event.relatedTarget instanceof Node && frameEl()?.contains(event.relatedTarget)) return;
   emit("leave");
-};
-
-const onChip = (): void => {
-  if (driver === "demo") emit("take");
-  else emit("demo");
 };
 
 onMounted(() => {
@@ -82,12 +83,15 @@ onMounted(() => {
     @focusout="onFocusOut"
     @keydown="onKeyDown"
     @keyup="emit('keyup', $event)"
-    @pointerdown.capture="onPointerDown"
+    @pointerdown.capture="emit('take')"
   >
     <slot />
-    <Chip class="play-chip" data-play-chip :selected="driver === 'visitor'" @click="onChip">
-      {{ driver === "demo" ? "Take over" : "Play the demo" }}
-    </Chip>
+    <Transition name="invite">
+      <p v-if="inviting" class="invite" :data-at="inviteAt" data-invite>
+        <span class="fine">This is live. Click in, it's yours.</span>
+        <span class="coarse">Tap in, it's yours.</span>
+      </p>
+    </Transition>
   </Surface>
 </template>
 
@@ -100,7 +104,53 @@ onMounted(() => {
   @apply focus-ring;
 }
 
-.play-chip {
-  @apply absolute top-3 right-3 z-20 hit-area;
+/* A toy sets --invite-inset to clear what it keeps at that edge. */
+.invite {
+  @apply surface-glass pointer-events-none absolute inset-x-0 z-20 mx-auto my-0 flex h-9 w-fit items-center rounded-full px-4 typo-caption-strong whitespace-nowrap text-fg shadow-lg;
+  bottom: var(--invite-inset, --spacing(4));
+}
+
+.invite[data-at="top"] {
+  top: var(--invite-inset, --spacing(4));
+  bottom: auto;
+}
+
+.invite .coarse {
+  @apply hidden;
+}
+
+@media (pointer: coarse) {
+  .invite .fine {
+    @apply hidden;
+  }
+
+  .invite .coarse {
+    @apply inline;
+  }
+}
+
+.invite-enter-active,
+.invite-leave-active {
+  transition:
+    opacity var(--duration-base) var(--ease-out),
+    translate var(--duration-base) var(--ease-out);
+}
+
+.invite-enter-from,
+.invite-leave-to {
+  opacity: 0;
+  translate: 0 6px;
+}
+
+.invite[data-at="top"].invite-enter-from,
+.invite[data-at="top"].invite-leave-to {
+  translate: 0 -6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invite-enter-active,
+  .invite-leave-active {
+    transition: none;
+  }
 }
 </style>
