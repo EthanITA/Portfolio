@@ -3,16 +3,18 @@ import type { SceneMode } from "#shared/types/seekable";
 import type { Status } from "~/utils/stage/fence";
 import type { SceneSetup } from "~/utils/stage/scene";
 
+import { MOTION_DURATION } from "@cela/design/utils/motion";
 import { STAGE_CAMERA, hydrationSafe, toScreen } from "~/utils/stage/camera";
 import { CYCLE, FENCE, REST_MS, gateX, inFlight, pose, spec } from "~/utils/stage/fence";
 import { useScene } from "~/utils/stage/scene";
 
-const { mode = "live" } = defineProps<{ mode?: SceneMode }>();
+const { mode = "live", light = 0 } = defineProps<{ mode?: SceneMode; light?: number }>();
 const emit = defineEmits<{ gate: [n: number] }>();
 
-const SWEEP = { amplitude: 1.7, period: 16000 } as const;
 const GATE = { height: 0.9, depth: 0.5, width: 0.06, reach: 0.32 } as const;
 const FRONT = GATE.depth / 2;
+const FOLLOW = { pan: 180, glow: 120, margin: 0.4 } as const;
+const RIPPLE = { step: 80, rise: 120, fall: MOTION_DURATION.base } as const;
 
 const SPOTS = Array.from({ length: FENCE.gates }, (_, i) => {
   const n = i + 1;
@@ -48,6 +50,13 @@ const overlays = new Map<number, HTMLElement>();
 const rects = new Map<number, [number, number, number, number]>();
 const sizes = new WeakMap<HTMLElement, string>();
 
+let ripplePending = false;
+const ripple = (): void => {
+  if (!film) ripplePending = true;
+};
+
+const ease = (from: number, to: number, dt: number, tau: number): number => to + (from - to) * Math.exp(-dt / tau);
+
 const bind = (k: number, el: unknown): void => {
   if (el instanceof HTMLElement) overlays.set(k, el);
   else overlays.delete(k);
@@ -76,7 +85,6 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
 
   const preset = STAGE_CAMERA.fence;
   const stage = await openStage({ canvas: surface, camera: preset, film: filming, mobile });
-  const narrow = matchMedia("(max-width: 767px)");
 
   const line = createLine(stage, { length: 16, thickness: 0.03 });
   stage.scene.add(line.group);
@@ -100,15 +108,41 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
     return [((point.x + 1) / 2) * view.width, ((1 - point.y) / 2) * view.height];
   };
 
+  const levels = SPOTS.map(() => 0);
+  let pan = 0;
+  let placed = false;
+  let rippleAt = -Infinity;
+
+  const framePx = (): number => Math.max(view.height, (view.width * 9) / 16);
+  // A box narrower than the gates crops them under cover framing, so the camera eases along the line to whichever gate the page lights.
+  const panTo = (n: number): number => {
+    const visible = view.width / framePx() / unit;
+    const span = gateX(FENCE.gates) - gateX(1) + 2 * (GATE.reach + FOLLOW.margin);
+    const reach = Math.max(0, (span - visible) / 2);
+    return Math.min(reach, Math.max(-reach, gateX(Math.max(1, n))));
+  };
+
   const frame = (ms: number, dt: number): boolean => {
     stage.advance(dt);
-    const offset = !filming && narrow.matches ? SWEEP.amplitude * Math.sin((2 * Math.PI * ms) / SWEEP.period) : 0;
-    stage.camera.position.set(preset.position[0] + offset, preset.position[1], preset.position[2]);
-    stage.camera.lookAt(preset.target[0] + offset, preset.target[1], preset.target[2]);
+    const lighting = !filming && Number.isInteger(light) && light >= 1 && light <= FENCE.gates ? light : 0;
+    if (ripplePending) {
+      rippleAt = ms;
+      ripplePending = false;
+    }
+    const goal = filming ? 0 : panTo(lighting);
+    pan = placed ? ease(pan, goal, dt, FOLLOW.pan) : goal;
+    placed = true;
+    stage.camera.position.set(preset.position[0] + pan, preset.position[1], preset.position[2]);
+    stage.camera.lookAt(preset.target[0] + pan, preset.target[1], preset.target[2]);
     stage.camera.updateMatrixWorld();
-    if (gates.value) gates.value.style.transform = `translate3d(${-offset * unit * Math.max(view.height, (view.width * 9) / 16)}px, 0, 0)`;
+    if (gates.value) gates.value.style.transform = `translate3d(${-pan * unit * framePx()}px, 0, 0)`;
 
-    const lit = SPOTS.map(() => 0);
+    const lit = SPOTS.map(({ n }, i) => {
+      levels[i] = ease(levels[i] ?? 0, n === lighting ? 1 : 0, dt, FOLLOW.glow);
+      const t = ms - rippleAt - i * RIPPLE.step;
+      const wave = t < 0 || t >= RIPPLE.rise + RIPPLE.fall ? 0 : t < RIPPLE.rise ? t / RIPPLE.rise : 1 - (t - RIPPLE.rise) / RIPPLE.fall;
+      return Math.max(levels[i] ?? 0, wave);
+    });
     const seen = new Set<number>();
     const next: View[] = [];
     for (const k of inFlight(ms)) {
@@ -209,11 +243,11 @@ const hover = (n: number): void => {
   if (!film && n !== spotlit) spotlight(n);
 };
 
-defineExpose({ ...seekable, restMs: REST_MS });
+defineExpose({ ...seekable, restMs: REST_MS, ripple });
 </script>
 
 <template>
-  <div ref="root" class="fence" data-scene="fence" :data-state="state" :data-theme-applied="theme">
+  <div ref="root" class="fence" data-scene="fence" :data-state="state" :data-theme-applied="theme" :data-light="light || undefined">
     <StagePoster v-if="!film" name="fence" :theme="theme" />
     <canvas ref="canvas" class="canvas" />
     <div v-if="!film" ref="gates" class="gates">
