@@ -1,3 +1,6 @@
+import { rm } from "node:fs/promises";
+import { join } from "node:path";
+
 import tailwindcss from "@tailwindcss/vite";
 import tailwindAutoReference from "vite-plugin-vue-tailwind-auto-reference";
 
@@ -91,6 +94,8 @@ export default defineNuxtConfig({
     "build:manifest": (manifest) => {
       for (const meta of Object.values(manifest)) meta.prefetch = false;
     },
+    // Vite writes its build manifest into the public root, and it maps the module graph down to local store paths.
+    "nitro:build:public-assets": (nitro) => rm(join(nitro.options.output.publicDir, "manifest.json"), { force: true }),
   },
   modules: ["@nuxtjs/seo", "@nuxt/fonts", "@pinia/nuxt"],
   nitro: { prerender: { crawlLinks: true, ignore: ["/film"], routes: ["/"] } },
@@ -115,6 +120,8 @@ export default defineNuxtConfig({
       knowsLanguage: ["it", "en"],
     },
   },
+  // A static deploy gains nothing from its service worker, and Nuxt already reloads on a missing chunk.
+  skewProtection: { enabled: false },
   site: {
     url: links.site,
     name: "Marco Dong",

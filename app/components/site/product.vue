@@ -113,7 +113,7 @@ const startFilm = async (): Promise<void> => {
 }
 
 .watch {
-  @apply surface-glass relative z-10 inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border-0 px-5 typo-body-strong text-fg;
+  @apply surface-raised relative z-10 inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border-0 px-5 typo-body-strong text-fg;
 
   &:disabled {
     @apply cursor-default text-muted;

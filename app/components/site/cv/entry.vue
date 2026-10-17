@@ -43,7 +43,7 @@ const { entry } = defineProps<{ entry: CvEntry }>();
 }
 
 .when {
-  @apply typo-mono-meta leading-snug text-subtle tabular-nums;
+  @apply typo-mono-meta leading-snug text-muted tabular-nums;
 }
 
 .points {
