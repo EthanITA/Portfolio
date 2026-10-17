@@ -23,16 +23,20 @@ const { slug, name, text, status, to, link } = defineProps<{
 
 const poster = useTemplateRef<HTMLElement>("poster");
 let tilt: AnimatableObject | undefined;
+let box: DOMRect | undefined;
 
 const still = (theme: Theme, width: 800 | 1600, format: FrameFormat): string => sequencePath(`${theme}/screens/${slug}-${width}`, format);
 const srcset = (theme: Theme, format: FrameFormat): string => `${still(theme, 800, format)} 800w, ${still(theme, 1600, format)} 1600w`;
 
 const fine = (): boolean => matchMedia("(hover: hover) and (pointer: fine)").matches;
 
+const onEnter = (): void => {
+  box = poster.value?.getBoundingClientRect();
+};
+
 const onMove = (event: PointerEvent): void => {
-  if (!poster.value || !motionOn() || !fine()) return;
+  if (!poster.value || !box || !motionOn() || !fine()) return;
   tilt ??= createAnimatable(poster.value, { rotateX: {}, rotateY: {}, ease: spring(SPRING.gentle) });
-  const box = poster.value.getBoundingClientRect();
   const x = (event.clientX - box.left) / box.width - 0.5;
   const y = (event.clientY - box.top) / box.height - 0.5;
   tilt.rotateY?.(x * TILT * 2);
@@ -48,7 +52,7 @@ onBeforeUnmount(() => tilt?.revert());
 </script>
 
 <template>
-  <Surface v-press as="article" class="flagship" :data-flagship="slug" @pointermove="onMove" @pointerleave="onLeave">
+  <Surface v-press as="article" class="flagship" :data-flagship="slug" @pointerenter="onEnter" @pointermove="onMove" @pointerleave="onLeave">
     <div ref="poster" class="poster" :data-flagship-poster="slug" aria-hidden="true">
       <picture v-for="theme in THEMES" :key="theme" class="still" :data-still="theme">
         <source type="image/avif" :srcset="srcset(theme, 'avif')" :sizes="SIZES" />
@@ -65,7 +69,7 @@ onBeforeUnmount(() => tilt?.revert());
 
 <style scoped>
 .flagship {
-  @apply flex flex-col gap-3 perspective-midrange;
+  @apply relative flex flex-col gap-3 transition-[translate,scale,box-shadow] duration-(--duration-snappy) ease-out perspective-midrange;
 }
 
 .poster {
@@ -94,7 +98,7 @@ onBeforeUnmount(() => tilt?.revert());
 }
 
 .more {
-  @apply typo-body-strong mt-auto inline-flex min-h-11 w-fit items-center text-primary underline-offset-4;
+  @apply typo-body-strong mt-auto inline-flex min-h-11 w-fit items-center text-primary underline-offset-4 after:absolute after:inset-0 after:content-[''];
 
   &:focus-visible {
     @apply focus-ring;
@@ -106,7 +110,7 @@ onBeforeUnmount(() => tilt?.revert());
     @apply -translate-y-1 shadow-md;
   }
 
-  .more:hover {
+  .flagship:hover .more {
     @apply underline;
   }
 }
