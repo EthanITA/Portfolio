@@ -38,7 +38,7 @@ export type Scene = {
 };
 
 const LIVE_RATIO = 0.1;
-const MAX_DT = 50;
+const MAX_DT = 100;
 
 export const useScene = ({ mode, duration, root, box = root, canvas, setup, reducedOnDemand }: SceneOptions): Scene => {
   const film = mode === "film";
