@@ -11,7 +11,7 @@ const markdown = (page: PageSeo): { title: string; href: string; description: st
 });
 
 // Runs before first paint: a stored dark choice never flashes light, and entrances hide only when they will play.
-const headScript = `(function(){var d=document.documentElement;try{d.dataset.theme=localStorage.getItem("cela-theme")==="dark"?"dark":"light"}catch(e){d.dataset.theme="light"}d.dataset.motion=matchMedia("(prefers-reduced-motion: reduce)").matches?"off":"on";setTimeout(function(){if(!("ready" in d.dataset))d.dataset.motion="off"},3000)})()`;
+const headScript = `(function(){var d=document.documentElement;try{d.dataset.theme=localStorage.getItem("cela-theme")==="dark"?"dark":"light"}catch(e){d.dataset.theme="light"}d.dataset.motion=matchMedia("(prefers-reduced-motion: reduce)").matches?"off":"on";if(d.dataset.motion==="on"&&matchMedia("(hover: hover) and (pointer: fine) and (min-width: 1024px)").matches)d.dataset.motionTitle="";setTimeout(function(){if(!("ready" in d.dataset))d.dataset.motion="off"},3000)})()`;
 
 const aiCrawlers = [
   "GPTBot",

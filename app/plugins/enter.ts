@@ -31,7 +31,14 @@ const resolve = (el: HTMLElement, value: EnterValue, staggered: boolean): EnterO
   return { ...base, delay: (base.delay ?? 0) + Math.min(index, STAGGER_CAP) * STAGGER_STEP };
 };
 
+const kind = ({ modifiers }: DirectiveBinding<EnterValue>): string => (modifiers.title ? "title" : "");
+
 const begin = (el: HTMLElement, { modifiers, value }: DirectiveBinding<EnterValue>): void => {
+  // Off a wide fine-pointer screen a title is the LCP, so it paints at once.
+  if (modifiers.title && !("motionTitle" in document.documentElement.dataset)) {
+    el.dataset.entered = "";
+    return;
+  }
   const opts = resolve(el, value, !!modifiers.stagger);
   if (modifiers.words) opts.words = true;
   if (modifiers.line) opts.line = true;
@@ -45,9 +52,9 @@ const begin = (el: HTMLElement, { modifiers, value }: DirectiveBinding<EnterValu
 };
 
 const vEnter: Directive<HTMLElement, EnterValue> = {
-  getSSRProps: () => ({ "data-enter": "" }),
+  getSSRProps: (binding) => ({ "data-enter": kind(binding) }),
   beforeMount(el, binding) {
-    el.dataset.enter = "";
+    el.dataset.enter = kind(binding);
     // Hydrating, mounted waits on every async component in the page's Suspense.
     if (binding.modifiers.now && el.isConnected) begin(el, binding);
   },

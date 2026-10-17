@@ -126,8 +126,8 @@ onBeforeUnmount(() => {
       </SiteMount>
       <div ref="intro" class="intro">
         <h1 class="title">
-          <span class="first">I build AI products end to end.</span>
-          <span v-enter.now="200" class="second">The agents write a lot of the code, and the standard is mine.</span>
+          <span v-enter.now.words.title class="first">I build AI products end to end.</span>
+          <span v-enter.now.title="200" class="second">The agents write a lot of the code, and the standard is mine.</span>
         </h1>
         <p v-enter.now="320" class="roles">Software engineer at Klarna, AI product engineer at Moneyfarm, and founder of Cela, where I'm building Sidecar, Sage and AI Shell.</p>
         <div class="actions">

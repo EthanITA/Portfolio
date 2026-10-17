@@ -10,7 +10,8 @@
 
 /* Hidden only while an entrance is still to play; no JS, reduced motion, print and a stalled app all see the page. */
 @media screen {
-  :root[data-motion="on"] [data-enter]:not([data-entered]) {
+  :root[data-motion="on"] [data-enter=""]:not([data-entered]),
+  :root[data-motion="on"][data-motion-title] [data-enter="title"]:not([data-entered]) {
     opacity: 0;
   }
 }
