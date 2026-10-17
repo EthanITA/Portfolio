@@ -57,7 +57,7 @@ const boxes = (ruler: HTMLElement): Partial<Record<string, Box>> =>
 const build = async (): Promise<void> => {
   if (!ruler.value) return;
   await Glyphs.load(ruler.value, "[data-word], .film-sky-chip, .film-sky-cap kbd");
-  const planned = Sky.plan({ lines: spoken, measured: read(ruler.value), cut, fold: script.rig.until, violet: script.violet });
+  const planned = Sky.plan({ lines: spoken, measured: read(ruler.value), cut, fold: script.rig.until, end: script.duration, violet: script.violet });
   const placed = Sky.caps({ keys: script.keys, waits: script.waits, lines: planned.lines, metrics: metrics(ruler.value), boxes: boxes(ruler.value), cut });
   lines.value = planned.lines;
   caps.value = placed.caps;

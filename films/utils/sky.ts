@@ -46,7 +46,7 @@ export type Pose = { opacity: number; y: number; blur: number; scale: number };
 
 export type Press = Pose & { down: number };
 
-export type PlanOptions = { lines: Spoken[]; measured: Partial<Record<Size, Widths>>[]; cut: Cut; fold: number; violet: string[] };
+export type PlanOptions = { lines: Spoken[]; measured: Partial<Record<Size, Widths>>[]; cut: Cut; fold: number; end: number; violet: string[] };
 
 export type Metrics = { em: number; descent: number };
 
@@ -131,7 +131,7 @@ const place = ({ spoken, measured, cut, marked, centred }: { spoken: Spoken; mea
   return { text: spoken.text, size: fit.size, at: rows[0]?.words[0]?.at ?? spoken.onsetMs, leave: Number.POSITIVE_INFINITY, rows };
 };
 
-const plan = ({ lines, measured, cut, fold, violet }: PlanOptions): { lines: Line[]; problems: string[] } => {
+const plan = ({ lines, measured, cut, fold, end, violet }: PlanOptions): { lines: Line[]; problems: string[] } => {
   const problems: string[] = [];
   const marked = new Set(violet.map(bare));
   const placed = lines.flatMap((spoken, index): Line[] => {
@@ -153,6 +153,7 @@ const plan = ({ lines, measured, cut, fold, violet }: PlanOptions): { lines: Lin
     const words = line.rows.flatMap((row) => row.words);
     for (const word of words) {
       if (word.leave < arrives(word)) problems.push(`"${word.text}" in "${line.text}" leaves at ${word.leave} ms, before it is in at ${arrives(word)}`);
+      if (arrives(word) > end) problems.push(`"${word.text}" in "${line.text}" is in at ${arrives(word)} ms, after the film ends at ${end}`);
     }
     const next = timed[index + 1];
     if (next && next.at < gone(line)) problems.push(`"${next.text}" lands at ${next.at} ms while "${line.text}" is leaving until ${gone(line)}`);
