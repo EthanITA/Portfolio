@@ -43,9 +43,9 @@ onMounted(() => {
   transform-origin: top left;
 }
 
-/* Not .card, which @cela/design styles globally and would add a real border under the glass's inset ring. */
+/* Not .card, which @cela/design also styles globally, so the hairline the note was reviewed with is stated here. */
 .sheet {
-  @apply flex flex-col gap-2 p-2.5 shadow-lg inset-ring inset-ring-(--glass-border-color);
+  @apply flex flex-col gap-2 border border-border p-2.5 shadow-lg;
 }
 
 .foot {
