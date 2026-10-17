@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Surface } from "@cela/design";
+import { MOTION_DURATION } from "@cela/design/utils/motion";
 import { type JSAnimation, type ScrollObserver, animate, onScroll } from "animejs";
 
 import type { Product } from "~/utils/site/films";
@@ -96,6 +97,7 @@ const heroProgress = ref(0);
 let drift: JSAnimation | undefined;
 let scroller: ScrollObserver | undefined;
 let away: IntersectionObserver | undefined;
+let hiding: ReturnType<typeof setTimeout> | undefined;
 
 // A global smooth scroll-behavior would also animate the router's back and forward restores across the whole page.
 const toWork = (event: MouseEvent): void => {
@@ -122,12 +124,20 @@ onMounted(() => {
     autoplay: scroller,
   });
   const stage = holder.value;
-  // Half a viewport past the pin the sequence covers it, and hidden it can never show through the tile break.
-  away = new IntersectionObserver(([entry]) => (stage.style.visibility = entry?.isIntersecting ? "" : "hidden"), { rootMargin: "50% 0px 0px 0px" });
+  // Hidden half a viewport past the pin it can never show through the tile break; the wait outlasts the sequence's fade-in on a fling.
+  away = new IntersectionObserver(
+    ([entry]) => {
+      clearTimeout(hiding);
+      if (entry?.isIntersecting) stage.style.visibility = "";
+      else hiding = setTimeout(() => (stage.style.visibility = "hidden"), MOTION_DURATION.fast);
+    },
+    { rootMargin: "50% 0px 0px 0px" },
+  );
   away.observe(hero.value);
 });
 
 onBeforeUnmount(() => {
+  clearTimeout(hiding);
   away?.disconnect();
   drift?.revert();
   scroller?.revert();
