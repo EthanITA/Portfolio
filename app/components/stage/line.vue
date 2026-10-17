@@ -104,6 +104,8 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
   const resize = (width: number, height: number): void => {
     stage.resize(width, height);
     if (!width || !height) return;
+    // The first resize runs before any render, when the view matrix still lacks lookAt's pitch, so every layout projected flat.
+    stage.camera.updateMatrixWorld();
     const origin = new Vector3(0, 0, 0).project(stage.camera);
     const unit = new Vector3(1, 0, 0).project(stage.camera).x - origin.x;
     const perUnit = (unit * width) / 2;
