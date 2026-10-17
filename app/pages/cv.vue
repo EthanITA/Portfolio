@@ -34,11 +34,11 @@ onBeforeUnmount(() => {
 <template>
   <div class="page">
     <div class="tools">
-      <a class="btn btn-primary" href="/marco-dong-cv.pdf" download>Download PDF</a>
+      <a v-enter.now v-press class="btn btn-primary download" href="/marco-dong-cv.pdf" download>Download PDF</a>
     </div>
 
     <article class="sheet">
-      <header class="masthead">
+      <header v-enter.now="60" class="masthead">
         <h1 class="name">{{ cv.name }}</h1>
         <p class="headline">{{ cv.headline }}</p>
         <ul class="contact">
@@ -50,22 +50,22 @@ onBeforeUnmount(() => {
         </ul>
       </header>
 
-      <p class="profile"><SiteRuns :runs="cv.profile" /></p>
+      <p v-enter.now="120" class="profile"><SiteRuns :runs="cv.profile" /></p>
 
       <div class="cols">
-        <section class="section" data-area="experience">
+        <section v-enter.now="180" class="section" data-area="experience">
           <h2 class="heading">Experience</h2>
           <SiteCvEntry v-for="entry in cv.experience" :key="entry.title + entry.org" :entry="entry" />
         </section>
 
         <div class="side">
-          <section v-for="section in side" :key="section.title" class="section">
+          <section v-for="section in side" :key="section.title" v-enter.now.stagger="240" class="section">
             <h2 class="heading">{{ section.title }}</h2>
             <SiteCvEntry v-for="entry in section.entries" :key="entry.title + entry.org" :entry="entry" />
           </section>
         </div>
 
-        <section class="section" data-area="skills">
+        <section v-enter.now="360" class="section" data-area="skills">
           <h2 class="heading">Skills</h2>
           <dl class="skills">
             <div v-for="skill in cv.skills" :key="skill.group" class="skill">
@@ -87,11 +87,11 @@ onBeforeUnmount(() => {
 }
 
 .tools {
-  @apply mx-auto flex w-full max-w-3xl justify-end print:hidden;
+  @apply mx-auto flex w-full max-w-200 justify-end print:hidden;
 }
 
 .sheet {
-  @apply surface-card mx-auto flex w-full max-w-3xl flex-col gap-5 p-5 sm:p-10;
+  @apply surface-raised mx-auto flex w-full max-w-200 flex-col gap-5 p-5 sm:p-10;
   @apply print:max-w-none print:gap-3 print:rounded-none print:border-0 print:p-0 print:shadow-none;
 }
 
@@ -157,7 +157,16 @@ onBeforeUnmount(() => {
 }
 
 .heading {
-  @apply typo-eyebrow m-0 w-full border-b border-border pb-1.5 leading-snug text-muted;
+  @apply typo-eyebrow m-0 flex flex-col gap-1.5 leading-snug text-muted;
+
+  &::after {
+    @apply block h-0.5 w-8 rounded-full bg-primary;
+    content: "";
+  }
+}
+
+.download {
+  @apply min-h-11 px-5;
 }
 
 .skills {

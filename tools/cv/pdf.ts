@@ -43,7 +43,7 @@ const { port } = server.address() as AddressInfo;
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage();
-  await page.emulateMedia({ colorScheme: "light", media: "print" });
+  await page.emulateMedia({ colorScheme: "light", media: "print", reducedMotion: "reduce" });
   await page.goto(`http://127.0.0.1:${port}/cv`, { waitUntil: "networkidle" });
   await page.waitForSelector('a[href^="mailto:"]');
   await page.evaluate(() => document.fonts.ready);

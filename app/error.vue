@@ -8,33 +8,36 @@ useSeoMeta({ title: String(error.status) });
 
 <template>
   <NuxtLayout>
-    <section class="lost wrap">
-      <h1 class="title">There's nothing at this address.</h1>
-      <NuxtLink class="home" to="/">Back to the start</NuxtLink>
+    <section class="lost">
+      <SiteMount name="hero">
+        <LazyStageHero lost />
+      </SiteMount>
+      <div class="note">
+        <h1 v-enter.now.words.title class="title">There's nothing at this address.</h1>
+        <NuxtLink v-enter.now="200" v-press class="btn btn-primary home" to="/">Back to the start</NuxtLink>
+      </div>
     </section>
   </NuxtLayout>
 </template>
 
 <style scoped>
 .lost {
-  @apply flex flex-col gap-6 pt-24 pb-12;
+  @apply relative -mt-20 flex h-svh min-h-160 flex-col justify-end overflow-hidden pt-20 pb-16 sm:pb-24;
+}
+
+.note {
+  @apply relative mx-auto flex w-full max-w-3xl flex-col items-center gap-6 px-5 text-center sm:px-8;
 }
 
 .title {
-  @apply m-0 text-4xl font-bold tracking-tight text-balance sm:text-6xl;
+  @apply m-0 text-4xl font-bold tracking-tight text-balance sm:text-5xl;
 }
 
 .home {
-  @apply typo-heading-lg w-fit text-primary underline-offset-4;
+  @apply min-h-11 justify-center px-5;
 
   &:focus-visible {
     @apply focus-ring;
-  }
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .home:hover {
-    @apply underline;
   }
 }
 </style>

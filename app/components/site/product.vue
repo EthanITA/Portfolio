@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import { Surface } from "@cela/design";
+
+import { type Product, films } from "~/utils/site/films";
 import type { Beat, Run } from "~/utils/site/text";
 
-const { name, sub, lead, beats, builtWith, status, limit } = defineProps<{
+const { slug, name, sub, lead, beats, builtWith, status, limit } = defineProps<{
+  slug: Product;
   name: string;
   sub: string;
   lead: Run[];
@@ -10,42 +14,59 @@ const { name, sub, lead, beats, builtWith, status, limit } = defineProps<{
   status: string;
   limit?: string;
 }>();
+
+const film = films[slug];
+const playing = ref(false);
 </script>
 
 <template>
   <article class="product">
     <header class="head wrap">
-      <h1 class="title">{{ name }}</h1>
-      <p class="sub">{{ sub }}</p>
-      <p class="lead"><SiteRuns :runs="lead" /></p>
+      <h1 v-enter.now.words.title class="title">{{ name }}</h1>
+      <p v-enter.now="200" class="sub">{{ sub }}</p>
+      <p v-enter.now="320" class="lead"><SiteRuns :runs="lead" /></p>
     </header>
 
-    <figure class="film wrap">
-      <div class="frame" />
-      <figcaption class="label">Watch the film</figcaption>
-    </figure>
+    <div v-enter.now="420" class="film wrap">
+      <Surface class="frame" variant="raised" shape="island" pad="none">
+        <video v-if="playing && film" class="video" controls autoplay playsinline preload="none" :poster="film.poster">
+          <source :src="film.webm" type="video/webm" />
+          <source :src="film.mp4" type="video/mp4" />
+        </video>
+        <template v-else>
+          <img v-if="film" class="poster" :src="film.poster" alt="" width="1920" height="1080" decoding="async" />
+          <button v-press class="watch" type="button" :disabled="!film" @click="playing = true">
+            <svg class="play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" /></svg>
+            Watch the film
+          </button>
+        </template>
+      </Surface>
+    </div>
 
-    <div class="play wrap">
+    <div class="stage wrap">
       <SiteMount name="play">
         <slot />
       </SiteMount>
     </div>
 
     <div class="beats wrap">
-      <section v-for="beat in beats" :key="beat.title" class="beat">
-        <h2 class="name">{{ beat.title }}</h2>
+      <Surface v-for="beat in beats" :key="beat.title" v-enter.stagger as="section" class="beat" data-glyph-host>
+        <div class="beat-head">
+          <h2 class="name">{{ beat.title }}</h2>
+          <SiteGlyph :name="beat.glyph" />
+        </div>
         <p class="text"><SiteRuns :runs="beat.text" /></p>
-      </section>
+      </Surface>
     </div>
 
-    <section class="facts wrap">
-      <div class="fact">
+    <div class="facts wrap">
+      <p v-if="limit" v-enter class="limit">{{ limit }}</p>
+      <Surface v-enter class="built" variant="sunken">
         <h2 class="name">Built with</h2>
         <p class="text">{{ builtWith }}</p>
-      </div>
-      <p v-if="limit" class="limit">{{ limit }}</p>
-      <p class="status">{{ status }}</p>
-    </section>
+      </Surface>
+      <p v-enter class="status"><span class="status-dot" aria-hidden="true" />{{ status }}</p>
+    </div>
   </article>
 </template>
 
@@ -70,24 +91,44 @@ const { name, sub, lead, beats, builtWith, status, limit } = defineProps<{
   @apply typo-body-lg max-w-2xl text-muted;
 }
 
-.film {
-  @apply m-0 flex flex-col gap-3;
-}
-
 .frame {
-  @apply aspect-video w-full rounded-box bg-sunken;
+  @apply relative grid aspect-video w-full place-items-center overflow-hidden;
 }
 
-.label {
-  @apply typo-caption-medium text-muted;
+.poster,
+.video {
+  @apply absolute inset-0 size-full object-cover;
+}
+
+.watch {
+  @apply surface-glass relative z-10 inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border-0 px-5 typo-body-strong text-fg;
+
+  &:disabled {
+    @apply cursor-default text-muted;
+  }
+
+  &:focus-visible {
+    @apply focus-ring;
+  }
+}
+
+.play {
+  @apply size-4 fill-current;
 }
 
 .beats {
-  @apply grid gap-8 sm:grid-cols-2;
+  @apply grid gap-4 md:grid-cols-2;
 }
 
-.beat,
-.fact {
+.beat {
+  @apply flex flex-col gap-3;
+}
+
+.beat-head {
+  @apply flex items-start justify-between gap-4;
+}
+
+.built {
   @apply flex flex-col gap-2;
 }
 
@@ -96,7 +137,7 @@ const { name, sub, lead, beats, builtWith, status, limit } = defineProps<{
 }
 
 .text {
-  @apply typo-body-md max-w-xl text-muted;
+  @apply typo-body-md text-muted;
 }
 
 .facts {
@@ -104,10 +145,10 @@ const { name, sub, lead, beats, builtWith, status, limit } = defineProps<{
 }
 
 .limit {
-  @apply typo-body-strong text-fg;
+  @apply typo-caption text-muted;
 }
 
 .status {
-  @apply typo-caption-medium w-fit rounded-full bg-primary-soft px-2.5 py-1 text-primary;
+  @apply chip-look w-fit text-fg;
 }
 </style>
