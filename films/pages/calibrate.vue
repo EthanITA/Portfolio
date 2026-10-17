@@ -61,7 +61,7 @@ onMounted(() => {
 
 <style scoped>
 .calibrate {
-  @apply relative h-screen w-screen overflow-hidden bg-base-100 text-base-content;
+  @apply relative h-screen w-screen overflow-hidden bg-canvas text-fg;
 }
 .calibrate-canvas {
   @apply absolute inset-0 size-full;
@@ -70,7 +70,7 @@ onMounted(() => {
   @apply absolute bottom-24 left-24 flex flex-col gap-4;
 }
 .calibrate-track {
-  @apply h-1 w-96 overflow-hidden rounded-full bg-base-300;
+  @apply h-1 w-96 overflow-hidden rounded-full bg-sunken;
 }
 .calibrate-bar {
   @apply h-full w-full origin-left bg-primary;

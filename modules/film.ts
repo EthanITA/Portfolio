@@ -8,8 +8,8 @@ export default defineNuxtModule({
     const { resolve } = createResolver(nuxt.options.rootDir);
 
     nuxt.hook("prepare:types", ({ tsConfig, nodeTsConfig }) => {
-      tsConfig.include?.push(resolve("films/pages/**/*"), resolve("films/components/**/*"), resolve("films/composables/**/*"));
-      nodeTsConfig.include?.push(resolve("tools/render/**/*"));
+      tsConfig.include?.push(...["pages", "components", "composables", "scripts", "utils"].map((dir) => resolve(`films/${dir}/**/*`)));
+      nodeTsConfig.include?.push(resolve("tools/render/**/*"), resolve("films/render.ts"));
     });
 
     // Typecheck needs the film components and imports; only `FILM=1 nuxt dev` serves the routes, so generate and build never see one.
@@ -17,6 +17,7 @@ export default defineNuxtModule({
 
     // Nobody watches a film route in a browser, and a hot update mid-render would rebuild the timeline under the renderer.
     if (nuxt.options.dev) nuxt.options.vite.server = { ...nuxt.options.vite.server, hmr: false };
+    nuxt.options.routeRules = { ...nuxt.options.routeRules, "/film/**": { ssr: false } };
 
     addComponentsDir({ path: resolve("films/components"), prefix: "Film" });
     addImportsDir(resolve("films/composables"));
