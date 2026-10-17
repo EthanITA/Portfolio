@@ -2,9 +2,9 @@ import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { Encode, Probe, Render, type Media } from "../tools/render/index.ts";
-import { voiceOf } from "./scripts/cues.ts";
+import { readSheet, SHEETS, voiceOf } from "./scripts/cues.ts";
 import sage from "./scripts/sage.ts";
-import { SAFE_MARGIN, type FilmScript } from "./scripts/script.ts";
+import { GRID, SAFE_MARGIN, type FilmScript } from "./scripts/script.ts";
 import shell from "./scripts/shell.ts";
 import sidecar from "./scripts/sidecar.ts";
 
@@ -117,12 +117,21 @@ const film = async (name: string): Promise<boolean> => {
   const cut = CUTS[values.cut];
   if (!script || !cut) throw new Error(`usage: tsx films/render.ts <${Object.keys(SCRIPTS).join("|")}...> [--cut ${Object.keys(CUTS).join("|")}] [--fit]`);
 
+  const problems = readSheet({ script, json: SHEETS[script.name] }).problems;
+  const sheet: Check[] = problems.length
+    ? problems.map((problem) => ({ name: "timing sheet", pass: false, detail: problem }))
+    : [{ name: "timing sheet", pass: true, detail: `${script.lines.length} lines on the ${GRID.bpm} bpm grid, closing at ${script.close} ms` }];
+  if (problems.length && !values.fit) {
+    console.log(JSON.stringify({ film: `${name}${cut.suffix}`, misplaced: sheet }, undefined, 2));
+    return false;
+  }
+
   const route = `/film/${name}`;
   const server = await Render.serve({ route, port: values.port ? Number(values.port) : undefined, root });
   try {
     const started = performance.now();
     const options = { url: `${server.origin}${route}`, width: cut.width, height: cut.height, scale: SCALE, fps: FPS };
-    const placement = await fit({ url: options.url, script, width: cut.width, height: cut.height });
+    const placement = [...sheet, ...(await fit({ url: options.url, script, width: cut.width, height: cut.height }))];
     const misplaced = placement.filter((check) => !check.pass);
     if (values.fit) {
       console.log(JSON.stringify({ film: `${name}${cut.suffix}`, placement, failed: misplaced.length }, undefined, 2));
