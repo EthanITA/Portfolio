@@ -117,8 +117,9 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
     layout.height = height;
   };
 
+  const point = new Vector3();
   const project = (x: number, y: number, z: number): [number, number] => {
-    const point = new Vector3(x, y, z).project(stage.camera);
+    point.set(x, y, z).project(stage.camera);
     return [((point.x + 1) / 2) * layout.width, ((1 - point.y) / 2) * layout.height];
   };
 

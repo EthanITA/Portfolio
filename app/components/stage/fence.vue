@@ -39,6 +39,11 @@ const views = shallowRef<View[]>([]);
 
 const clicks = new Map<number, number>();
 const emitted = new Set<number>();
+let spotlit = 0;
+const spotlight = (n: number): void => {
+  spotlit = n;
+  emit("gate", n);
+};
 const overlays = new Map<number, HTMLElement>();
 const rects = new Map<number, [number, number, number, number]>();
 const sizes = new WeakMap<HTMLElement, string>();
@@ -89,8 +94,9 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
   const view = { width: 1, height: 1 };
   const unit = toScreen(preset, [1, 0, FRONT]).side - toScreen(preset, [0, 0, FRONT]).side;
 
+  const point = new Vector3();
   const project = (x: number, y: number, z: number): [number, number] => {
-    const point = new Vector3(x, y, z).project(stage.camera);
+    point.set(x, y, z).project(stage.camera);
     return [((point.x + 1) / 2) * view.width, ((1 - point.y) / 2) * view.height];
   };
 
@@ -124,7 +130,7 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
       if (p.gate) lit[p.gate - 1] = Math.max(lit[p.gate - 1] ?? 0, p.lit);
       if (!filming && p.status === "stopped" && p.gate && !emitted.has(k)) {
         emitted.add(k);
-        emit("gate", p.gate);
+        spotlight(p.gate);
       }
       const [left, top] = project(x - chip.width / 2, y + chip.height / 2, 0);
       const [right, bottom] = project(x + chip.width / 2, y - chip.height / 2, 0);
@@ -199,7 +205,7 @@ const stop = (k: number): void => {
 };
 
 const hover = (n: number): void => {
-  if (!film) emit("gate", n);
+  if (!film && n !== spotlit) spotlight(n);
 };
 
 defineExpose({ ...seekable, restMs: REST_MS });
