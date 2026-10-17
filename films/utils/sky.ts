@@ -1,6 +1,6 @@
 import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
 import { bare, NARRATOR, type Spoken } from "../scripts/cues.ts";
-import { GRID, WINDOW, type Cut } from "../scripts/script.ts";
+import { GRID, SAFE_MARGIN, WINDOW, type Cut, type Key, type Wait } from "../scripts/script.ts";
 
 export const SKY = {
   enter: MOTION_DURATION.snappy,
@@ -11,6 +11,10 @@ export const SKY = {
   swell: 1.08,
   exit: MOTION_DURATION.fast,
   trail: 20,
+  gap: 8,
+  pad: 0.25,
+  pulse: { scale: 1.06, over: 250 },
+  dip: { scale: 0.96, over: MOTION_DURATION.press },
 } as const;
 
 export const STEPS = {
@@ -41,6 +45,14 @@ export type Line = { text: string; size: Size; at: number; leave: number; rows: 
 export type Pose = { opacity: number; y: number; blur: number; scale: number };
 
 export type PlanOptions = { lines: Spoken[]; measured: Partial<Record<Size, Widths>>[]; cut: Cut; fold: number; violet: string[] };
+
+export type Metrics = { em: number; descent: number };
+
+export type Box = { width: number; height: number };
+
+export type Cap = { keys: string; at: number; leave: number; dips: number[]; pulses: number[]; bottom: number };
+
+export type CapOptions = { keys: readonly Key[]; waits: Wait[]; lines: Line[]; metrics: Partial<Record<Size, Metrics>>; boxes: Partial<Record<string, Box>>; cut: Cut };
 
 const CODE = new Set(["?", "⌘Z"]);
 
@@ -86,6 +98,8 @@ const layout = ({ words, measured, cut }: { words: string[]; measured: Partial<R
 const beatAfter = (ms: number): number => GRID.originMs + Math.ceil((ms - GRID.originMs) / GRID.beatMs) * GRID.beatMs;
 
 const span = (count: number): number => SKY.exit + SKY.trail * (count - 1);
+
+const gone = (line: Line): number => line.leave + span(line.rows.reduce((count, row) => count + row.words.length, 0));
 
 const arrives = (word: Word): number => (word.letters ? (word.letters.at(-1)?.at ?? word.at) + Math.max(SKY.enter, SKY.settle) : word.at + (word.swell ? Math.max(SKY.enter, SKY.settle) : SKY.enter));
 
@@ -139,8 +153,7 @@ const plan = ({ lines, measured, cut, fold, violet }: PlanOptions): { lines: Lin
       if (word.leave < arrives(word)) problems.push(`"${word.text}" in "${line.text}" leaves at ${word.leave} ms, before it is in at ${arrives(word)}`);
     }
     const next = timed[index + 1];
-    const gone = line.leave + span(words.length);
-    if (next && next.at < gone) problems.push(`"${next.text}" lands at ${next.at} ms while "${line.text}" is leaving until ${gone}`);
+    if (next && next.at < gone(line)) problems.push(`"${next.text}" lands at ${next.at} ms while "${line.text}" is leaving until ${gone(line)}`);
   });
   return { lines: timed, problems };
 };
@@ -159,4 +172,66 @@ const pose = ({ ms, at, leave, swell }: { ms: number; at: number; leave: number;
 
 const code = (text: string): boolean => CODE.has(text);
 
-export const Sky = { plan, pose, letters, code };
+type Hold = { keys: string; at: number; until: number; dips: number[]; pulses: number[] };
+
+const beats = ({ after, before }: { after: number; before: number }): number[] => {
+  const first = beatAfter(after + 1);
+  return Array.from({ length: Math.max(0, Math.ceil((before - first) / GRID.beatMs)) }, (_, index) => first + index * GRID.beatMs);
+};
+
+// Presses of one key that touch merge into one cap, so ⌘Z twice and Return after its wait dip instead of blinking.
+const holds = ({ keys, waits }: { keys: readonly Key[]; waits: Wait[] }): Hold[] =>
+  [
+    ...keys.map((key): Hold => ({ keys: key.key, at: key.at, until: key.until ?? key.at + GRID.beatMs, dips: [key.at], pulses: [] })),
+    ...waits.map((wait): Hold => ({ keys: wait.key, at: wait.at, until: wait.until, dips: [], pulses: beats({ after: wait.at, before: wait.until }) })),
+  ]
+    .sort((a, b) => a.at - b.at)
+    .reduce<Hold[]>((merged, hold) => {
+      const last = merged.at(-1);
+      if (!last || last.keys !== hold.keys || hold.at > last.until) return [...merged, hold];
+      return [...merged.slice(0, -1), { ...last, until: Math.max(last.until, hold.until), dips: [...last.dips, ...hold.dips], pulses: [...last.pulses, ...hold.pulses] }];
+    }, []);
+
+const height = ({ line, em }: { line: Line; em: number }): number => line.rows.length * em + (line.rows.length - 1) * SKY.gap + SKY.pad * em;
+
+const right = (line: Line): number => {
+  const last = line.rows.at(-1)?.words.at(-1);
+  return last ? last.x + last.width : 0;
+};
+
+const caps = ({ keys, waits, lines, metrics, boxes, cut }: CapOptions): { caps: Cap[]; problems: string[] } => {
+  const problems: string[] = [];
+  const merged = holds({ keys, waits });
+  const placed = merged.flatMap((hold, index): Cap[] => {
+    const next = merged[index + 1];
+    const leave = next && next.at < hold.until + SKY.exit ? next.at - SKY.exit : hold.until;
+    if (leave < hold.at + SKY.enter) problems.push(`keycap "${hold.keys}" at ${hold.at} ms leaves at ${leave}, before it is in at ${hold.at + SKY.enter}`);
+    const box = boxes[hold.keys];
+    if (!box) {
+      problems.push(`keycap "${hold.keys}" was not measured`);
+      return [];
+    }
+    const shown = lines.filter((line) => line.at < leave + SKY.exit && gone(line) > hold.at);
+    const fallback = STEPS[cut][0].size;
+    const em = (line?: Line): number => metrics[line?.size ?? fallback]?.em ?? 0;
+    const beside = shown.every((line) => right(line) + SKY.gap + box.width <= WINDOW[cut].width);
+    const bottom = beside ? SKY.pad * em(shown[0]) + (metrics[shown[0]?.size ?? fallback]?.descent ?? 0) : Math.max(...shown.map((line) => height({ line, em: em(line) }))) + SKY.gap;
+    if (bottom + box.height > WINDOW[cut].y - SAFE_MARGIN) problems.push(`keycap "${hold.keys}" at ${hold.at} ms needs ${Math.ceil(bottom + box.height)} px above the line, the ${cut} sky has ${WINDOW[cut].y - SAFE_MARGIN}`);
+    return [{ keys: hold.keys, at: hold.at, leave, bottom, dips: hold.dips.filter((at) => at > hold.at && at + SKY.dip.over <= leave), pulses: hold.pulses.filter((at) => at + SKY.pulse.over <= leave) }];
+  });
+  return { caps: placed, problems };
+};
+
+const bump = ({ ms, at, over }: { ms: number; at: number; over: number }): number => {
+  const progress = (ms - at) / over;
+  return progress > 0 && progress < 1 ? Math.sin(Math.PI * progress) : 0;
+};
+
+const press = ({ ms, cap }: { ms: number; cap: Cap }): Pose => {
+  const base = pose({ ms, at: cap.at, leave: cap.leave, swell: false });
+  const pulse = Math.max(0, ...cap.pulses.map((at) => bump({ ms, at, over: SKY.pulse.over })));
+  const dip = Math.max(0, ...cap.dips.map((at) => bump({ ms, at, over: SKY.dip.over })));
+  return { ...base, scale: base.scale * (1 + (SKY.pulse.scale - 1) * pulse) * (1 - (1 - SKY.dip.scale) * dip) };
+};
+
+export const Sky = { plan, pose, letters, code, caps, press };

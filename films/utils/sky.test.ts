@@ -5,7 +5,7 @@ import sage from "../scripts/sage.ts";
 import { WINDOW, type Cut, type FilmScript } from "../scripts/script.ts";
 import shell from "../scripts/shell.ts";
 import sidecar from "../scripts/sidecar.ts";
-import { Sky, SKY, type Line, type Size, type Widths } from "./sky.ts";
+import { Sky, SKY, type Box, type Cap, type Line, type Metrics, type Size, type Widths } from "./sky.ts";
 
 const PX: Record<Size, number> = { "8xl": 96, "6xl": 60, "7xl": 72, "5xl": 48 };
 
@@ -109,6 +109,66 @@ describe("Sky.plan", () => {
     const lines = film({ script: sidecar, cut: "wide" }).lines;
     for (const row of named(lines, "That click stays yours.").rows) assert.equal(row.words[0]?.x, (WINDOW.wide.width - row.width) / 2);
     for (const row of named(lines, "Claude hears about it.").rows) assert.equal(row.words[0]?.x, 0);
+  });
+});
+
+const METRICS: Record<Size, Metrics> = { "8xl": { em: 96, descent: 20 }, "6xl": { em: 60, descent: 12 }, "7xl": { em: 72, descent: 15 }, "5xl": { em: 48, descent: 10 } };
+
+const ZOOM: Record<Cut, number> = { wide: 3, tall: 2.5 };
+
+const boxed = ({ keys, cut, width = 20 }: { keys: string[]; cut: Cut; width?: number }): Record<string, Box> =>
+  Object.fromEntries(keys.map((key) => [key, { width: width * ZOOM[cut] * key.split(" ").length, height: 18 * ZOOM[cut] }]));
+
+const capped = ({ script, cut = "wide" }: { script: FilmScript; cut?: Cut }): { caps: Cap[]; problems: string[] } =>
+  Sky.caps({ keys: script.keys, waits: script.waits, lines: film({ script, cut }).lines, metrics: METRICS, boxes: boxed({ keys: [...script.keys, ...script.waits].map((press) => press.key), cut }), cut });
+
+const timing = (cap?: Cap): Partial<Cap> => ({ keys: cap?.keys, at: cap?.at, leave: cap?.leave, dips: cap?.dips, pulses: cap?.pulses });
+
+describe("Sky.caps", () => {
+  it("shows a press on its beat and drops it a beat later, and a held key for its hold", () => {
+    assert.deepEqual(timing(capped({ script: shell }).caps[0]), { keys: "enter", at: 7000, leave: 7500, dips: [], pulses: [] });
+    assert.deepEqual(timing(capped({ script: sage }).caps[0]), { keys: "opt", at: 4500, leave: 7500, dips: [], pulses: [] });
+  });
+
+  it("merges touching presses of one key into one cap that dips on each repeat", () => {
+    const caps = capped({ script: sidecar }).caps;
+    assert.deepEqual(caps.map(timing).slice(1), [
+      { keys: "cmd Z", at: 30_000, leave: 31_000, dips: [30_500], pulses: [] },
+      { keys: "cmd shift Z", at: 31_500, leave: 32_500, dips: [32_000], pulses: [] },
+    ]);
+  });
+
+  it("pulses a waiting key on every beat it waits, dips it when pressed, and clears it before the next key lands", () => {
+    const enter = capped({ script: sage }).caps.find((cap) => cap.at === 20_500);
+    assert.deepEqual(timing(enter), { keys: "enter", at: 20_500, leave: 24_500, dips: [24_000], pulses: [21_000, 21_500, 22_000, 22_500, 23_000, 23_500] });
+    const waiting = capped({ script: shell }).caps.find((cap) => cap.at === 14_000);
+    assert.deepEqual(timing(waiting), { keys: "enter", at: 14_000, leave: 17_000 - SKY.exit, dips: [], pulses: [14_500, 15_000, 15_500, 16_000, 16_500] });
+  });
+
+  for (const cut of ["wide", "tall"] as const) {
+    it(`places every committed film's keys in the ${cut} cut with no problem`, () => {
+      for (const script of [shell, sage, sidecar]) assert.deepEqual(capped({ script, cut }).problems, [], script.name);
+    });
+  }
+
+  it("sits on the baseline beside the words, above them when the row is full, and refuses a sky too short to stack", () => {
+    const place = ({ text, width }: { text: string; width: number }) =>
+      Sky.caps({ keys: [{ key: "enter", at: 1500 }], waits: [], lines: [first({ text, cut: "tall" })], metrics: METRICS, boxes: boxed({ keys: ["enter"], cut: "tall", width }), cut: "tall" });
+    assert.equal(place({ text: "Or not.", width: 20 }).caps[0]?.bottom, SKY.pad * 72 + 15);
+    assert.equal(place({ text: "Or not.", width: 160 }).caps[0]?.bottom, 72 + SKY.pad * 72 + SKY.gap);
+    assert.deepEqual(place({ text: "one two three four five six seven eight nine ten eleven twelve", width: 160 }).problems, [`keycap "enter" at 1500 ms needs 225 px above the line, the tall sky has 174`]);
+  });
+});
+
+describe("Sky.press", () => {
+  const cap: Cap = { keys: "enter", at: 1000, leave: 4000, dips: [3000], pulses: [2000], bottom: 0 };
+  it("rests at scale 1, swells 6 percent halfway through a pulse and sinks 4 percent halfway through a press", () => {
+    assert.deepEqual(Sky.press({ ms: 1500, cap }), { opacity: 1, y: 0, blur: 0, scale: 1 });
+    assert.equal(Sky.press({ ms: 2000, cap }).scale, 1);
+    assert.equal(Sky.press({ ms: 2000 + SKY.pulse.over / 2, cap }).scale, SKY.pulse.scale);
+    assert.equal(Sky.press({ ms: 2000 + SKY.pulse.over, cap }).scale, 1);
+    assert.equal(Sky.press({ ms: 3000 + SKY.dip.over / 2, cap }).scale, SKY.dip.scale);
+    assert.equal(Sky.press({ ms: 4180, cap }).opacity, 0);
   });
 });
 
