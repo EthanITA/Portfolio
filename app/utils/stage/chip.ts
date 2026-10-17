@@ -16,10 +16,16 @@ export type Chip = {
 };
 
 const PX = 420;
+const LINE_HEIGHT = 1.45;
+const PAD = 0.9;
+
+export const chipHeight = (size: number, rows: number): number => rows * (size * LINE_HEIGHT) + size * PAD * 1.2;
 
 let mono = "";
 
 const fontStack = (): string => (mono ||= getComputedStyle(document.documentElement).getPropertyValue("--mono").trim() || "monospace");
+
+const fontOf = (size: number): string => `500 ${Math.round(size * PX)}px ${fontStack()}`;
 
 const canvas2d = (width: number, height: number): [HTMLCanvasElement, CanvasRenderingContext2D | undefined] => {
   const canvas = document.createElement("canvas");
@@ -48,6 +54,15 @@ const wrap = (context: CanvasRenderingContext2D, text: string, width: number, li
   while (last.length > 1 && context.measureText(`${last}…`).width > width) last = last.slice(0, -1);
   kept[lines - 1] = `${last.trimEnd()}…`;
   return kept;
+};
+
+export const fits = ({ text, size, maxWidth, lines = 2 }: ChipOptions): boolean => {
+  const [, measure] = canvas2d(1, 1);
+  if (!measure) return true;
+  measure.font = fontOf(size);
+  const width = (maxWidth - size * PAD * 2) * PX;
+  const rows = wrap(measure, text, width, Infinity);
+  return rows.length <= lines && rows.every((row) => measure.measureText(row).width <= width);
 };
 
 const texture = (canvas: HTMLCanvasElement): CanvasTexture => {
@@ -81,15 +96,15 @@ const checkMark = (): HTMLCanvasElement => {
 };
 
 export const createChip = (stage: Stage, { text, size, maxWidth, lines = 2 }: ChipOptions): Chip => {
-  const font = `500 ${Math.round(size * PX)}px ${fontStack()}`;
-  const pad = size * 0.9;
+  const font = fontOf(size);
+  const pad = size * PAD;
   const [, measure] = canvas2d(1, 1);
   if (measure) measure.font = font;
   const rows = measure ? wrap(measure, text, (maxWidth - pad * 2) * PX, lines) : [text];
   const textWidth = measure ? Math.max(...rows.map((row) => measure.measureText(row).width)) / PX : text.length * size * 0.6;
-  const lineHeight = size * 1.45;
+  const lineHeight = size * LINE_HEIGHT;
   const width = Math.min(maxWidth, textWidth + pad * 2);
-  const height = rows.length * lineHeight + pad * 1.2;
+  const height = chipHeight(size, rows.length);
   const radius = Math.min(height / 2, size * 1.6);
 
   const [labelCanvas, context] = canvas2d(width * PX, height * PX);
