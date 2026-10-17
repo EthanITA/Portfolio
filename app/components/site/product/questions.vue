@@ -52,7 +52,7 @@ const { slug, questions } = defineProps<{ slug: Product; questions: Question[] }
 }
 
 .answer {
-  @apply typo-body-md m-0 max-w-prose text-pretty px-5 pb-5 text-muted;
+  @apply typo-body-md m-0 measure text-pretty px-5 pb-5 text-muted;
 }
 
 @media (prefers-reduced-motion: reduce) {

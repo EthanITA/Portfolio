@@ -41,6 +41,11 @@
   @apply mx-auto w-full max-w-5xl px-5 sm:px-8;
 }
 
+/* About 70 characters a line: max-w-prose's 65ch reads 95 here, because this face's zero is 0.73em wide. */
+@utility measure {
+  max-width: 35em;
+}
+
 /* Chip's tokens on a span or a link: Chip always renders a toggle button, wrong for a static label and invalid inside a link. */
 @utility chip-look {
   @apply typo-meta-strong inline-flex w-fit items-center gap-1.5 rounded-full border border-border bg-raised px-2.5 py-1 text-muted no-underline;
