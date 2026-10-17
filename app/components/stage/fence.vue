@@ -260,7 +260,7 @@ defineExpose({ ...seekable, restMs: REST_MS });
 }
 
 .number {
-  @apply typo-mono-meta pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 text-muted;
+  @apply typo-mono-meta pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 text-fg;
 }
 
 .change {
