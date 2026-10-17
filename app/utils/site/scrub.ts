@@ -19,9 +19,11 @@ export const useScrub = ({ goal, update }: ScrubOptions): Scrub => {
   const step = (now: number): void => {
     frame = 0;
     const to = goal();
+    const was = progress;
     progress = motionOn() ? to + (progress - to) * Math.exp(-(last ? now - last : 1000 / 60) / LAG_MS) : to;
     if (Math.abs(to - progress) < SNAP) progress = to;
-    update(progress);
+    // Scrolls above or below the range wake it too, and they must cost no style writes.
+    if (progress !== was) update(progress);
     last = progress === to ? 0 : now;
     if (last) frame = requestAnimationFrame(step);
   };

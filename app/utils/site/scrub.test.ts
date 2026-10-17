@@ -75,6 +75,15 @@ describe("useScrub", () => {
     assert.equal(env.frames.size, 0);
   });
 
+  it("writes nothing for a wake that leaves the value where it was", () => {
+    const { seen } = scrub(0);
+    emit("scroll");
+    emit("resize");
+    tick();
+    assert.deepEqual(seen, [0]);
+    assert.equal(env.frames.size, 0);
+  });
+
   it("moves 13 percent of the gap on the first frame after a raw change", () => {
     const { raw, shown } = scrub(0.4);
     raw.value = 0.9;
@@ -101,6 +110,15 @@ describe("useScrub", () => {
     assert.equal(env.frames.size, 0);
     assert.ok(frames <= Math.ceil((120 * Math.log(1 / 0.001)) / TICK) + 1, `took ${frames} frames`);
     assert.ok(seen.every((value, i) => i === 0 || value >= seen[i - 1]!), "went backwards");
+  });
+
+  it("lands exactly on 0 on the way back, so a stop near either end still arrives", () => {
+    const { raw, shown } = scrub(1);
+    raw.value = 0;
+    emit("scroll");
+    settle();
+    assert.equal(shown(), 0);
+    assert.equal(env.frames.size, 0);
   });
 
   it("lands in the frame after a long one instead of parking short", () => {
