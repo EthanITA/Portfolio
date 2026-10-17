@@ -28,7 +28,7 @@ const { name } = defineProps<{ name: "hero" | "line" | "fence" | "play" }>();
 }
 
 .mount[data-mount="line"] {
-  @apply h-[60svh] min-h-80 md:h-[70svh];
+  @apply h-[60svh] min-h-136 md:h-[70svh];
 }
 
 .mount[data-mount="fence"] {
