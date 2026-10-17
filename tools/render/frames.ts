@@ -146,6 +146,11 @@ const capture = async ({ worker, ms, timeout }: { worker: Worker; ms: number; ti
     worker.page.evaluate(async (at) => {
       await window.__seek(at);
       await window.__ready();
+      // Chrome skips raster invalidation for sub-pixel transform and near-1 opacity steps, so nudging the page forces every tile to repaint.
+      const previous = document.body.style.transform;
+      document.body.style.transform = "translateX(1px)";
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      document.body.style.transform = previous;
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     }, ms),
     timeout,
