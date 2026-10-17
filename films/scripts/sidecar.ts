@@ -2,6 +2,8 @@ import { SIDECAR_SCRIPT } from "../../app/utils/play/script/sidecar.ts";
 import { GRID, type FilmScript } from "./script.ts";
 
 const LINE = 41_000;
+const SEAM = 37_000;
+const FOLD = 39_500;
 
 export default {
   name: "sidecar",
@@ -20,15 +22,15 @@ export default {
     "Claude does the work. You decide what lands.",
     "That click stays yours.",
   ],
+  violet: ["Approve", "Reject", "⌘Z", "You", "decide", "yours"],
   keys: SIDECAR_SCRIPT.keys,
-  island: [
-    { at: 0, until: 3000, shape: "island", open: 1000 },
-    { at: LINE - 600, shape: "island", draw: LINE, y: 0.25 },
-  ],
-  rules: [{ anchor: "seam", at: 37_000 }],
+  waits: [],
+  island: { carry: 500 },
+  rules: [{ anchor: "seam", at: SEAM }],
+  stops: [{ at: SEAM, until: FOLD }],
   rig: {
     at: 2000,
-    until: 39_500,
+    until: FOLD,
     shots: [
       { at: 10_000, duration: 1000, scale: 1.5, anchor: "hunks" },
       { at: 16_000, duration: 1000, scale: 1 },

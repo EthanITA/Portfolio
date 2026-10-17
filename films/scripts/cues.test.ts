@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, it } from "node:test";
-import { readSheet, SHEETS } from "./cues.ts";
+import { mixProblems, readSheet, SHEETS } from "./cues.ts";
 import sage from "./sage.ts";
 import { GRID, type FilmScript } from "./script.ts";
 import shell from "./shell.ts";
@@ -11,7 +11,7 @@ import sidecar from "./sidecar.ts";
 
 type Line = { stem: string; voice: string; text: string; onsetMs: number; endMs: number; words: { text: string; startMs: number; endMs: number }[]; anchor?: { word: string; beatMs: number } };
 
-type Fixture = { durationMs: number; mixSha256?: string; bed: { grid: Record<string, number>; closeMs: number; accents: { atMs: number; kind: string }[] }; cues: Line[] };
+type Fixture = { durationMs: number; mixSha256?: string; bed: { grid: Record<string, number>; closeMs: number; breakdown: { fromMs: number; toMs: number }; accents: { atMs: number; kind: string }[] }; cues: Line[] };
 
 const WORD = 250;
 const MIX = "5e1f".repeat(16);
@@ -20,7 +20,12 @@ const MIX = "5e1f".repeat(16);
 const fixture = (script: FilmScript): Fixture => ({
   durationMs: script.duration,
   mixSha256: MIX,
-  bed: { grid: { ...GRID, beats: script.duration / GRID.beatMs }, closeMs: script.close, accents: [{ atMs: 4000, kind: "clap" }, { atMs: script.close, kind: "close" }] },
+  bed: {
+    grid: { ...GRID, beats: script.duration / GRID.beatMs },
+    closeMs: script.close,
+    breakdown: { fromMs: 2000, toMs: script.rules.find((rule) => rule.anchor === "seam")?.at ?? 4000 },
+    accents: [{ atMs: 4000, kind: "clap" }, { atMs: script.close, kind: "close" }],
+  },
   cues: script.lines.map((text, index) => {
     const onsetMs = 1000 + index * 4000;
     const words = text.split(" ").map((word, position) => ({ text: word, startMs: onsetMs + position * WORD, endMs: onsetMs + (position + 1) * WORD }));
@@ -31,7 +36,7 @@ const fixture = (script: FilmScript): Fixture => ({
 const problems = (script: FilmScript, change: (sheet: Fixture) => void = () => {}): string[] => {
   const sheet = fixture(script);
   change(sheet);
-  return readSheet({ script, json: sheet, mixSha256: MIX }).problems;
+  return [...mixProblems({ json: sheet, mixSha256: MIX }), ...readSheet({ script, json: sheet }).problems];
 };
 
 const line = (sheet: Fixture, index: number): Line => {
@@ -55,8 +60,9 @@ describe("readSheet", () => {
       const mixSha256 = createHash("sha256")
         .update(await readFile(join(import.meta.dirname, "../audio", script.name, "mix.wav")))
         .digest("hex");
-      const { sheet, problems: found } = readSheet({ script, json: SHEETS[script.name], mixSha256 });
-      assert.deepEqual(found, [], script.name);
+      const json = SHEETS[script.name];
+      const { sheet, problems: found } = readSheet({ script, json });
+      assert.deepEqual([...mixProblems({ json, mixSha256 }), ...found], [], script.name);
       assert.equal(sheet.lines.length, script.lines.length, script.name);
     }
   });
@@ -107,6 +113,21 @@ describe("readSheet", () => {
         sheet.bed.closeMs += 300;
       }).join("\n"),
       /bed\.closeMs is 32300/,
+    );
+  });
+
+  it("ties Sidecar's breakdown to the seam rule and leaves films without one alone", () => {
+    one(
+      problems(sidecar, (sheet) => {
+        sheet.bed.breakdown.toMs = 36_500;
+      }),
+      /bed\.breakdown\.toMs is 36500, while the seam rule draws at 37000/,
+    );
+    assert.deepEqual(
+      problems(shell, (sheet) => {
+        sheet.bed.breakdown.toMs = 36_500;
+      }),
+      [],
     );
   });
 
@@ -274,7 +295,7 @@ describe("readSheet", () => {
     sheet.cues.push({ stem: "voice", voice: "person", text: "I want to join the standup", onsetMs: 5800, endMs: 7700, words: [] });
     const cue = sheet.cues.find((item) => item.text === handBack);
     if (cue) cue.voice = "sage";
-    const { sheet: read, problems: found } = readSheet({ script: sage, json: sheet, mixSha256: MIX });
+    const { sheet: read, problems: found } = readSheet({ script: sage, json: sheet });
     assert.deepEqual(found, []);
     assert.equal(read.lines.find((item) => item.text === handBack)?.voice, "sage");
     assert.equal(read.lines.length, sage.lines.length);

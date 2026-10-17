@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
+import { IslandMotion } from "~~/films/utils/island";
 
 const { at } = defineProps<{ at: number }>();
 
 const end = useTemplateRef<HTMLElement>("end");
-const { timeline } = useFilmContext();
+const { timeline, cut } = useFilmContext();
 
 onMounted(() => {
   if (!end.value) return;
@@ -14,11 +15,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <p ref="end" class="film-end"><slot /></p>
+  <p ref="end" class="film-end" :style="{ top: `${IslandMotion.endTop(cut)}px` }"><slot /></p>
 </template>
 
 <style scoped>
 .film-end {
-  @apply absolute inset-x-0 top-2/3 text-center font-mono text-3xl opacity-0;
+  @apply absolute inset-x-0 text-center font-mono text-3xl opacity-0;
 }
 </style>

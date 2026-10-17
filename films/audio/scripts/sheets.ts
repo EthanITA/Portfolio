@@ -1,3 +1,7 @@
+import { SAGE_SCRIPT } from "../../../app/utils/play/script/sage";
+import { SHELL_SCRIPT } from "../../../app/utils/play/script/shell";
+import { SIDECAR_SCRIPT } from "../../../app/utils/play/script/sidecar";
+
 export type Narrated = { readonly text: string; readonly anchor: string; readonly beatMs: number; readonly onsetMs: number };
 
 export type Sheet = {
@@ -23,79 +27,11 @@ export const windowsOf = ({ narrator, durationMs }: Pick<Sheet, "narrator" | "du
     return { fromMs: Math.max(0, line.onsetMs - LEAD_ROOM_MS), untilMs: Math.min(...limits) };
   });
 
-export const SHELL_MOMENTS = {
-  typeFind: 4000,
-  enterFind: 7000,
-  outputFind: 9000,
-  typeDist: 10_500,
-  enterDist: 12_000,
-  stagedDist: 14_000,
-  killDist: 17_000,
-  typePush: 17_500,
-  enterPush: 19_500,
-  askedPush: 21_000,
-  answerNo: 24_000,
-  clear: 24_500,
-  typePipe: 25_000,
-  enterPipe: 27_500,
-  answerPipe: 29_000,
-} as const;
+// The two sheet times play's scripts have no moment for.
+export const HAND_BACK_VOICE_MS = 33_000;
+export const SIDECAR_SEAM_MS = 37_000;
 
-export const SAGE_MOMENTS = {
-  optionDown: 4500,
-  wordsStart: 5500,
-  release: 7500,
-  understood: 9500,
-  goal: 11_000,
-  step1: 11_500,
-  tick1: 14_000,
-  step2: 14_500,
-  tick2: 16_000,
-  step3: 16_500,
-  tick3: 18_000,
-  cardIn: 20_000,
-  fillStart: 20_500,
-  returnKey: 24_000,
-  joined: 24_000,
-  fold: 26_000,
-  hold2: 28_000,
-  words2Start: 28_500,
-  release2: 30_000,
-  pageIn: 30_500,
-  scrollToPay: 31_000,
-  payOutlined: 32_000,
-  handBack: 32_000,
-  handBackVoice: 33_000,
-} as const;
-
-export const SIDECAR_MOMENTS = {
-  edit1: 4500,
-  sideIn: 5000,
-  row1: 5500,
-  edit2: 6500,
-  row2: 7500,
-  edit3: 8500,
-  row3: 9500,
-  acceptHunk: 11_000,
-  rejectHunk: 12_500,
-  tellStart: 13_000,
-  tellLands: 14_000,
-  reply: 15_000,
-  artifacts: 18_000,
-  select: 19_500,
-  popover: 20_000,
-  typeNote: 20_500,
-  addToTray: 22_000,
-  send: 23_000,
-  noteLands: 24_000,
-  review: 28_000,
-  undo: 30_000,
-  redo: 31_500,
-  hold: 35_000,
-  seam: 37_000,
-} as const;
-
-const m = { shell: SHELL_MOMENTS, sage: SAGE_MOMENTS, sidecar: SIDECAR_MOMENTS };
+const m = { shell: SHELL_SCRIPT.moments, sage: SAGE_SCRIPT.moments, sidecar: SIDECAR_SCRIPT.moments };
 
 export const SHEETS = {
   shell: {
@@ -132,7 +68,7 @@ export const SHEETS = {
   sidecar: {
     durationMs: 45_000,
     closeMs: 41_000,
-    breakdown: [35_000, m.sidecar.seam],
+    breakdown: [35_000, SIDECAR_SEAM_MS],
     stabsMs: [m.sidecar.tellLands, m.sidecar.noteLands],
     narrator: [
       { text: "A companion window for Claude Code.", anchor: "Claude", beatMs: 2000, onsetMs: 700 },

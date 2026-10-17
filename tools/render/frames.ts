@@ -135,34 +135,51 @@ const arm = async ({ worker, url, timeout }: { worker: Worker; url: string; time
   worker.stale = false;
 };
 
-const shoot = async ({ worker, url, ms, timeout }: { worker: Worker; url: string; ms: number; timeout: number }): Promise<Buffer> => {
-  const png = await capture({ worker, ms, timeout }).catch((error: unknown) => {
+const shoot = async ({ worker, url, ms, timeout, region }: { worker: Worker; url: string; ms: number; timeout: number; region?: string }): Promise<Buffer> => {
+  const png = await capture({ worker, ms, timeout, region }).catch((error: unknown) => {
     if (!VITE_REBUNDLE.test(String(error))) throw error;
     worker.errors.push(String(error));
   });
   if (png && !worker.stale && !rebundling(worker)) return png;
   await arm({ worker, url, timeout });
-  return capture({ worker, ms, timeout });
+  return capture({ worker, ms, timeout, region });
 };
 
-const capture = async ({ worker, ms, timeout }: { worker: Worker; ms: number; timeout: number }): Promise<Buffer> => {
-  await withTimeout(
-    worker.page.evaluate(async (at) => {
-      await window.__seek(at);
-      await window.__ready();
-      // Chrome skips raster invalidation for sub-pixel steps, and moving the page only repositions composited layers, so hiding it repaints them all.
-      const previous = document.body.style.visibility;
-      document.body.style.visibility = "hidden";
-      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      document.body.style.visibility = previous;
-      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    }, ms),
+type Box = { x: number; y: number; width: number; height: number };
+
+// A crop on whole CSS pixels keeps every capture of the same box the same size and free of half-pixel edges.
+const snap = (box: Box): Box => {
+  const x = Math.floor(box.x);
+  const y = Math.floor(box.y);
+  return { x, y, width: Math.ceil(box.x + box.width) - x, height: Math.ceil(box.y + box.height) - y };
+};
+
+const capture = async ({ worker, ms, timeout, region }: { worker: Worker; ms: number; timeout: number; region?: string }): Promise<Buffer> => {
+  const box = await withTimeout(
+    worker.page.evaluate(
+      async ({ at, selector }) => {
+        await window.__seek(at);
+        await window.__ready();
+        // Chrome skips raster invalidation for sub-pixel steps, and moving the page only repositions composited layers, so hiding it repaints them all.
+        const previous = document.body.style.visibility;
+        document.body.style.visibility = "hidden";
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        document.body.style.visibility = previous;
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const rect = selector ? document.querySelector(selector)?.getBoundingClientRect() : undefined;
+        return rect ? { x: rect.left, y: rect.top, width: rect.width, height: rect.height } : undefined;
+      },
+      { at: ms, selector: region },
+    ),
     timeout,
     `frame at ${ms} ms`,
   );
+  if (region && !box?.width) throw new Error(`${region} has no box at ${ms} ms`);
+  const crop = region && box ? snap(box) : { x: 0, y: 0, width: worker.width, height: worker.height };
+  if (crop.x < 0 || crop.y < 0 || crop.x + crop.width > worker.width || crop.y + crop.height > worker.height)
+    throw new Error(`${region} at ${ms} ms runs outside the ${worker.width}x${worker.height} frame: ${JSON.stringify(crop)}`);
   // This CDP session never saw Playwright's device scale override, so the clip has to carry it or the frame comes out at CSS size.
-  const clip = { x: 0, y: 0, width: worker.width, height: worker.height, scale: worker.scale };
-  const { data } = await worker.cdp.send("Page.captureScreenshot", { format: "png", optimizeForSpeed: true, clip });
+  const { data } = await worker.cdp.send("Page.captureScreenshot", { format: "png", optimizeForSpeed: true, clip: { ...crop, scale: worker.scale } });
   return Buffer.from(data, "base64");
 };
 
@@ -223,6 +240,23 @@ export const renderFrames = async ({ url, dir, width, height, scale = 1, fps = 6
     return { dir, pattern: Frame.pattern, fps, from, count, width: outWidth, height: outHeight, hashes };
   } finally {
     await Promise.all(browsers.map((browser) => browser.close()));
+  }
+};
+
+export type StillOptions = { url: string; dir: string; width: number; height: number; scale?: number; ms: number; region: string; timeout?: number };
+
+export const renderStill = async ({ url, dir, width, height, scale = 2, ms, region, timeout = 30_000 }: StillOptions): Promise<Frames> => {
+  const browser = await launch();
+  try {
+    const worker = await openPage({ browser, url, width, height, scale });
+    const png = await shoot({ worker, url, ms, timeout, region });
+    if (worker.errors.length) throw new Error(`page error at ${ms} ms: ${worker.errors.join("; ")}`);
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, Frame.name(0)), png);
+    const hashes = new Map([[0, createHash("sha256").update(png).digest("hex")]]);
+    return { dir, pattern: Frame.pattern, fps: 60, from: ms, count: 1, width: png.readUInt32BE(16), height: png.readUInt32BE(20), hashes };
+  } finally {
+    await browser.close();
   }
 };
 

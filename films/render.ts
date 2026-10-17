@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { Encode, Probe, Render, type Media } from "../tools/render/index.ts";
-import { readSheet, SHEETS } from "./scripts/cues.ts";
+import { mixProblems, readSheet, SHEETS } from "./scripts/cues.ts";
 import sage from "./scripts/sage.ts";
 import { GRID, SAFE_MARGIN, type FilmScript } from "./scripts/script.ts";
 import shell from "./scripts/shell.ts";
@@ -42,25 +42,36 @@ const fit = async ({ url, script, width, height }: { url: string; script: FilmSc
     height,
     scale: SCALE,
     times: Array.from({ length: script.duration / 100 }, (_, n) => n * 100),
-    read: (): { placed: Placed[]; landed: string } => ({
+    read: (): { placed: Placed[]; landed: string; sky: string } => ({
       landed: document.querySelector<HTMLElement>(".film-rig")?.dataset.landed ?? "",
-      placed: [".film-key-caps", ".film-title [data-word]", ".film-end"].flatMap((selector) =>
-        [...document.querySelectorAll(selector)]
+      sky: document.querySelector<HTMLElement>(".film-sky")?.dataset.problems ?? "the frame has no .film-sky",
+      placed: [
+        ...[...document.querySelectorAll(".film-end")]
           .filter((element) => {
             let opacity = 1;
             for (let node: Element | undefined = element; node; node = node.parentElement ?? undefined) opacity *= Number(getComputedStyle(node).opacity);
             return opacity > 0.05;
           })
-          .map((element) => {
-            const range = document.createRange();
-            range.selectNodeContents(element);
-            const box = selector === ".film-end" ? range.getBoundingClientRect() : element.getBoundingClientRect();
-            return { name: `${selector} "${element.textContent?.trim()}"`, left: box.left, right: box.right, top: box.top, bottom: box.bottom };
-          }),
-      ),
+          .map((element) => ({ selector: ".film-end", element })),
+        // A word's 0.4em travel crosses the margin only while it fades, so its place is read at rest.
+        ...[
+          { selector: ".film-sky", resting: ".film-sky [data-at]" },
+          { selector: ".film-title", resting: ".film-title [data-at]" },
+          { selector: ".film-sky-cap", resting: ".film-sky [data-cap]" },
+        ].flatMap(({ selector, resting }) =>
+          [...document.querySelectorAll<HTMLElement>(resting)].filter((element) => element.style.opacity === "1" && !element.style.transform).map((element) => ({ selector, element })),
+        ),
+      ].map(({ selector, element }) => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        const box = selector === ".film-end" ? range.getBoundingClientRect() : element.getBoundingClientRect();
+        return { name: `${selector} "${(element.closest(".film-sky-word") ?? element).textContent?.trim()}"`, left: box.left, right: box.right, top: box.top, bottom: box.bottom };
+      }),
     }),
   });
   const landed = samples.at(-1)?.value.landed.split(" ").map(Number) ?? [];
+  const sky = samples.at(-1)?.value.sky ?? "";
+  const planned: Check[] = sky ? sky.split("\n").map((problem) => ({ name: "sky", pass: false, detail: problem })) : [{ name: "sky", pass: true, detail: `${script.lines.length} lines planned` }];
   const shots: Check[] = script.rig.shots.map((shot, index) => ({ name: `shot at ${shot.at} ms${shot.anchor ? ` on "${shot.anchor}"` : ""} lands`, pass: true, detail: `scale ${landed[index]?.toFixed(3)} of ${shot.scale}` }));
   const closest = new Map<string, { margin: number; ms: number }>();
   for (const { ms, value } of samples) {
@@ -70,7 +81,7 @@ const fit = async ({ url, script, width, height }: { url: string; script: FilmSc
       if (!previous || margin < previous.margin) closest.set(placed.name, { margin, ms });
     }
   }
-  return [...shots, ...[...closest].map(([name, { margin, ms }]) => ({ name: `${name} inside the frame`, pass: margin >= SAFE_MARGIN, detail: `${margin.toFixed(1)} px from the edge at ${ms} ms` }))];
+  return [...planned, ...shots, ...[...closest].map(([name, { margin, ms }]) => ({ name: `${name} inside the frame`, pass: margin >= SAFE_MARGIN, detail: `${margin.toFixed(1)} px from the edge at ${ms} ms` }))];
 };
 
 const verify = async ({ script, files, width, height, audio }: { script: FilmScript; files: string[]; width: number; height: number; audio: boolean }): Promise<Check[]> => {
@@ -110,7 +121,8 @@ const film = async (name: string): Promise<boolean> => {
 
   const mix = join(root, "films/audio", name, "mix.wav");
   const mixSha256 = existsSync(mix) ? createHash("sha256").update(await readFile(mix)).digest("hex") : "no mix.wav";
-  const problems = readSheet({ script, json: SHEETS[script.name], mixSha256 }).problems;
+  const json = SHEETS[script.name];
+  const problems = [...mixProblems({ json, mixSha256 }), ...readSheet({ script, json }).problems];
   const sheet: Check[] = problems.length
     ? problems.map((problem) => ({ name: "timing sheet", pass: false, detail: problem }))
     : [{ name: "timing sheet", pass: true, detail: `${script.lines.length} lines on the ${GRID.bpm} bpm grid, closing at ${script.close} ms` }];

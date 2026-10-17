@@ -18,12 +18,15 @@ export default {
     "Pipe a diff in. A commit message comes out.",
     "That click stays yours.",
   ],
+  violet: ["Enter", "not", "asks", "yours"],
   keys: SHELL_SCRIPT.keys,
-  island: [
-    { at: 0, until: 3000, shape: "line", draw: 400 },
-    { at: LINE - 600, shape: "island", draw: LINE, y: 0.25 },
-  ],
+  waits: [{ key: "enter", at: SHELL_SCRIPT.moments.stagedDist, until: SHELL_SCRIPT.moments.killDist }],
+  island: {},
   rules: [],
+  stops: [
+    { at: SHELL_SCRIPT.moments.stagedDist, until: SHELL_SCRIPT.moments.killDist },
+    { at: SHELL_SCRIPT.moments.askedPush, until: SHELL_SCRIPT.moments.answerNo },
+  ],
   rig: {
     at: 2000,
     until: 30_500,
