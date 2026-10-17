@@ -3,7 +3,7 @@ import type { SceneMode } from "#shared/types/seekable";
 import type { ShellToy } from "~/utils/play/shell";
 
 import { Kbd, Surface } from "@cela/design";
-import { useReel } from "~/utils/play/reel";
+import { useCaret, useReel } from "~/utils/play/reel";
 import { SHELL_REEL, SPINNER, shellToy } from "~/utils/play/shell";
 
 const { mode = "live" } = defineProps<{ mode?: SceneMode }>();
@@ -23,6 +23,13 @@ const reel = useReel({
 defineExpose(reel.seekable);
 
 const state = computed(() => reel.view.current);
+
+const caret = useCaret({ visible, reduced: reel.reduced });
+const blink = computed(() => (mode === "film" ? state.value.blink : caret.value));
+watch(
+  () => state.value.line,
+  () => (caret.value = 0),
+);
 
 const TWINS = [
   { key: "Enter", caps: "enter" },
@@ -67,8 +74,8 @@ const onInput = (event: Event): void => {
           <span class="dots"><i /><i /><i /></span>
           <span class="title">{{ state.folder }}</span>
         </div>
-        <div class="screen" aria-live="polite">
-          <p
+        <div class="screen" :aria-live="reel.driver.value === 'visitor' ? 'polite' : 'off'">
+          <div
             v-for="row in state.rows"
             :key="row.id"
             class="row"
@@ -84,11 +91,11 @@ const onInput = (event: Event): void => {
               data-label
               :style="{ '--in': `var(--${row.label.channel}, 1)` }"
             >{{ row.label.text }}</span>
-          </p>
-          <p v-if="state.phase === 'asking'" class="row" data-ask data-film-anchor="line" data-tier="ask">
-            <span class="text">put it on your line? [y/N] </span><span class="cursor" :data-blink="state.blink" />
-          </p>
-          <p
+          </div>
+          <div v-if="state.phase === 'asking'" class="row" data-ask data-film-anchor="line" data-tier="ask">
+            <span class="text">put it on your line? [y/N] </span><span class="cursor" :data-blink="blink" />
+          </div>
+          <div
             v-else-if="state.phase !== 'running'"
             class="row"
             data-film-anchor="line"
@@ -97,9 +104,9 @@ const onInput = (event: Event): void => {
             :data-staged="state.staged ?? 'none'"
           >
             <span class="prompt"><span class="folder">{{ state.folder }}</span> $ </span>
-            <span class="text">{{ state.line }}</span><span class="cursor" :data-blink="state.blink" />
-          </p>
-          <p v-if="state.phase === 'spinning'" class="row spinner" data-spinner aria-hidden="true">{{ SPINNER[state.spin] }}</p>
+            <span class="text">{{ state.line }}</span><span class="cursor" :data-blink="blink" />
+          </div>
+          <div v-if="state.phase === 'spinning'" class="row spinner" data-spinner aria-hidden="true">{{ SPINNER[state.spin] }}</div>
         </div>
       </Surface>
 
@@ -197,11 +204,7 @@ const onInput = (event: Event): void => {
   @apply ml-px inline-block h-4 w-2 bg-fg align-text-bottom;
 }
 
-.shell[data-mode="live"] .cursor {
-  animation: play-blink 1060ms steps(1) infinite;
-}
-
-.shell[data-mode="film"] .cursor[data-blink="1"] {
+.cursor[data-blink="1"] {
   @apply opacity-0;
 }
 
@@ -225,12 +228,6 @@ const onInput = (event: Event): void => {
 @media (pointer: coarse) {
   .shell[data-mode="live"] .twins {
     @apply flex;
-  }
-}
-
-@keyframes play-blink {
-  50% {
-    opacity: 0;
   }
 }
 </style>

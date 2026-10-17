@@ -1,6 +1,8 @@
 import type { Beat, Channel, Reel, Visitor } from "./reel";
+import type { Typed } from "./script/typed";
 
 import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
+import { PIPE_LINE, SHELL_SCRIPT } from "./script/shell";
 
 export type Folder = "design" | "shell";
 
@@ -40,8 +42,6 @@ const LABEL = {
   pipe: "One answer from a pipe",
 } as const;
 
-const PIPE_LINE = "git show HEAD | ai -p 'Write one concise conventional commit subject for this change.'";
-
 const RECORDS = {
   find: {
     tier: "safe",
@@ -58,13 +58,17 @@ const RECORDS = {
   pipe: { line: PIPE_LINE, folder: "design", output: ["feat(state-message): delay loading message fade-in to prevent flashes"] },
 } satisfies Record<string, Asked | Piped>;
 
-const KEYWORDS: Record<RecordKey, string[]> = {
-  find: ["find", "biggest", "largest", "big", "files", "size", "sizes", "heaviest", "five", "top"],
-  dist: ["delete", "remove", "rm", "dist", "folder", "clean"],
-  push: ["push", "force", "origin", "main", "branch", "overwrite"],
-  commit: ["commit", "staged", "stage", "message"],
-  pipe: ["pipe", "subject", "summarize", "show"],
+const VERBS = ["delete", "remove", "rm", "erase", "wipe", "clean", "push", "force", "overwrite"];
+
+const KEYWORDS: Record<RecordKey, Record<string, number>> = {
+  find: { find: 2, biggest: 2, largest: 2, heaviest: 2, big: 1, files: 1, size: 1, sizes: 1, five: 1, top: 1 },
+  dist: { delete: 3, remove: 3, rm: 3, erase: 3, wipe: 3, clean: 3, dist: 2, folder: 1 },
+  push: { push: 3, force: 3, overwrite: 3, origin: 1, main: 1, branch: 1 },
+  commit: { commit: 2, staged: 2, stage: 1, message: 1 },
+  pipe: { pipe: 2, subject: 1, summarize: 1, show: 1 },
 };
+
+const RISK: Record<RecordKey, number> = { push: 2, dist: 1, commit: 1, pipe: 0, find: 0 };
 
 export const UNKNOWN = "This playground replays real recordings. Try one of the five asks.";
 
@@ -85,11 +89,14 @@ export const Shell = {
     const text = line.trim().toLowerCase();
     if (!text.startsWith("?")) return text.includes("ai -p") || text.startsWith("git show") ? "pipe" : undefined;
     const words = text.slice(1).split(/[^a-z0-9.]+/).filter(Boolean);
+    // Fails closed like the real guardrail, so a destructive ask can never replay as the safe run.
+    const destructive = words.some((word) => VERBS.includes(word));
     let best: RecordKey | undefined;
     let score = 0;
     for (const key of Object.keys(KEYWORDS) as RecordKey[]) {
-      const hits = KEYWORDS[key].filter((word) => words.includes(word)).length;
-      if (hits > score) {
+      if (destructive && !RISK[key]) continue;
+      const hits = words.reduce((sum, word) => sum + (KEYWORDS[key][word] ?? 0), 0);
+      if (hits > score || (hits === score && hits > 0 && best && RISK[key] > RISK[best])) {
         best = key;
         score = hits;
       }
@@ -168,14 +175,13 @@ export const Shell = {
   },
 };
 
-const typing = (at: number, text: string, every: number): Beat<ShellState> => ({
-  at,
-  every,
-  steps: text.length,
-  apply: (state, step) => {
-    state.line = text.slice(0, step);
-  },
-});
+const typing = ({ text, at: presses }: Typed): Beat<ShellState>[] =>
+  presses.map((ms, index) => ({
+    at: ms,
+    apply: (state) => {
+      state.line = text.slice(0, index + 1);
+    },
+  }));
 
 const spinning = (at: number, key: RecordKey, until: number): Beat<ShellState> => ({
   at,
@@ -201,48 +207,48 @@ const at = (ms: number, apply: (state: ShellState) => void): Beat<ShellState> =>
 
 const label = (name: string, ms: number): Channel => ({ name, at: ms, from: 0, to: 1, duration: MOTION_DURATION.base, ease: MOTION_EASE.out });
 
-const ASK_FIND = "? find the five biggest files in here, skip node_modules and .git";
-const ASK_DIST = "? delete the dist folder";
-const ASK_PUSH = "? force push my branch over main on origin";
+const { moments: m, presses } = SHELL_SCRIPT;
 
 export const SHELL_REEL: Reel<ShellState> = {
-  duration: 35_000,
-  loop: { from: 3000, to: 33_500 },
-  still: 15_500,
+  duration: SHELL_SCRIPT.duration,
+  loop: SHELL_SCRIPT.loop,
+  still: SHELL_SCRIPT.still,
   initial: Shell.initial,
   beats: [
     blinking(0),
-    typing(3200, ASK_FIND, 38),
-    spinning(5900, "find", 7700),
-    at(7700, (state) => Shell.resolve(state, "find", "lbl-find")),
-    blinking(7700),
-    typing(10_300, ASK_DIST, 40),
-    spinning(11_500, "dist", 13_300),
-    at(13_300, (state) => Shell.resolve(state, "dist", "lbl-dist")),
-    blinking(13_300),
-    at(18_000, (state) => {
+    ...typing(presses.find),
+    spinning(m.enterFind, "find", m.outputFind),
+    at(m.outputFind, (state) => Shell.resolve(state, "find", "lbl-find")),
+    blinking(m.outputFind),
+    ...typing(presses.dist),
+    spinning(m.enterDist, "dist", m.stagedDist),
+    at(m.stagedDist, (state) => Shell.resolve(state, "dist", "lbl-dist")),
+    blinking(m.stagedDist),
+    at(m.killDist, (state) => {
       state.line = "";
       state.staged = undefined;
     }),
-    typing(18_300, ASK_PUSH, 38),
-    spinning(20_200, "push", 22_000),
-    at(22_000, (state) => Shell.resolve(state, "push", "lbl-push")),
-    blinking(22_000),
-    at(27_000, (state) => {
+    ...typing(presses.push),
+    spinning(m.enterPush, "push", m.askedPush),
+    at(m.askedPush, (state) => Shell.resolve(state, "push", "lbl-push")),
+    blinking(m.askedPush),
+    at(m.answerNo, (state) => Shell.answer(state, false)),
+    blinking(m.answerNo),
+    at(m.clear, (state) => {
       state.rows = [];
       state.folder = "design";
       state.line = "";
       state.phase = "idle";
       state.pending = undefined;
     }),
-    typing(27_200, PIPE_LINE, 26),
-    at(29_700, (state) => {
+    ...typing(presses.pipe),
+    at(m.enterPipe, (state) => {
       Shell.enter(state);
     }),
-    at(30_900, (state) => Shell.resolve(state, "pipe", "lbl-pipe")),
-    blinking(30_900),
+    at(m.answerPipe, (state) => Shell.resolve(state, "pipe", "lbl-pipe")),
+    blinking(m.answerPipe),
   ],
-  channels: [label("lbl-find", 7700), label("lbl-dist", 13_300), label("lbl-push", 22_000), label("lbl-pipe", 30_900)],
+  channels: [label("lbl-find", m.outputFind), label("lbl-dist", m.stagedDist), label("lbl-push", m.askedPush), label("lbl-pipe", m.answerPipe)],
 };
 
 export type ShellToy = Visitor<ShellState> & {
