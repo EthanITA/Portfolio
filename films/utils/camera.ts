@@ -1,11 +1,11 @@
 import { MOTION_EASE } from "@cela/design/utils/motion";
-import type { Shot } from "../scripts/script.ts";
+import { SAFE_MARGIN, type Shot } from "../scripts/script.ts";
 
 export type View = { x: number; y: number; scale: number };
 
 const IDENTITY: View = { x: 0, y: 0, scale: 1 };
 
-const LIMIT = { scale: 1.6, margin: 48, push: { min: 1800, max: 2400 }, hold: 1500 } as const;
+const LIMIT = { scale: 1.6, margin: SAFE_MARGIN, push: { min: 1800, max: 2400 }, hold: 1500 } as const;
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 

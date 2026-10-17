@@ -1,3 +1,5 @@
+export const SAFE_MARGIN = 48;
+
 export type Shot = { at: number; duration: number; scale: number; anchor?: string };
 
 export type Cue = { text: string; at: number; until: number };
