@@ -1,0 +1,9 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "cedar",
+  "text": "pay the invoice",
+  "transcript": "pay the invoice",
+  "id": "gen-1792183649-BVkau8Bmlo3E8u5L0AeQ",
+  "cost": 0,
+  "bytes": 67200
+}

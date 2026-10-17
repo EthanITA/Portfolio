@@ -12,9 +12,20 @@ const status = async (url: string): Promise<number> => {
   }
 };
 
+const settle = async ({ url, timeout }: { url: string; timeout: number }): Promise<number> => {
+  const deadline = Date.now() + timeout;
+  let code = await status(url);
+  // A 5xx is Nuxt restarting after a file was added or removed, so wait it out rather than call it the wrong server.
+  while (code >= 500 && Date.now() < deadline) {
+    await sleep(1000);
+    code = await status(url);
+  }
+  return code;
+};
+
 export const serve = async ({ route, port = 3105, root, timeout = 180_000 }: { route: string; port?: number; root: string; timeout?: number }): Promise<Server> => {
   const origin = `http://localhost:${port}`;
-  const running = await status(`${origin}${route}`);
+  const running = await settle({ url: `${origin}${route}`, timeout });
   if (running === 200) return { origin, stop: () => {} };
   if (running) throw new Error(`${origin}${route} answered ${running}; the server on :${port} has to run with FILM=1`);
 

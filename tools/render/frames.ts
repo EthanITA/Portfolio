@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { availableParallelism } from "node:os";
 import { join } from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 import { chromium, type Browser, type CDPSession, type Page } from "playwright";
 import type {} from "./contract.ts";
 
@@ -80,13 +81,13 @@ export const launch = (): Promise<Browser> => chromium.launch({ headless: true, 
 const withTimeout = <T>(promise: Promise<T>, ms: number, what: string): Promise<T> =>
   Promise.race([promise, new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${what} timed out after ${ms} ms`)), ms).unref())]);
 
-type Worker = { page: Page; cdp: CDPSession; stale: boolean; errors: string[] };
+type Worker = { page: Page; cdp: CDPSession; stale: boolean; errors: string[]; width: number; height: number; scale: number };
 
 export const openPage = async ({ browser, url, width, height, scale = 1, timeout = 120_000 }: { browser: Browser; url: string; width: number; height: number; scale?: number; timeout?: number }): Promise<Worker> => {
   const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: scale, reducedMotion: "no-preference", colorScheme: "light" });
   await context.addInitScript(INIT_SCRIPT);
   const page = await context.newPage();
-  const worker: Worker = { page, cdp: await context.newCDPSession(page), stale: false, errors: [] };
+  const worker: Worker = { page, cdp: await context.newCDPSession(page), stale: false, errors: [], width, height, scale };
   page.on("pageerror", (error) => worker.errors.push(error.message));
   page.on("framenavigated", (frame) => {
     if (frame === page.mainFrame()) worker.stale = true;
@@ -95,18 +96,49 @@ export const openPage = async ({ browser, url, width, height, scale = 1, timeout
   return worker;
 };
 
+// A cold Vite server re-bundles dependencies on first use, and with HMR off a page that asked for the old bundle just fails to import.
+const VITE_REBUNDLE = /Failed to fetch dynamically imported module|Outdated Optimize Dep|Importing a module script failed/;
+
+const rebundling = (worker: Worker): boolean => worker.errors.some((error) => VITE_REBUNDLE.test(error));
+
 const arm = async ({ worker, url, timeout }: { worker: Worker; url: string; timeout: number }): Promise<void> => {
-  await worker.page.goto(url, { waitUntil: "load", timeout });
-  await worker.page.waitForFunction(() => typeof window.__seek === "function" && typeof window.__ready === "function", undefined, { timeout }).catch(() => {
-    throw new Error(`${url} never exposed window.__seek and window.__ready; mount it through useFilm()`);
-  });
-  // anime.js leaves a delayed tween unstyled until the playhead first passes it, so sweep once or a fresh page shows it early.
-  await worker.page.evaluate(async () => {
-    await window.__ready();
-    if (window.__duration) await window.__seek(window.__duration);
-    await window.__seek(0);
-  });
+  for (let attempt = 1; ; attempt++) {
+    worker.errors = [];
+    await worker.page.goto(url, { waitUntil: "load", timeout });
+    const deadline = Date.now() + timeout;
+    let ready = false;
+    while (!ready && !rebundling(worker) && Date.now() < deadline) {
+      ready = await worker.page.evaluate(() => typeof window.__seek === "function" && typeof window.__ready === "function").catch(() => false);
+      if (!ready) await sleep(250);
+    }
+    if (ready) {
+      // anime.js leaves a delayed tween unstyled until the playhead first passes it, so sweep once or a fresh page shows it early.
+      await worker.page
+        .evaluate(async () => {
+          await window.__ready();
+          if (window.__duration) await window.__seek(window.__duration);
+          await window.__seek(0);
+        })
+        .catch((error: unknown) => worker.errors.push(String(error)));
+      if (!rebundling(worker)) break;
+    }
+    if (!rebundling(worker)) throw new Error(`${url} never exposed window.__seek and window.__ready; mount it through useFilm()`);
+    if (attempt === 5) throw new Error(`${url} still failed to load after ${attempt} tries: ${worker.errors.join("; ")}`);
+    console.warn(`vite re-bundled dependencies under ${url}, reloading it (try ${attempt + 1})`);
+    await sleep(1000 * attempt);
+  }
+  worker.errors = [];
   worker.stale = false;
+};
+
+const shoot = async ({ worker, url, ms, timeout }: { worker: Worker; url: string; ms: number; timeout: number }): Promise<Buffer> => {
+  const png = await capture({ worker, ms, timeout }).catch((error: unknown) => {
+    if (!VITE_REBUNDLE.test(String(error))) throw error;
+    worker.errors.push(String(error));
+  });
+  if (png && !worker.stale && !rebundling(worker)) return png;
+  await arm({ worker, url, timeout });
+  return capture({ worker, ms, timeout });
 };
 
 const capture = async ({ worker, ms, timeout }: { worker: Worker; ms: number; timeout: number }): Promise<Buffer> => {
@@ -119,7 +151,9 @@ const capture = async ({ worker, ms, timeout }: { worker: Worker; ms: number; ti
     timeout,
     `frame at ${ms} ms`,
   );
-  const { data } = await worker.cdp.send("Page.captureScreenshot", { format: "png", optimizeForSpeed: true });
+  // This CDP session never saw Playwright's device scale override, so the clip has to carry it or the frame comes out at CSS size.
+  const clip = { x: 0, y: 0, width: worker.width, height: worker.height, scale: worker.scale };
+  const { data } = await worker.cdp.send("Page.captureScreenshot", { format: "png", optimizeForSpeed: true, clip });
   return Buffer.from(data, "base64");
 };
 
@@ -166,12 +200,10 @@ export const renderFrames = async ({ url, dir, width, height, scale = 1, fps = 6
     const run = async (worker: Worker): Promise<void> => {
       for (const index of order) {
         const ms = Frame.time({ from, fps, index });
-        let png = await capture({ worker, ms, timeout });
-        if (worker.stale) {
-          await arm({ worker, url, timeout });
-          png = await capture({ worker, ms, timeout });
-        }
+        const png = await shoot({ worker, url, ms, timeout });
         if (worker.errors.length) throw new Error(`page error at ${ms} ms: ${worker.errors.join("; ")}`);
+        const size = `${png.readUInt32BE(16)}x${png.readUInt32BE(20)}`;
+        if (size !== `${outWidth}x${outHeight}`) throw new Error(`frame ${index} came out ${size}, expected ${outWidth}x${outHeight}`);
         await writeFile(join(dir, Frame.name(index)), png);
         hashes.set(index, createHash("sha256").update(png).digest("hex"));
         onProgress?.(hashes.size, queue.length);
