@@ -353,7 +353,7 @@ defineExpose({ ...seekable, restMs: FILM.rest });
 }
 
 .zone {
-  @apply typo-eyebrow pointer-events-none absolute left-4 -translate-y-1/2 text-fg;
+  @apply typo-eyebrow pointer-events-none absolute left-4 -translate-y-1/2 leading-none text-fg;
   /* The canvas crops like a 16:9 cover poster, so one frame height is the larger of the box height and its width over 16:9. */
   top: calc(50% + (var(--top) - 0.5) * max(100cqh, 56.25cqw));
 }
