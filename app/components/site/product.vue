@@ -23,8 +23,8 @@ const playing = ref(false);
   <article class="product">
     <header class="head wrap">
       <h1 v-enter.now.words.wide class="title">{{ name }}</h1>
-      <p v-enter.now="200" class="sub">{{ sub }}</p>
-      <p v-enter.now="320" class="lead"><SiteRuns :runs="lead" /></p>
+      <p v-enter.now.wide="200" class="sub">{{ sub }}</p>
+      <p v-enter.now.wide="320" class="lead"><SiteRuns :runs="lead" /></p>
     </header>
 
     <div v-enter.now="420" class="film wrap">

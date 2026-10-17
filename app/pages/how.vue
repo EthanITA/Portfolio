@@ -63,7 +63,7 @@ onBeforeUnmount(() => {
   <div class="how">
     <header class="head wrap">
       <h1 v-enter.now.words.wide class="title">How I work</h1>
-      <p v-enter.now="320" class="lead">Agents write a lot of my code. I wrote the rules they work under, I review what they ship, and nothing goes out under my name that I can't explain.</p>
+      <p v-enter.now.wide="320" class="lead">Agents write a lot of my code. I wrote the rules they work under, I review what they ship, and nothing goes out under my name that I can't explain.</p>
     </header>
 
     <ol ref="cards" class="rules wrap">
