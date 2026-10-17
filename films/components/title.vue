@@ -22,7 +22,7 @@ onMounted(() => {
 
 <style scoped>
 .film-title {
-  @apply absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-8xl leading-none font-bold tracking-tight;
+  @apply absolute top-1/2 left-0 w-full -translate-y-1/2 text-center text-8xl leading-none font-bold tracking-tight;
 }
 .film-title[data-tone="inverse"] {
   @apply text-raised;
