@@ -3,29 +3,31 @@ import { typed, type Key } from "./typed.ts";
 export const NOTE = "make this a chart";
 
 const moments = {
-  edit1: 3400,
-  sideIn: 3600,
-  row1: 3900,
-  edit2: 5400,
-  row2: 5900,
-  edit3: 7400,
-  row3: 7900,
-  acceptHunk: 10_600,
-  rejectHunk: 12_800,
-  tellStart: 13_400,
-  tellLands: 14_200,
-  reply: 15_200,
+  edit1: 4500,
+  sideIn: 5000,
+  row1: 5500,
+  edit2: 6500,
+  row2: 7500,
+  edit3: 8500,
+  row3: 9500,
+  acceptHunk: 11_000,
+  rejectHunk: 12_500,
+  tellStart: 13_000,
+  tellLands: 14_000,
+  reply: 15_000,
   artifacts: 18_000,
   select: 19_500,
-  popover: 20_300,
-  typeNote: 20_600,
+  popover: 20_000,
+  typeNote: 20_500,
   addToTray: 22_000,
-  send: 22_800,
+  send: 23_000,
   noteLands: 24_000,
   review: 28_000,
-  undo: 29_000,
+  undo: 30_000,
+  undoAgain: 30_500,
   redo: 31_500,
-  hold: 34_000,
+  redoAgain: 32_000,
+  hold: 35_000,
 } as const;
 
 const presses = {
@@ -35,14 +37,16 @@ const presses = {
 const keys: Key[] = [
   { key: "enter", at: moments.addToTray },
   { key: "cmd Z", at: moments.undo },
+  { key: "cmd Z", at: moments.undoAgain },
   { key: "cmd shift Z", at: moments.redo },
+  { key: "cmd shift Z", at: moments.redoAgain },
 ];
 
 export const SIDECAR_SCRIPT = {
   duration: 45_000,
   still: 17_500,
   // The live loop opens with the window in and the first file's hunks pending, so the first thing seen is a decision to make.
-  loop: { from: 3900, to: 36_000 },
+  loop: { from: 5500, to: 41_000 },
   toast: 2200,
   moments,
   presses,
