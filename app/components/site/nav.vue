@@ -6,14 +6,12 @@ import { nav } from "~/utils/site/links";
 import { SPRING, motionOn } from "~/utils/site/motion";
 
 const IDLE = "Building Sidecar, Sage and AI Shell";
-const LABEL_MS = 1200;
 const FOLD_AT = 0.8;
 
 const route = useRoute();
 const folded = ref(false);
 const menu = ref(false);
 const focused = ref(false);
-const label = ref<string>();
 const tween = ref<"grow" | "fold">("grow");
 
 const root = useTemplateRef<HTMLElement>("root");
@@ -22,7 +20,6 @@ const underline = useTemplateRef<HTMLElement>("underline");
 const menuButton = useTemplateRef<HTMLButtonElement>("menuButton");
 
 const open = computed(() => menu.value || !folded.value || focused.value);
-const idle = computed(() => label.value ?? IDLE);
 
 watch(open, (now) => (tween.value = now ? "grow" : "fold"));
 
@@ -52,14 +49,10 @@ const onScroll = (): void => {
   frame ||= requestAnimationFrame(measure);
 };
 
-let labelTimer: ReturnType<typeof setTimeout> | undefined;
 watch(
   () => route.path,
-  (path) => {
+  () => {
     menu.value = false;
-    label.value = nav.find((item) => item.to === path)?.label;
-    clearTimeout(labelTimer);
-    if (label.value) labelTimer = setTimeout(() => (label.value = undefined), LABEL_MS);
     void nextTick(place);
   },
 );
@@ -110,7 +103,6 @@ onBeforeUnmount(() => {
   window.removeEventListener("scroll", onScroll);
   window.removeEventListener("resize", place);
   cancelAnimationFrame(frame);
-  clearTimeout(labelTimer);
   slide?.revert();
 });
 </script>
@@ -135,7 +127,7 @@ onBeforeUnmount(() => {
             <NuxtLink class="mark" to="/">Marco Dong</NuxtLink>
             <span v-if="folded && !expanded && !menu" class="status">
               <span class="dot" aria-hidden="true" />
-              <span v-fade="idle" class="idle">{{ idle }}</span>
+              <span class="idle">{{ IDLE }}</span>
             </span>
             <div class="wide">
               <div data-island-reveal>

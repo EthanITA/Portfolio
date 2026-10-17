@@ -26,7 +26,7 @@ const facts = ["Based in Milan", "Italian native, English at work"];
 <template>
   <div class="about">
     <header class="head wrap">
-      <h1 v-enter.now.words.title class="title">I don't know what I don't know, so I go and find out.</h1>
+      <h1 v-enter.now.words.wide class="title">I don't know what I don't know, so I go and find out.</h1>
       <p v-enter.now="320" class="intro">I studied computer science in Bologna and later took an MBA, because I want to build a business and not only the software inside it. Agents write a lot of my code now. I wrote the rules they work under, I review what they ship, and nothing goes out under my name that I can't explain.</p>
     </header>
 

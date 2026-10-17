@@ -13,7 +13,7 @@ useSeoMeta({ title: String(error.status) });
         <LazyStageHero lost />
       </SiteMount>
       <div class="note">
-        <h1 v-enter.now.words.title class="title">There's nothing at this address.</h1>
+        <h1 v-enter.now.words.wide class="title">There's nothing at this address.</h1>
         <NuxtLink v-enter.now="200" v-press class="btn btn-primary home" to="/">Back to the start</NuxtLink>
       </div>
     </section>
