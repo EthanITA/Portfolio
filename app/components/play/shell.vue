@@ -169,11 +169,11 @@ const onInput = (event: Event): void => {
 
 .row[data-tier="caution"],
 .row[data-tier="ask"] {
-  @apply text-warning;
+  @apply text-warning-text;
 }
 
 .row[data-tier="danger"] {
-  @apply text-error;
+  @apply text-error-text;
 }
 
 .prompt {

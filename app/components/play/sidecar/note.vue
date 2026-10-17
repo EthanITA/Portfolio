@@ -52,7 +52,7 @@ onMounted(() => {
 }
 
 .action {
-  @apply h-7 cursor-pointer rounded-full border border-border bg-raised px-3 typo-caption-strong text-fg;
+  @apply relative hit-area h-7 cursor-pointer rounded-full border border-border bg-raised px-3 typo-caption-strong text-fg;
 }
 
 .action[data-tone="primary"] {

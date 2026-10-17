@@ -60,16 +60,16 @@ const onKey = (event: KeyboardEvent, block: Block): void => {
 }
 
 .block {
-  @apply relative cursor-pointer rounded-lg px-2 py-1 text-fg;
+  @apply relative hit-area cursor-pointer rounded-lg px-2 py-1 text-fg;
 }
 
-.block::after {
+.block::before {
   @apply pointer-events-none absolute -inset-0.5 rounded-lg ring-2 ring-primary;
   content: "";
   opacity: 0;
 }
 
-.block[data-spot="true"]::after {
+.block[data-spot="true"]::before {
   opacity: var(--spot, 1);
 }
 

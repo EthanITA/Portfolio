@@ -69,8 +69,7 @@ const { rows } = defineProps<{ rows: TermRow[] }>();
 }
 
 .mark {
-  @apply flex w-3.5 flex-none items-center justify-center;
-  height: 1lh;
+  @apply flex h-lh w-3.5 flex-none items-center justify-center;
 }
 
 .row[data-kind="tool"] .mark {

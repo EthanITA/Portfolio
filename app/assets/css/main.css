@@ -1,5 +1,28 @@
 @import "@cela/design/css";
 
+/* Status hues as text, mixed toward ink until 4.5:1 on canvas, sunken and raised. */
+@theme inline {
+  --color-warning-text: color-mix(in oklch, var(--warning), var(--ink) 30%);
+  --color-success-text: color-mix(in oklch, var(--success), var(--ink) 12%);
+  --color-error-text: color-mix(in oklch, var(--error), var(--ink) 6%);
+}
+
+/* 24 px targets, 44 on touch, on a positioned box's pseudo-element so box and ring stay as drawn; --hit-x and --hit-y cap it at a neighbour's pitch. */
+@utility hit-area {
+  --hit: 24px;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset-block: min(0px, calc((100% - min(var(--hit), var(--hit-y, var(--hit)))) / 2));
+    inset-inline: min(0px, calc((100% - min(var(--hit), var(--hit-x, var(--hit)))) / 2));
+  }
+
+  @media (pointer: coarse) {
+    --hit: 44px;
+  }
+}
+
 :root[data-theme="light"] {
   color-scheme: light;
 }
