@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Kbd } from "@cela/design";
 import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
+import type { Cue } from "~~/films/scripts/script";
 
-const { keys, at, until, beside } = defineProps<{ keys: string; at: number; until: number; beside?: string }>();
+const { keys, at, until, beside } = defineProps<{ keys: string; at: number; until: number; beside?: Pick<Cue, "at" | "until"> }>();
 
 const GAP = 24;
 
@@ -17,16 +18,22 @@ onMounted(() => {
     .add(key.value, { opacity: [1, 0], duration: MOTION_DURATION.fast, ease: MOTION_EASE.out }, until);
 });
 
-let placed = false;
+let shift = 0;
 
-// Placed on the first frame rather than at mount, because the caption's width is only final once its font has loaded.
-onFrame(() => {
-  if (placed || !band.value || !key.value) return;
-  placed = true;
-  const caption = beside ? band.value.parentElement?.querySelector(`[data-caption="${beside}"] .film-caption`) : undefined;
-  if (!caption) return;
-  const shift = caption.getBoundingClientRect().width / 2 + GAP + key.value.getBoundingClientRect().width / 2;
-  band.value.style.translate = `${-shift}px 0`;
+const progress = (ms: number, start: number, length: number): number => Math.min(1, Math.max(0, (ms - start) / length));
+
+// The key sits centred alone and slides beside its caption only while that caption is up, measured once fonts have loaded.
+onFrame((ms) => {
+  if (!band.value || !key.value || !beside) return;
+  if (!shift) {
+    const caption = band.value.parentElement?.querySelector(`[data-caption="${beside.at}"] .film-caption`);
+    const caps = key.value.querySelector(".film-key-caps");
+    if (!caption || !caps) return;
+    shift = caption.getBoundingClientRect().width / 2 + GAP + caps.getBoundingClientRect().width / 2;
+  }
+  const enter = MOTION_EASE.out(progress(ms, beside.at, MOTION_DURATION.base));
+  const leave = MOTION_EASE.out(progress(ms, beside.until, MOTION_DURATION.fast));
+  band.value.style.translate = `${-shift * enter * (1 - leave)}px 0`;
 });
 </script>
 
