@@ -11,7 +11,7 @@ type Size = { width: number; height: number };
 const RENDERED: Record<PosterName, Size & { mobile?: Size & { below: number } }> = {
   hero: { width: 1920, height: 1080, mobile: { width: 1920, height: 1080, below: 1024 } },
   lost: { width: 1920, height: 1080, mobile: { width: 1920, height: 1080, below: 1024 } },
-  line: { width: 1920, height: 1080, mobile: { width: 800, height: 1000, below: 768 } },
+  line: { width: 1920, height: 1080, mobile: { width: 720, height: 828, below: 768 } },
   fence: { width: 1920, height: 1080 },
 };
 
