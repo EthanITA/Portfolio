@@ -1,10 +1,8 @@
 import { SAGE_SCRIPT } from "../../../app/utils/play/script/sage";
 import { SHELL_SCRIPT } from "../../../app/utils/play/script/shell";
 import { SIDECAR_SCRIPT } from "../../../app/utils/play/script/sidecar";
-import sageFilm from "../../../films/scripts/sage";
-import type { FilmScript } from "../../../films/scripts/script";
-import shellFilm from "../../../films/scripts/shell";
-import sidecarFilm from "../../../films/scripts/sidecar";
+import type { Typed } from "../../../app/utils/play/script/typed";
+import { SAGE_MOMENTS, SHEETS, SHELL_MOMENTS, SIDECAR_MOMENTS, windowsOf } from "./sheets";
 import type { ClickVariant, KeyVariant, TickVariant, WhooshDirection } from "./lib/synth";
 
 export type FilmName = "sidecar" | "sage" | "shell";
@@ -20,7 +18,7 @@ export type CueSpec =
   | (Base & { sound: "thud" })
   | (Base & { sound: "line"; durMs: number; cutMs?: number })
   | (Base & { sound: "whoosh"; durMs: number; fromHz: number; toHz: number; direction: WhooshDirection })
-  | (Base & { sound: "voice"; voice: VoiceName; text: string; until?: number })
+  | (Base & { sound: "voice"; voice: VoiceName; text: string; from?: number; until?: number; anchor?: { word: string; beatMs: number } })
   | (Base & { sound: "typing"; endMs: number; text: string; seed: number; presses?: number[] });
 
 export type FilmSpec = {
@@ -57,19 +55,18 @@ export const MUSIC_VARIANT: Record<FilmName, string> = {
   shell: "The driest and most minimal of the family, the pulse a little more present, like a quiet machine at rest.",
 };
 
-const whoosh = (id: string, at: number, durMs: number, direction: WhooshDirection, marks: string, sheet: string, fromHz = 350, toHz = 2400): CueSpec => ({
-  id, at, sound: "whoosh", durMs, fromHz, toHz, direction, marks, sheet,
+const ISLAND_OPEN_MS = 2000;
+const LINE_START_MS = 600;
+
+const whoosh = (id: string, at: number, durMs: number, direction: WhooshDirection, marks: string, fromHz = 350, toHz = 2400): CueSpec => ({
+  id, at, sound: "whoosh", durMs, fromHz, toHz, direction, marks, sheet: "",
 });
 
-const quiet = (cue: CueSpec, gainDb = -6): CueSpec => ({ ...cue, gainDb });
-
-const typing = (id: string, script: { text: string; at: number[] }, seed: number, marks: string): CueSpec => ({
+const typing = (id: string, script: Typed, seed: number, marks: string): CueSpec => ({
   id, at: script.at[0] ?? 0, sound: "typing", endMs: script.at.at(-1) ?? 0, presses: script.at, text: script.text, seed, marks, sheet: "",
 });
 
-const MAX_WHOOSH_MS = 1200;
-
-const MAX_PULL_BACK_MS = 1000;
+const retimed = (script: Typed, was: number, now: number): Typed => ({ text: script.text, at: script.at.map((t) => t + now - was) });
 
 const RANGES = {
   sidecar: [[0, 3], [3, 10], [10, 18], [18, 28], [28, 34], [34, 41], [41, 45]],
@@ -83,72 +80,30 @@ const withSheets = (film: keyof typeof RANGES, cues: CueSpec[]): CueSpec[] =>
     return { ...cue, sheet: `${from}-${to}` };
   });
 
-const camera = (film: FilmScript): CueSpec[] => {
-  const seen = new Map<string, number>();
-  const last = film.rig.shots.length - 1;
-  return film.rig.shots.flatMap((shot, index): CueSpec[] => {
-    if (shot.anchor) {
-      const durMs = Math.min(shot.duration, MAX_WHOOSH_MS);
-      const name = `push-${shot.anchor}`;
-      const count = (seen.get(name) ?? 0) + 1;
-      seen.set(name, count);
-      return [quiet(whoosh(count > 1 ? `${name}-${count}` : name, shot.at, durMs, "still", `the camera pushes in on the ${shot.anchor}`, "", 300, 1800))];
-    }
-    return index === last && shot.scale < 1
-      ? [quiet(whoosh("pull-back", shot.at, Math.min(shot.duration, MAX_PULL_BACK_MS), "still", "the camera pulls back to the end card", "", 1600, 300))]
-      : [];
+const frame = (film: FilmName): CueSpec[] => [
+  { id: "line-start", at: 0, sound: "line", durMs: LINE_START_MS, marks: "the violet line draws under the title", sheet: "" },
+  whoosh("islandOpen", ISLAND_OPEN_MS, 500, "still", "the island opens into the product window"),
+  { id: "line-end-card", at: SHEETS[film].closeMs, sound: "line", durMs: 600, marks: "the violet line draws on the end card, on the closing hit", sheet: "" },
+];
+
+const narratorCues = (film: FilmName, voicesAt: readonly number[]): CueSpec[] => {
+  const sheet = SHEETS[film];
+  const windows = windowsOf(sheet, voicesAt);
+  return sheet.narrator.map(({ text, anchor, beatMs, onsetMs }, i): CueSpec => {
+    const last = i === sheet.narrator.length - 1;
+    const { fromMs, untilMs } = windows[i]!;
+    return {
+      id: last ? "narrator-end" : `narrator-${i + 1}`, at: onsetMs, from: fromMs, until: untilMs, anchor: { word: anchor, beatMs }, sound: "voice", voice: "narrator", text,
+      marks: last ? "the narrator closes over the end card, spoken only" : `the narrator, line ${i + 1}`, sheet: "",
+    };
   });
 };
 
-const endCard = (film: FilmScript): CueSpec => ({
-  id: "line-end-card", at: film.island.at(-1)?.draw ?? film.end.at, sound: "line", durMs: 600, marks: "the violet line draws on the end card", sheet: "",
-});
-
-const NARRATOR: Record<FilmName, Array<[at: number, until: number, text: string]>> = {
-  shell: [
-    [3300, 7600, "Forget the flags. Type ? and say what you want."],
-    [7900, 9600, "Only looks? It runs."],
-    [13600, 16400, "Changes something? It waits for your Enter."],
-    [18200, 19000, "Or not."],
-    [22400, 24800, "Can't be undone? It asks first."],
-    [27600, 30600, "Pipe a diff in. A commit message comes out."],
-    [33000, 34400, "That click stays yours."],
-  ],
-  sage: [
-    [900, 2800, "A Mac assistant in the notch."],
-    [3100, 5500, "No app to open. Just hold a key."],
-    [7800, 9300, "English, Italian or Chinese."],
-    [10800, 13600, "Then it does the steps. One by one."],
-    [22400, 26000, "Changing something? It asks. You get five seconds."],
-    [26900, 28300, "Return, and you're in."],
-    [32000, 33200, "Money? It stops."],
-    [37200, 38800, "That click stays yours."],
-  ],
-  sidecar: [
-    [1300, 3400, "A companion window for Claude Code."],
-    [4000, 7600, "No scrolling diffs. Each change lands in your list."],
-    [10300, 12600, "Approve a hunk. Reject two lines."],
-    [13600, 15000, "Claude hears about it."],
-    [18400, 21200, "It built a page? Select anything on it."],
-    [22000, 25000, "Send a note. It lands in the conversation."],
-    [28200, 31400, "Changed your mind? ⌘Z takes back 50 decisions."],
-    [34800, 38200, "Claude does the work. You decide what lands."],
-    [41800, 43600, "That click stays yours."],
-  ],
-};
-
-const narratorCues = (film: FilmName): CueSpec[] =>
-  withSheets(
-    film,
-    NARRATOR[film].map(([at, until, text], i, all): CueSpec => {
-      const last = i === all.length - 1;
-      return { id: last ? "narrator-end" : `narrator-${i + 1}`, at, until, sound: "voice", voice: "narrator", text, marks: last ? "the narrator closes over the end card, spoken only" : `the narrator, line ${i + 1}`, sheet: "" };
-    }),
-  );
-
 const sageCues = (): CueSpec[] => {
-  const { moments: m, words, fill } = SAGE_SCRIPT;
+  const m = SAGE_MOMENTS;
+  const { words, fill } = SAGE_SCRIPT;
   return withSheets("sage", [
+    ...frame("sage"),
     { id: "optionDown", at: m.optionDown, sound: "key", variant: "down", marks: "the right Option key goes down", sheet: "" },
     { id: "ask-1", at: m.wordsStart, sound: "voice", voice: "person", text: words.ask.text, marks: "the spoken ask, words appear live", sheet: "" },
     { id: "release", at: m.release, sound: "key", variant: "up", marks: "the key is released", sheet: "" },
@@ -158,50 +113,50 @@ const sageCues = (): CueSpec[] => {
     { id: "tick3", at: m.tick3, sound: "tick", variant: "high", marks: "Mic and camera off is ticked", sheet: "" },
     { id: "fillStart", at: m.fillStart, sound: "line", durMs: fill, cutMs: m.returnKey - m.fillStart, marks: "the violet line fills and Return cuts it", sheet: "" },
     { id: "returnKey", at: m.returnKey, sound: "click", variant: "soft", marks: "Return is pressed and the line is cut", sheet: "" },
-    { id: "joined", at: m.joined + 60, sound: "chime", marks: "it joins the call", sheet: "" },
+    { id: "joined", at: m.joined, sound: "chime", marks: "it joins the call", sheet: "" },
     { id: "hold2", at: m.hold2, sound: "key", variant: "down", marks: "the right Option key goes down again", sheet: "" },
     { id: "ask-2", at: m.words2Start, sound: "voice", voice: "person", text: words.second.text, marks: "the second spoken ask", sheet: "" },
     { id: "release2", at: m.release2, sound: "key", variant: "up", marks: "the key is released", sheet: "" },
-    quiet(whoosh("scrollToPay", m.scrollToPay, 500, "still", "the page scrolls to Pay", "", 350, 1600), -3),
     { id: "payOutlined", at: m.payOutlined, sound: "thud", marks: "Pay is outlined, stopped at the line", sheet: "" },
-    { id: "handback", at: m.handBack + 300, sound: "voice", voice: "sage", text: "Stopped at Pay. It's yours to press.", marks: "Sage hands Pay back", sheet: "" },
-    ...camera(sageFilm),
-    endCard(sageFilm),
+    { id: "handback", at: m.handBackVoice, sound: "voice", voice: "sage", text: "Stopped at Pay. It's yours to press.", marks: "Sage hands Pay back", sheet: "" },
+    ...narratorCues("sage", [m.wordsStart, m.understood, m.words2Start, m.handBackVoice]),
   ]);
 };
 
 const shellCues = (): CueSpec[] => {
-  const { moments: m, presses } = SHELL_SCRIPT;
+  const m = SHELL_MOMENTS;
+  const was = SHELL_SCRIPT.moments;
+  const presses = SHELL_SCRIPT.presses;
   const click = (id: string, at: number, marks: string): CueSpec => ({ id, at, sound: "click", variant: "soft", marks, sheet: "" });
   const output = Array.from({ length: 5 }, (_, i): CueSpec => ({
     id: i ? `outputFind-${i + 1}` : "outputFind", at: m.outputFind + i * 45, sound: "tick", variant: "high", gainDb: -2 * i, marks: `the find output, line ${i + 1}`, sheet: "",
   }));
   return withSheets("shell", [
-    typing("typeFind", presses.find, 21, "the first ask is typed"),
+    ...frame("shell"),
+    typing("typeFind", retimed(presses.find, was.typeFind, m.typeFind), 21, "the first ask is typed"),
     click("enterFind", m.enterFind, "Enter, the spinner starts"),
     ...output,
-    typing("typeDist", presses.dist, 22, "the second ask is typed"),
+    typing("typeDist", retimed(presses.dist, was.typeDist, m.typeDist), 22, "the second ask is typed"),
     click("enterDist", m.enterDist, "Enter on the second ask, the spinner starts"),
     { id: "stagedDist", at: m.stagedDist, sound: "tick", variant: "low", marks: "caution · deletes files lands with rm -r dist on the line", sheet: "" },
     { ...click("killDist", m.killDist, "ctrl U clears the staged rm -r dist from the line"), gainDb: -5 },
-    typing("typePush", presses.push, 23, "the third ask is typed"),
+    typing("typePush", retimed(presses.push, was.typePush, m.typePush), 23, "the third ask is typed"),
     click("enterPush", m.enterPush, "Enter on the third ask, the spinner starts"),
     { id: "askedPush", at: m.askedPush, sound: "thud", marks: "danger · changes something remote or published, and the y/N prompt", sheet: "" },
     { id: "answerNo", at: m.answerNo, sound: "key", variant: "down", marks: "N answers the prompt and leaves an empty line", sheet: "" },
-    typing("typePipe", presses.pipe, 24, "the pipe is typed"),
+    typing("typePipe", retimed(presses.pipe, was.typePipe, m.typePipe), 24, "the pipe is typed"),
     click("enterPipe", m.enterPipe, "Enter on the pipe"),
     { id: "answerPipe", at: m.answerPipe, sound: "chime", marks: "one conventional commit subject comes back", sheet: "" },
-    ...camera(shellFilm),
-    endCard(shellFilm),
+    ...narratorCues("shell", []),
   ]);
 };
 
 const sidecarCues = (): CueSpec[] => {
-  const { moments: m, presses } = SIDECAR_SCRIPT;
+  const m = SIDECAR_MOMENTS;
   const click = (id: string, at: number, variant: ClickVariant, marks: string): CueSpec => ({ id, at, sound: "click", variant, marks, sheet: "" });
   const tick = (id: string, at: number, variant: TickVariant, marks: string): CueSpec => ({ id, at, sound: "tick", variant, marks, sheet: "" });
   return withSheets("sidecar", [
-    whoosh("islandOpen", sidecarFilm.island[0]?.open ?? 1000, 500, "still", "the island opens into the title", ""),
+    ...frame("sidecar"),
     tick("row1", m.row1, "high", "first edit lands in the Review list"),
     tick("row2", m.row2, "high", "second edit lands in the Review list"),
     tick("row3", m.row3, "high", "third edit lands in the Review list"),
@@ -210,38 +165,24 @@ const sidecarCues = (): CueSpec[] => {
     tick("tellLands", m.tellLands, "low", "the reject lands in the terminal as a message"),
     tick("reply", m.reply, "low", "Claude answers that it saw the reject"),
     click("select", m.select, "soft", "a paragraph is selected"),
-    typing("typeNote", presses.note, 11, "the note is typed"),
+    typing("typeNote", retimed(SIDECAR_SCRIPT.presses.note, SIDECAR_SCRIPT.moments.typeNote, m.typeNote), 11, "the note is typed"),
     click("addToTray", m.addToTray, "soft", "Enter adds the note to the tray"),
     click("send", m.send, "soft", "the note is sent"),
-    whoosh("noteArc", m.send, m.noteLands - m.send, "rtl", "the note arcs into the terminal", ""),
+    whoosh("noteArc", m.send, m.noteLands - m.send, "rtl", "the note arcs into the terminal"),
     { id: "noteLands", at: m.noteLands, sound: "chime", marks: "the note lands as Marco's own message", sheet: "" },
-    click("undo", m.undo, "soft", "cmd Z takes the last decision back"),
+    click("undo", m.undo, "soft", "cmd Z takes back the last decision"),
     tick("undoStacks", m.undo + 100, "low", "the decision history changes"),
     click("redo", m.redo, "soft", "cmd shift Z redoes it"),
     tick("redoStacks", m.redo + 100, "low", "the decision history changes"),
-    { id: "seam", at: sidecarFilm.rules.find((rule) => rule.anchor === "seam")?.at ?? 36_000, sound: "line", durMs: 600, marks: "the violet line between terminal and island draws", sheet: "" },
-    ...camera(sidecarFilm),
-    endCard(sidecarFilm),
+    { id: "seam", at: m.seam, sound: "line", durMs: 600, marks: "the violet line between terminal and island draws", sheet: "" },
+    ...narratorCues("sidecar", []),
   ]);
 };
 
+const music = { source: "synth", take: 1, gainDb: 0, fadeInMs: 60, fadeOutMs: 1000, startMs: 0 } as const;
+
 export const FILMS: Record<FilmName, FilmSpec> = {
-  sidecar: {
-    name: "sidecar",
-    durationMs: 45000,
-    music: { source: "synth", take: 1, gainDb: 0, fadeInMs: 1200, fadeOutMs: 3000, startMs: 0 },
-    cues: [...sidecarCues(), ...narratorCues("sidecar")],
-  },
-  sage: {
-    name: "sage",
-    durationMs: 40000,
-    music: { source: "synth", take: 1, gainDb: 0, fadeInMs: 1200, fadeOutMs: 3000, startMs: 0 },
-    cues: [...sageCues(), ...narratorCues("sage")],
-  },
-  shell: {
-    name: "shell",
-    durationMs: 35000,
-    music: { source: "synth", take: 1, gainDb: 0, fadeInMs: 1200, fadeOutMs: 3000, startMs: 0 },
-    cues: [...shellCues(), ...narratorCues("shell")],
-  },
+  sidecar: { name: "sidecar", durationMs: SHEETS.sidecar.durationMs, music, cues: sidecarCues() },
+  sage: { name: "sage", durationMs: SHEETS.sage.durationMs, music, cues: sageCues() },
+  shell: { name: "shell", durationMs: SHEETS.shell.durationMs, music, cues: shellCues() },
 };

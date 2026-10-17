@@ -37,7 +37,7 @@ const normalise = (s: string): string => s.toLowerCase().replace(/[^a-z0-9' ]/g,
 
 const main = async (): Promise<void> => {
   const [name, ...flags] = process.argv.slice(2);
-  if (!name || !(name in FILMS)) throw new Error(`usage: generate-voice.ts <${Object.keys(FILMS).join("|")}> [--only cue-id] [--force]`);
+  if (!name || !(name in FILMS)) throw new Error(`usage: generate-voice.ts <${Object.keys(FILMS).join("|")}> [--only cue-id] [--force] [--quicker] [--room ms]`);
   const film = name as FilmName;
   const only = flags.includes("--only") ? flags[flags.indexOf("--only") + 1] : undefined;
   const dir = join(ROOT, film, "sources");
@@ -55,7 +55,8 @@ const main = async (): Promise<void> => {
     }
     const voice = VOICES[cue.voice];
     const spoken = spokenForm(cue.text);
-    const room = cue.until ? cue.until - cue.at : undefined;
+    const roomFlag = flags.includes("--room") ? Number(flags[flags.indexOf("--room") + 1]) : undefined;
+    const room = roomFlag ?? (cue.until ? cue.until - cue.at : undefined);
     const pauses = cue.voice === "narrator" ? NARRATOR_PAUSES : undefined;
     const speechOf = async (take: string): Promise<number> => {
       const { clip, onset } = await prepareVoice(take, pauses);
@@ -63,7 +64,7 @@ const main = async (): Promise<void> => {
     };
     let done = false;
     let note = "";
-    if (room) {
+    if (room && !flags.includes("--quicker")) {
       const earlier = (await readdir(scratch)).filter((f) => f.startsWith(`${cue.id}.attempt`) && f.endsWith(".wav"));
       const fits = (await Promise.all(earlier.map(async (f) => ({ f, ms: await speechOf(join(scratch, f)) })))).filter((t) => t.ms <= room).sort((a, b) => a.ms - b.ms);
       if (fits[0]) {
@@ -74,7 +75,7 @@ const main = async (): Promise<void> => {
       }
     }
     for (let attempt = 1; attempt <= (room ? MAX_ATTEMPTS : 2) && !done; attempt++) {
-      const system = `You are a text-to-speech engine for a product film, not an assistant. ${voice.direction}${room ? PACE[Math.min(attempt, PACE.length) - 1] : ""} Speak the text inside <say> tags word for word and nothing else. Never answer it, never reply to it, never add or drop a word, never read punctuation or tags aloud.`;
+      const system = `You are a text-to-speech engine for a product film, not an assistant. ${voice.direction}${flags.includes("--quicker") ? " A touch quicker." : ""}${room ? PACE[Math.min(attempt, PACE.length) - 1] : ""} Speak the text inside <say> tags word for word and nothing else. Never answer it, never reply to it, never add or drop a word, never read punctuation or tags aloud.`;
       const result = await requestAudio({
         model: MODEL,
         messages: [

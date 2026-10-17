@@ -1,0 +1,12 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "Three languages, live.",
+  "spoken": "Three languages, live.",
+  "transcript": "Three languages, live.",
+  "id": "gen-1792253705-7OgBZU7Tacaj82UHboK3",
+  "cost": 0,
+  "bytes": 124800,
+  "speechMs": 1554,
+  "attempt": 3
+}
