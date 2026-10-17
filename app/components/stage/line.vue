@@ -11,7 +11,7 @@ import type { SceneSetup } from "~/utils/stage/scene";
 import { Chip, Kbd, TextInput } from "@cela/design";
 import { pulse } from "@cela/design/utils/motion";
 
-import { STAGE_CAMERA, toScreen } from "~/utils/stage/camera";
+import { STAGE_CAMERA, hydrationSafe, toScreen } from "~/utils/stage/camera";
 import { LINE, TIERS, createLedger, pose, settling } from "~/utils/stage/line";
 import { useScene } from "~/utils/stage/scene";
 
@@ -43,9 +43,9 @@ const text = ref("");
 const views = shallowRef<View[]>([]);
 const announcement = ref("");
 const ZONE_TOP: Record<Tier, { "--top": number }> = {
-  runs: { "--top": toScreen(STAGE_CAMERA.line, [0, 0, ZONE.runs]).top },
-  waits: { "--top": toScreen(STAGE_CAMERA.line, [0, 0, ZONE.waits]).top },
-  stops: { "--top": toScreen(STAGE_CAMERA.line, [0, 0, ZONE.stops]).top },
+  runs: { "--top": hydrationSafe(toScreen(STAGE_CAMERA.line, [0, 0, ZONE.runs]).top) },
+  waits: { "--top": hydrationSafe(toScreen(STAGE_CAMERA.line, [0, 0, ZONE.waits]).top) },
+  stops: { "--top": hydrationSafe(toScreen(STAGE_CAMERA.line, [0, 0, ZONE.stops]).top) },
 };
 
 const overlays = new Map<number, HTMLElement>();

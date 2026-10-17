@@ -3,7 +3,7 @@ import type { SceneMode } from "#shared/types/seekable";
 import type { Status } from "~/utils/stage/fence";
 import type { SceneSetup } from "~/utils/stage/scene";
 
-import { STAGE_CAMERA, toScreen } from "~/utils/stage/camera";
+import { STAGE_CAMERA, hydrationSafe, toScreen } from "~/utils/stage/camera";
 import { CYCLE, FENCE, REST_MS, gateX, inFlight, pose, spec } from "~/utils/stage/fence";
 import { useScene } from "~/utils/stage/scene";
 
@@ -18,7 +18,15 @@ const SPOTS = Array.from({ length: FENCE.gates }, (_, i) => {
   const n = i + 1;
   const left = toScreen(STAGE_CAMERA.fence, [gateX(n) - GATE.reach, GATE.height, FRONT]);
   const right = toScreen(STAGE_CAMERA.fence, [gateX(n) + GATE.reach, 0, FRONT]);
-  return { n, style: { "--left": left.side, "--top": left.top, "--width": right.side - left.side, "--height": right.top - left.top } };
+  return {
+    n,
+    style: {
+      "--left": hydrationSafe(left.side),
+      "--top": hydrationSafe(left.top),
+      "--width": hydrationSafe(right.side - left.side),
+      "--height": hydrationSafe(right.top - left.top),
+    },
+  };
 });
 
 type View = { k: number; path: string; status: Status };
