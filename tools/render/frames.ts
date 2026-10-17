@@ -60,8 +60,9 @@ const INIT_SCRIPT = `(() => {
   else document.addEventListener("DOMContentLoaded", style, { once: true });
 })();`;
 
-// SwiftShader over Metal: the GPU path gave different pixels for the same frame across runs and was no faster.
+// Metal, and Skia's GPU raster even on SwiftShader, flipped edge pixels between captures of an unchanged page, so tiles raster on the CPU.
 const LAUNCH_ARGS = [
+  "--disable-gpu-rasterization",
   "--force-color-profile=srgb",
   "--hide-scrollbars",
   "--disable-lcd-text",
