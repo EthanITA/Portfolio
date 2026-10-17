@@ -410,7 +410,7 @@ export const motionOf = (before: SidecarState, after: SidecarState): Motion[] =>
   return out;
 };
 
-const at =(ms: number, apply: (state: SidecarState) => void): Beat<SidecarState> => ({ at: ms, apply: (state) => apply(state) });
+const at = (ms: number, apply: (state: SidecarState) => void): Beat<SidecarState> => ({ at: ms, apply: (state) => apply(state) });
 
 const typing = ({ text, at: presses }: Typed): Beat<SidecarState>[] =>
   presses.map((ms, index) => at(ms, (state) => (state.draft = text.slice(0, index + 1))));
