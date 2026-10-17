@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Surface } from "@cela/design";
-import { MOTION_DURATION } from "@cela/design/utils/motion";
 import { type JSAnimation, type ScrollObserver, animate, onScroll } from "animejs";
 
 import type { Product } from "~/utils/site/films";
@@ -92,12 +91,9 @@ const work: Work[] = [
 
 const hero = useTemplateRef<HTMLElement>("hero");
 const intro = useTemplateRef<HTMLElement>("intro");
-const holder = useTemplateRef<HTMLElement>("holder");
 const heroProgress = ref(0);
 let drift: JSAnimation | undefined;
 let scroller: ScrollObserver | undefined;
-let away: IntersectionObserver | undefined;
-let hiding: ReturnType<typeof setTimeout> | undefined;
 
 // A global smooth scroll-behavior would also animate the router's back and forward restores across the whole page.
 const toWork = (event: MouseEvent): void => {
@@ -108,7 +104,7 @@ const toWork = (event: MouseEvent): void => {
 };
 
 onMounted(() => {
-  if (!hero.value || !intro.value || !holder.value || !motionOn()) return;
+  if (!hero.value || !intro.value || !motionOn()) return;
   scroller = onScroll({
     target: hero.value,
     enter: "top top",
@@ -123,22 +119,9 @@ onMounted(() => {
     translateY: [0, -hero.value.offsetHeight * DRIFT],
     autoplay: scroller,
   });
-  const stage = holder.value;
-  // Hidden half a viewport past the pin it can never show through the tile break; the wait outlasts the sequence's fade-in on a fling.
-  away = new IntersectionObserver(
-    ([entry]) => {
-      clearTimeout(hiding);
-      if (entry?.isIntersecting) stage.style.visibility = "";
-      else hiding = setTimeout(() => (stage.style.visibility = "hidden"), MOTION_DURATION.fast);
-    },
-    { rootMargin: "50% 0px 0px 0px" },
-  );
-  away.observe(hero.value);
 });
 
 onBeforeUnmount(() => {
-  clearTimeout(hiding);
-  away?.disconnect();
   drift?.revert();
   scroller?.revert();
 });
@@ -147,7 +130,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="home">
     <div class="opening">
-      <div ref="holder" v-enter.now.wide.scale="150" class="holder">
+      <div v-enter.now.wide.scale="150" class="holder">
         <SiteMount name="hero">
           <LazyStageHero :progress="heroProgress" />
         </SiteMount>
