@@ -8,7 +8,7 @@ const GAP = 200;
 
 // Pills share one band, so each one is gone before the next arrives.
 const captions = computed(() => {
-  const all = [...script.captions, ...voice].sort((a, b) => a.at - b.at);
+  const all = [...voice].sort((a, b) => a.at - b.at);
   return all.map((caption, index) => {
     const next = all[index + 1];
     return next ? { ...caption, until: Math.min(caption.until, next.at - GAP) } : caption;

@@ -8,7 +8,8 @@ const { timeline } = useFilmContext();
 
 onMounted(() => {
   if (!end.value) return;
-  timeline.add(end.value, { opacity: [0, 1], y: [16, 0], duration: MOTION_DURATION.base, ease: MOTION_EASE.out }, at);
+  // The sheet times when the end text lands, so its tween starts its duration earlier.
+  timeline.add(end.value, { opacity: [0, 1], y: [16, 0], duration: MOTION_DURATION.base, ease: MOTION_EASE.out }, at - MOTION_DURATION.base);
 });
 </script>
 

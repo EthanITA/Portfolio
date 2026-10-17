@@ -102,7 +102,7 @@ const verify = async ({ script, files, width, height, audio }: { script: FilmScr
   const [master = ""] = files;
   const black = await Probe.black(master);
   expect("no black stretch", !black.length, JSON.stringify(black));
-  const at = [...script.captions, ...voiceOf(script.name)].map((caption) => (caption.at + caption.until) / 2000);
+  const at = voiceOf(script.name).map((caption) => (caption.at + caption.until) / 2000);
   for (const band of at.length ? await Probe.band(master, { at }) : []) expect(`caption band at ${band.at} s`, band.spread > 40, `spread ${band.spread}`);
   if (audio) {
     const loudness = await Probe.loudness(master);
