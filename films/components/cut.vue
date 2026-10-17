@@ -3,7 +3,16 @@ import type { Cue, FilmScript } from "~~/films/scripts/script";
 
 const { script, voice = [] } = defineProps<{ script: FilmScript; voice?: Cue[] }>();
 
-const captions = computed(() => [...script.captions, ...voice]);
+const GAP = 200;
+
+// Pills share one band, so each one is gone before the next arrives.
+const captions = computed(() => {
+  const all = [...script.captions, ...voice].sort((a, b) => a.at - b.at);
+  return all.map((caption, index) => {
+    const next = all[index + 1];
+    return next ? { ...caption, until: Math.min(caption.until, next.at - GAP) } : caption;
+  });
+});
 
 const presses = computed(() =>
   script.keys.map((press) => {
