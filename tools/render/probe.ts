@@ -13,7 +13,9 @@ export type Media = {
   video: string;
   pixFmt: string;
   colorSpace?: string;
+  videoSeconds?: number;
   audio?: string;
+  audioSeconds?: number;
   sampleRate?: number;
   channels?: number;
 };
@@ -33,6 +35,15 @@ type FfprobeStream = {
   color_space?: string;
   sample_rate?: string;
   channels?: number;
+  duration?: string;
+  tags?: { DURATION?: string };
+};
+
+// MP4 reports a stream's duration in seconds, while WebM only carries it as an HH:MM:SS tag.
+const streamSeconds = (stream: FfprobeStream): number | undefined => {
+  if (stream.duration) return Number(stream.duration);
+  const [hours = 0, minutes = 0, seconds = 0] = stream.tags?.DURATION?.split(":").map(Number) ?? [];
+  return stream.tags?.DURATION ? hours * 3600 + minutes * 60 + seconds : undefined;
 };
 
 const rate = (fraction = "0/1"): number => {
@@ -57,7 +68,9 @@ export const media = async (file: string): Promise<Media> => {
     video: video.codec_name,
     pixFmt: video.pix_fmt ?? "",
     colorSpace: video.color_space,
+    videoSeconds: streamSeconds(video),
     audio: audio?.codec_name,
+    audioSeconds: audio ? streamSeconds(audio) : undefined,
     sampleRate: audio?.sample_rate ? Number(audio.sample_rate) : undefined,
     channels: audio?.channels,
   };

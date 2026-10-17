@@ -43,6 +43,10 @@ const verify = async ({ script, files, width, height, audio }: { script: FilmScr
     expect(`${label} bytes`, media.bytes < BUDGET, String(media.bytes));
     expect(`${label} codec`, label.endsWith(".mp4") ? media.video === "h264" : media.video === "vp9", `${media.video} ${media.pixFmt} ${media.colorSpace}`);
     expect(`${label} audio`, audio ? Boolean(media.audio) : !media.audio, media.audio ?? "none");
+    if (audio) {
+      const drift = Math.abs((media.audioSeconds ?? 0) - (media.videoSeconds ?? 0));
+      expect(`${label} audio and video in step`, drift <= 0.02, `audio ${media.audioSeconds} s, video ${media.videoSeconds} s`);
+    }
   }
   const [master = ""] = files;
   const black = await Probe.black(master);
