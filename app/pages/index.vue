@@ -13,7 +13,6 @@ type Count = { to: number; after?: string; decimals?: number };
 type Work = { name: string; text: string; count?: Count; label: string };
 
 const DRIFT = 0.3;
-const DRIFT_OPACITY = 0.4;
 
 useHead({ titleTemplate: "%s" });
 useSeoMeta({ title: seo.home.title, description: seo.home.description });
@@ -112,7 +111,6 @@ onMounted(() => {
   });
   drift = animate(intro.value, {
     ease: "linear",
-    opacity: [1, DRIFT_OPACITY],
     translateY: [0, -hero.value.offsetHeight * DRIFT],
     autoplay: scroller,
   });
