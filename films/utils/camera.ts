@@ -12,6 +12,16 @@ const clamp = (value: number, min: number, max: number): number => Math.min(max,
 const axis = ({ center, scale, size }: { center: number; scale: number; size: number }): number =>
   scale * size >= size ? clamp(size / 2 - scale * center, size - scale * size, 0) : (size - scale * size) / 2;
 
+export type Box = { x: number; y: number; width: number; height: number };
+
+// Rig coordinates undo whatever transform the rig carries right now, so a box reads the same at any camera position.
+const local = ({ rig, element }: { rig: HTMLElement; element: Element }): Box => {
+  const box = rig.getBoundingClientRect();
+  const target = element.getBoundingClientRect();
+  const current = box.width / rig.offsetWidth;
+  return { x: (target.left - box.left) / current, y: (target.top - box.top) / current, width: target.width / current, height: target.height / current };
+};
+
 const frame = ({ shot, rig }: { shot: Shot; rig: HTMLElement }): View => {
   const width = rig.offsetWidth;
   const height = rig.offsetHeight;
@@ -19,11 +29,9 @@ const frame = ({ shot, rig }: { shot: Shot; rig: HTMLElement }): View => {
   let center = { x: width / 2, y: height / 2 };
   let scale = Math.min(shot.scale, LIMIT.scale);
   if (anchor) {
-    const box = rig.getBoundingClientRect();
-    const target = anchor.getBoundingClientRect();
-    const current = box.width / width;
-    center = { x: (target.left + target.width / 2 - box.left) / current, y: (target.top + target.height / 2 - box.top) / current };
-    scale = Math.min(scale, (width - 2 * LIMIT.margin) / (target.width / current), (height - 2 * LIMIT.margin) / (target.height / current));
+    const target = local({ rig, element: anchor });
+    center = { x: target.x + target.width / 2, y: target.y + target.height / 2 };
+    scale = Math.min(scale, (width - 2 * LIMIT.margin) / target.width, (height - 2 * LIMIT.margin) / target.height);
   }
   return { x: axis({ center: center.x, scale, size: width }), y: axis({ center: center.y, scale, size: height }), scale };
 };
@@ -61,4 +69,4 @@ const validate = (shots: Shot[]): void => {
   });
 };
 
-export const Camera = { measure, view, validate };
+export const Camera = { measure, view, validate, local };

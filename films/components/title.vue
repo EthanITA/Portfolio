@@ -25,7 +25,7 @@ onMounted(() => {
   @apply absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-8xl leading-none font-bold tracking-tight;
 }
 .film-title[data-tone="inverse"] {
-  @apply text-base-100;
+  @apply text-raised;
 }
 .film-title :deep([data-word]) {
   @apply inline-block opacity-0;

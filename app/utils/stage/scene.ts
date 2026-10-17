@@ -24,6 +24,7 @@ export type SceneOptions = {
   canvas: () => HTMLCanvasElement | undefined;
   setup: SceneSetup;
   reducedOnDemand?: boolean;
+  start?: number;
 };
 
 export type FilmSeekable = Seekable & { ready: () => Promise<void> };
@@ -38,9 +39,9 @@ export type Scene = {
 };
 
 const LIVE_RATIO = 0.1;
-const MAX_DT = 50;
+const MAX_DT = 100;
 
-export const useScene = ({ mode, duration, root, box = root, canvas, setup, reducedOnDemand }: SceneOptions): Scene => {
+export const useScene = ({ mode, duration, root, box = root, canvas, setup, reducedOnDemand, start = 0 }: SceneOptions): Scene => {
   const film = mode === "film";
   const state = ref<SceneState>("poster");
   const theme = ref<StageTheme>("light");
@@ -54,17 +55,16 @@ export const useScene = ({ mode, duration, root, box = root, canvas, setup, redu
   let pageVisible = true;
   let shown = false;
   let busy = true;
-  let clock = 0;
+  let clock = start;
   let last = 0;
   let raf = 0;
 
   const running = (): boolean => !!runtime && inView && pageVisible && (!reduced.value || (!!reducedOnDemand && busy));
 
   const stamp = (): void => {
-    if (film) state.value = runtime ? "live" : "poster";
-    else if (reduced.value) state.value = "reduced";
-    else if (!inView || !pageVisible) state.value = "paused";
-    else state.value = running() ? "live" : "poster";
+    if (reduced.value && !film) state.value = "reduced";
+    else if (!runtime) state.value = "poster";
+    else state.value = film || running() ? "live" : "paused";
   };
 
   const reveal = (): void => {

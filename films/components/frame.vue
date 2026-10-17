@@ -6,6 +6,6 @@
 
 <style scoped>
 .film-frame {
-  @apply relative h-screen w-screen overflow-hidden bg-base-200 font-sans text-base-content;
+  @apply relative h-screen w-screen overflow-hidden bg-canvas font-sans text-fg;
 }
 </style>

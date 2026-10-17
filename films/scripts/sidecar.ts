@@ -1,39 +1,43 @@
-import { cuesOf } from "./cues.ts";
-import type { FilmScript } from "./script.ts";
+import type { FilmScript, Key } from "./script.ts";
 
-const cue = cuesOf("sidecar");
-const line = cue.at("line-end-card");
+// Sidecar's undo and redo until play's SIDECAR_SCRIPT exists; becomes its keys import then.
+const PLAY = {
+  keys: [
+    { key: "cmd Z", at: 28_800 },
+    { key: "cmd shift Z", at: 30_400 },
+  ] satisfies Key[],
+};
+
+const LINE = 41_400;
 
 export default {
   name: "sidecar",
   duration: 45_000,
   poster: 3000,
-  title: { text: "Sidecar", at: cue.at("island-open"), until: 3000, tone: "inverse" },
+  title: { text: "Sidecar", at: 1200, until: 3000, tone: "inverse" },
   captions: [
     { text: "A companion window for Claude Code.", at: 1800, until: 3000 },
-    { text: "Claude does the work. You decide what lands.", at: 34_600, until: line - 800 },
+    { text: "Claude does the work. You decide what lands.", at: 34_600, until: LINE - 800 },
   ],
-  presses: [
-    { keys: "cmd z", at: cue.at("undo") - 200, until: cue.at("undo") + 1000 },
-    { keys: "cmd shift z", at: cue.at("redo") - 200, until: cue.at("redo") + 1000 },
-  ],
+  keys: PLAY.keys,
   island: [
-    { at: 0, until: 3000, shape: "island", open: cue.at("island-open") - 200 },
-    { at: line - 600, shape: "island", draw: line, y: 0.25 },
+    { at: 0, until: 3000, shape: "island", open: 1000 },
+    { at: LINE - 600, shape: "island", draw: LINE, y: 0.25 },
   ],
+  rules: [{ anchor: "seam", at: 36_000 }],
   rig: {
     at: 3000,
-    until: line - 1000,
+    until: LINE - 1000,
     shots: [
       { at: 0, duration: 0, scale: 0.96 },
       { at: 3000, duration: 900, scale: 1 },
       { at: 10_000, duration: 2000, scale: 1.5, anchor: "review" },
       { at: 14_500, duration: 1800, scale: 1 },
-      { at: cue.at("artifacts-face"), duration: 2200, scale: 1.5, anchor: "artifacts" },
+      { at: 18_000, duration: 2200, scale: 1.5, anchor: "artifacts" },
       { at: 24_500, duration: 1800, scale: 1 },
       { at: 28_200, duration: 1800, scale: 1.4, anchor: "history" },
-      { at: cue.at("pull-back"), duration: 3000, scale: 0.9 },
+      { at: 34_000, duration: 3000, scale: 0.9 },
     ],
   },
-  end: { text: "Sidecar · madong.me/sidecar", at: line + 200 },
+  end: { text: "Sidecar · madong.me/sidecar", at: LINE + 200 },
 } satisfies FilmScript;
