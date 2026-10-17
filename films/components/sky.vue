@@ -93,7 +93,7 @@ onFrame((ms) => {
     <div v-for="step in STEPS[cut]" :key="step.size" :data-size="step.size">
       <div data-metrics>x<span class="film-sky-baseline" data-baseline /></div>
       <div v-for="(line, index) in spoken" :key="index" :data-line="index">
-        <span class="film-sky-probe" data-space> </span>
+        <span class="film-sky-probe" data-space>{{ " " }}</span>
         <template v-for="(word, position) in line.words" :key="position">
           <span v-if="Sky.code(word.text)" class="film-sky-probe" data-word><span class="film-sky-chip">{{ word.text }}</span></span>
           <span v-else class="film-sky-probe" data-word>{{ word.text }}</span>

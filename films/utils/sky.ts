@@ -137,6 +137,7 @@ const plan = ({ lines, measured, cut, fold, end, violet }: PlanOptions): { lines
   const placed = lines.flatMap((spoken, index): Line[] => {
     const line = place({ spoken, measured: measured[index] ?? {}, cut, marked, centred: index === lines.length - 1 });
     if (!line) problems.push(`line "${spoken.text}" fits no ${cut} size inside ${WINDOW[cut].width} px`);
+    if (line && !((measured[index]?.[line.size]?.space ?? 0) > 0)) problems.push(`the space between the words of "${spoken.text}" was not measured at ${line.size}`);
     return line ? [line] : [];
   });
   const timed = placed.map((line, index): Line => {
