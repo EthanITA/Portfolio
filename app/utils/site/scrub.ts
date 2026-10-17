@@ -5,13 +5,14 @@ const LAG_MS = 120;
 // A quarter of a sequence frame, so a scrub lands no later than anime's nudged lerp brought it.
 const SNAP = 0.001;
 
-export type ScrubOptions = { goal: () => number; update: (progress: number) => void };
+export type ScrubOptions = { goal: () => number; update: (progress: number) => void; from?: number };
 export type Scrub = { wake: () => void; stop: () => void };
 
 // The lag runs on the page's clock, so the frame after a long one catches up instead of parking short of the scroll.
-export const useScrub = ({ goal, update }: ScrubOptions): Scrub => {
-  // Seeding at the restored scroll keeps the smoothing from replaying the scrub on a reload mid-page.
-  let progress = goal();
+export const useScrub = ({ goal, update, from }: ScrubOptions): Scrub => {
+  const start = goal();
+  // Seeded at the restored scroll unless told otherwise, so a reload mid-page doesn't replay the scrub.
+  let progress = from ?? start;
   let frame = 0;
   let last = 0;
   let stopped = false;
@@ -41,5 +42,6 @@ export const useScrub = ({ goal, update }: ScrubOptions): Scrub => {
   addEventListener("scroll", wake, { passive: true });
   addEventListener("resize", wake);
   if (getCurrentScope()) onScopeDispose(stop);
+  if (progress !== start) wake();
   return { wake, stop };
 };

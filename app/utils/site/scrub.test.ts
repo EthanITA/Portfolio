@@ -49,10 +49,10 @@ const settle = (limit = 200): number => {
   return frames;
 };
 
-const scrub = (start: number) => {
+const scrub = (start: number, from?: number) => {
   const raw = { value: start };
   const seen: number[] = [];
-  const handle = useScrub({ goal: () => raw.value, update: (progress) => seen.push(progress) });
+  const handle = useScrub({ goal: () => raw.value, update: (progress) => seen.push(progress), from });
   return { raw, seen, handle, shown: (): number => seen.at(-1) ?? Number.NaN };
 };
 
@@ -72,6 +72,20 @@ describe("useScrub", () => {
   it("seeds from the goal at once and asks for no frame at rest", () => {
     const { seen } = scrub(0.4);
     assert.deepEqual(seen, [0.4]);
+    assert.equal(env.frames.size, 0);
+  });
+
+  it("starts from a given seed and catches up to the goal without a raw change", () => {
+    const { seen, shown } = scrub(0.6, 0);
+    assert.equal(seen[0], 0);
+    assert.equal(env.frames.size, 1);
+    settle();
+    assert.equal(shown(), 0.6);
+    assert.ok(seen.every((value, i) => i === 0 || value >= seen[i - 1]!), "went backwards");
+  });
+
+  it("asks for no frame when the given seed is already the goal", () => {
+    scrub(0.6, 0.6);
     assert.equal(env.frames.size, 0);
   });
 
@@ -101,6 +115,15 @@ describe("useScrub", () => {
     assert.equal(env.frames.size, 0);
     assert.ok(frames <= Math.ceil((120 * Math.log(1 / 0.001)) / TICK) + 1, `took ${frames} frames`);
     assert.ok(seen.every((value, i) => i === 0 || value >= seen[i - 1]!), "went backwards");
+  });
+
+  it("lands exactly on 0 on the way back, so a stop near either end still arrives", () => {
+    const { raw, shown } = scrub(1);
+    raw.value = 0;
+    emit("scroll");
+    settle();
+    assert.equal(shown(), 0);
+    assert.equal(env.frames.size, 0);
   });
 
   it("lands in the frame after a long one instead of parking short", () => {
