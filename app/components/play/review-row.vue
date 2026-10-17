@@ -6,9 +6,9 @@ import { animate } from "animejs";
 import { EDITS } from "~/utils/play/sidecar";
 
 const root = useTemplateRef<HTMLElement>("root");
-const { path, hunks } = EDITS.index;
+const { path, hunks } = EDITS.sidecar;
 const verdict = ref<Verdict>("accepted");
-const shown = computed<Hunk[]>(() => hunks.slice(0, 1).map((hunk) => ({ ...hunk, verdict: verdict.value })));
+const shown = computed<Hunk[]>(() => hunks.map((hunk) => ({ ...hunk, verdict: verdict.value })));
 
 // The prerendered row is already approved, so only a client that may move takes it back to pending to approve it on cue.
 onMounted(() => {
