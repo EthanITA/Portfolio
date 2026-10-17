@@ -3,7 +3,7 @@ import type { Beat, Run } from "./text";
 
 export type Flagship = { slug: Product; name: string; text: Run[]; to: string; link: string };
 
-export type Stat = { to: number; before?: string; after?: string; label: string };
+export type Stat = { to: number; before?: string; unit?: string; label: string };
 
 export type Question = { ask: string; answer: Run[] };
 
@@ -85,7 +85,7 @@ export const products: Record<Product, ProductPage> = {
       { to: 50, label: "decisions back" },
       { to: 1, label: "copy before the first edit" },
       { to: 4, label: "grains: line, hunk, file, folder" },
-      { to: 1, after: " s", label: "to follow your tab" },
+      { to: 1, unit: " s", label: "to follow your tab" },
     ],
     questions: [
       { ask: "Does it touch my files?", answer: ["It keeps what a file held before Claude's first edit, so every change can be read and undone."] },
@@ -134,8 +134,8 @@ export const products: Record<Product, ProductPage> = {
     decides: { heading: "Nine buttons it never presses", line: "It outlines them and hands them back." },
     numbers: [
       { to: 3, label: "languages" },
-      { to: 5, after: " s", label: "to say no" },
-      { to: 20, after: " s", label: "on a step that can't be undone" },
+      { to: 5, unit: " s", label: "to say no" },
+      { to: 20, unit: " s", label: "on a step that can't be undone" },
       { to: 50, label: "lines of memory" },
     ],
     questions: [
@@ -183,10 +183,10 @@ export const products: Record<Product, ProductPage> = {
       line: "Whether a command is dangerous is never a question put to the model that wrote it.",
     },
     numbers: [
-      { to: 25, before: "~", after: " ms", label: "to start" },
+      { to: 25, before: "~", unit: " ms", label: "to start" },
       { to: 0, label: "dependencies" },
       { to: 82, label: "offline tests" },
-      { to: 10, after: " min", label: "of follow-up memory" },
+      { to: 10, unit: " min", label: "of follow-up memory" },
     ],
     questions: [
       { ask: "Does it run anything by itself?", answer: ["Only a command that just looks, the way it would if you'd typed it."] },

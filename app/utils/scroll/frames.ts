@@ -1,9 +1,12 @@
+import type { Product } from "~/utils/site/films";
 import { MANIFEST } from "./manifest.gen";
 import { SEQUENCE } from "./sequence";
 
 export type FrameWidth = 1920 | 960;
 
 export type FrameFormat = "avif" | "webp";
+
+export type ScreenWidth = 800 | 1600;
 
 export type Drawable = { bitmap: ImageBitmap; index: number; floor: boolean };
 
@@ -25,6 +28,8 @@ const LAST = SEQUENCE.frames - 1;
 const pad = (index: number): string => String(index).padStart(3, "0");
 
 export const sequencePath = (path: string, format: FrameFormat): string => `/sequence/${path}.${format}?v=${MANIFEST.version}`;
+
+export const screen = (slug: Product, width: ScreenWidth, format: FrameFormat): string => sequencePath(`screens/${slug}-${width}`, format);
 
 const coarseToFine = (): number[] => {
   const order = [0, LAST];

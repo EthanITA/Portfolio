@@ -2,7 +2,7 @@
 import { Surface } from "@cela/design";
 import { type AnimatableObject, createAnimatable, spring } from "animejs";
 
-import { type FrameFormat, sequencePath } from "~/utils/scroll/frames";
+import { type FrameFormat, screen } from "~/utils/scroll/frames";
 import type { Product } from "~/utils/site/films";
 import { SPRING, motionOn } from "~/utils/site/motion";
 import type { Run } from "~/utils/site/text";
@@ -22,8 +22,7 @@ const poster = useTemplateRef<HTMLElement>("poster");
 let tilt: AnimatableObject | undefined;
 let box: DOMRect | undefined;
 
-const still = (width: 800 | 1600, format: FrameFormat): string => sequencePath(`screens/${slug}-${width}`, format);
-const srcset = (format: FrameFormat): string => `${still(800, format)} 800w, ${still(1600, format)} 1600w`;
+const srcset = (format: FrameFormat): string => `${screen(slug, 800, format)} 800w, ${screen(slug, 1600, format)} 1600w`;
 
 const fine = (): boolean => matchMedia("(hover: hover) and (pointer: fine)").matches;
 
@@ -54,7 +53,7 @@ onBeforeUnmount(() => tilt?.revert());
       <picture>
         <source type="image/avif" :srcset="srcset('avif')" :sizes="SIZES" />
         <source type="image/webp" :srcset="srcset('webp')" :sizes="SIZES" />
-        <img class="image" :src="still(800, 'webp')" width="1600" height="1000" alt="" loading="lazy" decoding="async" />
+        <img class="image" :src="screen(slug, 800, 'webp')" width="1600" height="1000" alt="" loading="lazy" decoding="async" />
       </picture>
     </div>
     <h2 class="name">{{ name }}</h2>

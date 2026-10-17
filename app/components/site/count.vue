@@ -6,7 +6,15 @@ import { motionOn } from "~/utils/site/motion";
 
 const COUNT_MS = 800;
 
-const { to, before = "", after = "", decimals = 0 } = defineProps<{ to: number; before?: string; after?: string; decimals?: number }>();
+const {
+  to,
+  from = 0,
+  before = "",
+  after = "",
+  decimals = 0,
+  manual = false,
+  go = false,
+} = defineProps<{ to: number; from?: number; before?: string; after?: string; decimals?: number; manual?: boolean; go?: boolean }>();
 const emit = defineEmits<{ start: [] }>();
 
 const el = useTemplateRef<HTMLElement>("el");
@@ -14,24 +22,36 @@ const format = (n: number): string => `${before}${n.toFixed(decimals)}${after}`;
 
 let observer: IntersectionObserver | undefined;
 
+const run = (): void => {
+  const target = el.value;
+  if (!target) return;
+  const proxy = { n: from };
+  target.textContent = format(from);
+  emit("start");
+  animate(proxy, {
+    duration: COUNT_MS,
+    ease: MOTION_EASE.out,
+    n: to,
+    onUpdate: () => (target.textContent = format(proxy.n)),
+    onComplete: () => (target.textContent = format(to)),
+  });
+};
+
+watch(
+  () => go,
+  (now, was) => {
+    if (manual && now && !was && motionOn()) run();
+  },
+);
+
 // The final copy is what the HTML ships, so crawlers, no-JS and reduced motion read the real number.
 onMounted(() => {
-  if (!el.value || !motionOn()) return;
+  if (!el.value || manual || !motionOn()) return;
   observer = new IntersectionObserver(
     ([entry]) => {
-      if (!entry?.isIntersecting || !el.value) return;
+      if (!entry?.isIntersecting) return;
       observer?.disconnect();
-      const target = el.value;
-      const proxy = { n: 0 };
-      target.textContent = format(0);
-      emit("start");
-      animate(proxy, {
-        duration: COUNT_MS,
-        ease: MOTION_EASE.out,
-        n: to,
-        onUpdate: () => (target.textContent = format(proxy.n)),
-        onComplete: () => (target.textContent = format(to)),
-      });
+      run();
     },
     { threshold: 0.6 },
   );

@@ -167,7 +167,7 @@ const onSubmit = (): void => {
               </div>
               <div v-for="(step, index) in state.steps" :key="index" class="row step" data-step :data-done="step.done" :style="{ '--in': `var(--st${index}, 1)`, '--tick': `var(--tk${index}, 1)` }">
                 <span class="mark">
-                  <svg class="check" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5 L5.5 10.5 L11.5 3.5" /></svg>
+                  <PlaySageTick class="check" />
                   <i class="pending" />
                 </span>
                 <span class="step-text">{{ step.text }}</span>
