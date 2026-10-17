@@ -16,6 +16,7 @@ const options: { label: string; value: Product }[] = [
 const route = useRoute();
 const active = ref<Product>("sidecar");
 const section = useTemplateRef<HTMLElement>("section");
+const playground = useTemplateRef("playground");
 
 const fromHash = (hash: string): Product | undefined => options.find((o) => `#${o.value}` === hash)?.value;
 
@@ -57,12 +58,13 @@ const swap: TransitionProps = {
   <section ref="section" class="playgrounds wrap">
     <div v-enter class="control">
       <Segmented v-model="active" :options="options" />
+      <PlayChip :play="playground ?? undefined" />
     </div>
     <SiteMount v-enter name="play">
       <Transition v-bind="swap">
-        <LazyPlaySidecar v-if="active === 'sidecar'" key="sidecar" />
-        <LazyPlaySage v-else-if="active === 'sage'" key="sage" />
-        <LazyPlayShell v-else key="shell" />
+        <LazyPlaySidecar v-if="active === 'sidecar'" key="sidecar" ref="playground" />
+        <LazyPlaySage v-else-if="active === 'sage'" key="sage" ref="playground" />
+        <LazyPlayShell v-else key="shell" ref="playground" />
       </Transition>
     </SiteMount>
   </section>
@@ -74,6 +76,6 @@ const swap: TransitionProps = {
 }
 
 .control {
-  @apply sticky top-20 z-10 md:static;
+  @apply sticky top-20 z-10 flex w-full items-center justify-between gap-3 md:static;
 }
 </style>

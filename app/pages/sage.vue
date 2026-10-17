@@ -53,7 +53,5 @@ const beats: Beat[] = [
     ]"
     :beats="beats"
     built-with="A native Swift app for the island and the keys, and a Nuxt server that plans each step with Claude. A separate classifier model rates every step before it runs."
-  >
-    <LazyPlaySage />
-  </SiteProduct>
+  />
 </template>

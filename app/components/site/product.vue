@@ -28,6 +28,7 @@ const loaded = ref(false);
 const wide = ref(true);
 const portraitMissing = ref(false);
 const video = useTemplateRef<HTMLVideoElement>("video");
+const playground = useTemplateRef("playground");
 
 // The landscape cut follows the portrait one, so a portrait file that 404s falls through to the letterboxed master.
 const cuts = computed<Cut[]>(() => {
@@ -94,12 +95,15 @@ onBeforeUnmount(() => query?.removeEventListener("change", onQuery));
     </header>
 
     <div id="film" v-enter.now.wide="420" class="stage wrap">
-      <div v-if="film" class="bar">
-        <Segmented :model-value="mode" :options="MODES" @update:model-value="choose" />
+      <div class="bar">
+        <Segmented v-if="film" :model-value="mode" :options="MODES" @update:model-value="choose" />
+        <PlayChip v-show="mode === 'try'" class="chip" :play="playground ?? undefined" />
       </div>
       <SiteMount name="play">
         <div v-show="mode === 'try'" class="layer">
-          <slot />
+          <LazyPlaySidecar v-if="slug === 'sidecar'" ref="playground" :paused="mode === 'watch'" />
+          <LazyPlaySage v-else-if="slug === 'sage'" ref="playground" :paused="mode === 'watch'" />
+          <LazyPlayShell v-else ref="playground" :paused="mode === 'watch'" />
         </div>
         <Surface v-if="film" v-show="mode === 'watch'" class="film" variant="sunken" shape="island" pad="none">
           <video v-if="loaded" ref="video" class="video" controls playsinline preload="none" :poster="poster" @ended="choose('try')">
@@ -166,6 +170,10 @@ onBeforeUnmount(() => query?.removeEventListener("change", onQuery));
 
 .bar {
   @apply sticky top-20 z-10 flex items-center justify-between gap-3 md:static;
+}
+
+.chip {
+  @apply ml-auto;
 }
 
 .film {
