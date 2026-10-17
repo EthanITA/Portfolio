@@ -5,6 +5,7 @@ import type { SageToy } from "~/utils/play/sage";
 import { Kbd } from "@cela/design";
 import { useReel } from "~/utils/play/reel";
 import { SAGE_REEL, sageToy, sizeOf } from "~/utils/play/sage";
+import { BEATS } from "~/utils/play/script/beats";
 
 const { mode = "live", paused = false } = defineProps<{ mode?: SceneMode; paused?: boolean }>();
 
@@ -25,9 +26,10 @@ const reel = useReel({
       draw: (selector, to, options) => reel.draw(selector, to, options),
       turn: () => Number.parseFloat(root.value ? getComputedStyle(root.value).getPropertyValue("--turn") : "0") || 0,
     })),
+  beats: BEATS.sage.beats,
 });
 
-defineExpose({ ...reel.seekable, ...reel.control });
+defineExpose({ ...reel.seekable, ...reel.control, show: reel.show });
 
 const state = computed(() => reel.view.current);
 
@@ -229,6 +231,7 @@ const onSubmit = (): void => {
           <Kbd keys="esc" />
         </button>
       </div>
+      <PlayBeats v-if="mode === 'film'" :beats="BEATS.sage.beats" />
     </div>
   </PlayFrame>
 </template>
