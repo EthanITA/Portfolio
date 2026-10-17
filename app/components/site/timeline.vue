@@ -68,7 +68,8 @@ onMounted(async () => {
   draw = animate(line, { draw: ["0 0", "0 1"], ease: "linear", autoplay: scroller });
   resize = new ResizeObserver(() => {
     trace();
-    scroller?.refresh();
+    // onScroll resolves its target a frame after creation, and the observer's first callback can land before that.
+    if (scroller?.target) scroller.refresh();
   });
   resize.observe(root.value);
 });

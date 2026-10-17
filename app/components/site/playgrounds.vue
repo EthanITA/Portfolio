@@ -15,11 +15,15 @@ const options: { label: string; value: Product }[] = [
 
 const route = useRoute();
 const active = ref<Product>("sidecar");
+const section = useTemplateRef<HTMLElement>("section");
 
 const fromHash = (hash: string): Product | undefined => options.find((o) => `#${o.value}` === hash)?.value;
 
 onMounted(() => {
-  active.value = fromHash(route.hash) ?? active.value;
+  const picked = fromHash(route.hash);
+  if (!picked) return;
+  active.value = picked;
+  section.value?.scrollIntoView({ behavior: "instant" });
 });
 
 watch(active, (value) => {
@@ -50,7 +54,7 @@ const swap: TransitionProps = {
 </script>
 
 <template>
-  <section class="playgrounds wrap">
+  <section ref="section" class="playgrounds wrap">
     <div v-enter class="control">
       <Segmented v-model="active" :options="options" />
     </div>
@@ -66,7 +70,7 @@ const swap: TransitionProps = {
 
 <style scoped>
 .playgrounds {
-  @apply flex flex-col items-center gap-6;
+  @apply flex scroll-mt-20 flex-col items-center gap-6;
 }
 
 .control {

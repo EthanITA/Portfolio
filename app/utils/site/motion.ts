@@ -2,7 +2,7 @@ import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
 import { animate, splitText, stagger } from "animejs";
 import type { TransitionProps } from "vue";
 
-export type EnterOptions = { delay?: number; distance?: number; words?: boolean; line?: boolean };
+export type EnterOptions = { delay?: number; distance?: number; words?: boolean; line?: boolean; scale?: boolean };
 
 const LINE_MS = 600;
 
@@ -23,9 +23,15 @@ const settle = (el: HTMLElement): void => {
   el.style.removeProperty("transform");
 };
 
-export const enter = (el: HTMLElement, { delay = 0, distance = 12, words = false, line = false }: EnterOptions = {}): void => {
+export const enter = (el: HTMLElement, { delay = 0, distance = 12, words = false, line = false, scale = false }: EnterOptions = {}): void => {
   if (!motionOn()) {
     el.dataset.entered = "";
+    return;
+  }
+  if (scale) {
+    el.style.opacity = "0";
+    el.dataset.entered = "";
+    animate(el, { delay, duration: MOTION_DURATION.slow, ease: MOTION_EASE.out, opacity: [0, 1], scale: [0.95, 1], onComplete: () => settle(el) });
     return;
   }
   if (line) {

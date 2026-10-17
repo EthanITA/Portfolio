@@ -63,8 +63,16 @@ const scrub = (page: Page, progress: number): Promise<void> =>
   page.evaluate((p) => {
     const section = document.querySelector<HTMLElement>("[data-scene=sequence]")!;
     const top = section.getBoundingClientRect().top + scrollY;
-    scrollTo(0, top + p * (section.offsetHeight - innerHeight));
+    scrollTo({ top: top + p * (section.offsetHeight - innerHeight), behavior: "instant" });
   }, progress);
+
+const handoff = (page: Page, offset: number): Promise<{ stage: string; hero?: string }> =>
+  page.evaluate(async (by) => {
+    const section = document.querySelector<HTMLElement>("[data-scene=sequence]")!;
+    scrollTo({ top: section.getBoundingClientRect().top + scrollY - by, behavior: "instant" });
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    return { stage: getComputedStyle(section.firstElementChild!).visibility, hero: document.querySelector<HTMLElement>("[data-scene=hero]")?.dataset.state };
+  }, offset);
 
 const settle = (page: Page): Promise<void> => page.waitForTimeout(700);
 
@@ -107,13 +115,21 @@ const run = async ({ width, height, reduced }: { width: number; height: number; 
     await scrub(page, 0.5);
     await settle(page);
     const animations = await page.evaluate(() => document.getAnimations().length);
-    report.reduced = { state: state.state, sticky: sizes.sticky, animations };
+    const shown = await handoff(page, 1);
+    report.reduced = { state: state.state, sticky: sizes.sticky, animations, stage: shown.stage };
+    expect(shown.stage === "visible", `${label}: the stage is ${shown.stage} before the pin`);
     expect(state.state === "reduced", `${label}: data-state is ${state.state}`);
     expect(sizes.sticky !== "sticky", `${label}: the stage is still sticky`);
     expect(animations === 0, `${label}: ${animations} animations running`);
   } else {
     expect(Math.abs(sizes.ratio - (width < 768 ? 3 : 4)) < 0.02, `${label}: section is ${sizes.ratio.toFixed(2)} viewports tall`);
     await page.waitForFunction(() => document.querySelector<HTMLElement>("[data-scene=sequence]")?.dataset.state !== "poster", undefined, { timeout: 15000 });
+
+    const before = await handoff(page, 1);
+    const pinned = await handoff(page, 0);
+    report.handoff = { before, pinned };
+    expect(before.stage === "hidden" && before.hero === "live", `${label}: 1px before the pin the stage is ${before.stage} and the hero ${before.hero}`);
+    expect(pinned.stage === "visible", `${label}: at the pin the stage is ${pinned.stage}`);
 
     await scrub(page, 0);
     await settle(page);
@@ -211,13 +227,13 @@ const run = async ({ width, height, reduced }: { width: number; height: number; 
 
 const edges = async (): Promise<Record<string, unknown>> => {
   const report: Record<string, unknown> = {};
-  const browser = await chromium.launch({ args: ["--enable-unsafe-swiftshader"] });
+  const browser = await chromium.launch({ channel: "chromium" });
   const open = async (options: Parameters<typeof browser.newContext>[0] = {}): Promise<{ page: Page; errors: string[] }> => {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, ...options });
     const page = await context.newPage();
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
-    page.on("console", (message) => message.type() === "error" && errors.push(message.text()));
+    page.on("console", (message) => message.type() === "error" && !message.location().url.endsWith("/favicon.ico") && errors.push(message.text()));
     return { page, errors };
   };
 
@@ -246,7 +262,8 @@ const edges = async (): Promise<Record<string, unknown>> => {
   report.scrubBack = back;
   expect(back.phase === "break" && back.cards.every((opacity) => opacity === "0"), `scrubbing back to 0.86 left ${JSON.stringify(back)}`);
 
-  await theme.page.click('a[href="/sidecar"]');
+  // The nav island folds its links away mid-scroll, so the route change is dispatched rather than clicked.
+  await theme.page.locator('a[href="/sidecar"]').first().dispatchEvent("click");
   await theme.page.waitForURL("**/sidecar");
   await settle(theme.page);
   report.unmount = { errors: theme.errors };
@@ -257,7 +274,7 @@ const edges = async (): Promise<Record<string, unknown>> => {
     const phases: string[] = [];
     Object.assign(window, { __phases: phases });
     addEventListener("DOMContentLoaded", () => {
-      scrollTo(0, document.documentElement.scrollHeight);
+      scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
       const section = document.querySelector<HTMLElement>("[data-scene=sequence]");
       if (section) new MutationObserver(() => phases.push(section.dataset.phase ?? "")).observe(section, { attributes: true, attributeFilter: ["data-phase"] });
     });

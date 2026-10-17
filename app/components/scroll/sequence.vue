@@ -73,6 +73,12 @@ const setup = (): void => {
   let disposed = false;
   const idle = window.requestIdleCallback ?? ((callback: () => void) => setTimeout(callback, 1));
 
+  // The pin is read from the live rect, never the smoothed p, so the stage appears in the frame it sticks.
+  const pin = (): void => {
+    const pinned = String(section.getBoundingClientRect().top <= 0);
+    if (section.dataset.pinned !== pinned) section.dataset.pinned = pinned;
+  };
+
   const viewTargets = (): Targets =>
     Object.fromEntries(Object.entries(documentTargets).map(([screen, rect]) => [screen, { ...rect, y: rect.y - scroll }]));
 
@@ -141,6 +147,7 @@ const setup = (): void => {
     targets.value = documentTargets;
     section.dataset.targets = JSON.stringify(documentTargets, (_, value: unknown) => (typeof value === "number" ? Math.round(value) : value));
     draw();
+    pin();
   };
 
   const loadStills = async (): Promise<void> => {
@@ -193,6 +200,8 @@ const setup = (): void => {
   progress = Math.min(Math.max(-placed.top / (placed.height - innerHeight), 0), 1);
   timer.seek(progress * timer.duration);
   draw();
+  pin();
+  addEventListener("scroll", pin, { passive: true });
 
   const resize = new ResizeObserver(() => measure());
   for (const element of [section, document.documentElement, ...cards]) resize.observe(element);
@@ -226,6 +235,8 @@ const setup = (): void => {
     disposed = true;
     cancelAnimationFrame(pending);
     timer.revert();
+    removeEventListener("scroll", pin);
+    delete section.dataset.pinned;
     for (const element of [...lines, ...cards]) write(element, { opacity: "", transform: "" });
     resize.disconnect();
     nearby.disconnect();
@@ -295,7 +306,11 @@ onMounted(() => {
 }
 
 .stage {
-  @apply pointer-events-none sticky top-0 h-svh w-full overflow-hidden;
+  @apply pointer-events-none sticky top-0 h-svh w-full overflow-hidden bg-canvas transition-[opacity,visibility] duration-(--duration-fast) ease-(--ease-out);
+}
+
+.sequence[data-pinned="false"] .stage {
+  @apply invisible opacity-0;
 }
 
 .poster,
