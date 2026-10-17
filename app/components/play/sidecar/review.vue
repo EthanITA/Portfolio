@@ -125,52 +125,54 @@ const entranceOf = (row: TreeRow): string => {
           </span>
         </header>
         <div class="diff">
-          <div
-            v-for="hunk in file.hunks"
-            :key="hunk.id"
-            class="hunk"
-            :data-hunk="hunk.id"
-            :data-verdict="hunk.verdict"
-            :style="{ '--v': `var(--v-${hunk.id}, 1)` }"
-          >
-            <span class="seam">
-              <button
-                aria-label="Accept the hunk"
-                class="arrow"
-                data-tone="accept"
-                :data-chosen="hunk.verdict === 'accepted'"
-                :disabled="hunk.verdict !== 'pending'"
-                type="button"
-                @click="emit('hunk', hunk.id, true)"
-              >
-                <PlaySidecarIcon name="check" />
-              </button>
-              <button
-                aria-label="Reject the hunk, then say why"
-                class="arrow"
-                data-tone="reject"
-                :data-chosen="hunk.verdict === 'rejected'"
-                :disabled="hunk.verdict !== 'pending'"
-                type="button"
-                @click="emit('hunk', hunk.id, false)"
-              >
-                <PlaySidecarIcon name="x" />
-              </button>
-            </span>
-            <div v-for="line in hunk.lines" :key="`${line.mark}${line.line}`" class="row" :data-mark="line.mark">
-              <span class="num">{{ line.line }}</span>
-              <span class="sign">{{ SIGN[line.mark] }}</span>
-              <span class="code">{{ line.text }}</span>
+          <div class="hunks" data-film-anchor="hunks">
+            <div
+              v-for="hunk in file.hunks"
+              :key="hunk.id"
+              class="hunk"
+              :data-hunk="hunk.id"
+              :data-verdict="hunk.verdict"
+              :style="{ '--v': `var(--v-${hunk.id}, 1)` }"
+            >
+              <span class="seam">
+                <button
+                  aria-label="Accept the hunk"
+                  class="arrow"
+                  data-tone="accept"
+                  :data-chosen="hunk.verdict === 'accepted'"
+                  :disabled="hunk.verdict !== 'pending'"
+                  type="button"
+                  @click="emit('hunk', hunk.id, true)"
+                >
+                  <PlaySidecarIcon name="check" />
+                </button>
+                <button
+                  aria-label="Reject the hunk, then say why"
+                  class="arrow"
+                  data-tone="reject"
+                  :data-chosen="hunk.verdict === 'rejected'"
+                  :disabled="hunk.verdict !== 'pending'"
+                  type="button"
+                  @click="emit('hunk', hunk.id, false)"
+                >
+                  <PlaySidecarIcon name="x" />
+                </button>
+              </span>
+              <div v-for="line in hunk.lines" :key="`${line.mark}${line.line}`" class="row" :data-mark="line.mark">
+                <span class="num">{{ line.line }}</span>
+                <span class="sign">{{ SIGN[line.mark] }}</span>
+                <span class="code">{{ line.text }}</span>
+              </div>
+              <PlaySidecarNote
+                v-if="state.composing && state.spot === hunk.id"
+                :draft="state.draft"
+                :focus="focus"
+                :mode="mode"
+                @cancel="emit('cancel')"
+                @draft="emit('draft', $event)"
+                @save="emit('save')"
+              />
             </div>
-            <PlaySidecarNote
-              v-if="state.composing && state.spot === hunk.id"
-              :draft="state.draft"
-              :focus="focus"
-              :mode="mode"
-              @cancel="emit('cancel')"
-              @draft="emit('draft', $event)"
-              @save="emit('save')"
-            />
           </div>
         </div>
       </template>
@@ -347,7 +349,11 @@ button.name {
 }
 
 .diff {
-  @apply flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-2;
+  @apply flex min-h-0 flex-1 flex-col overflow-hidden p-2;
+}
+
+.hunks {
+  @apply flex flex-col gap-2;
 }
 
 .hunk {

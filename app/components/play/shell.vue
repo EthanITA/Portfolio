@@ -92,19 +92,17 @@ const onInput = (event: Event): void => {
               :style="{ '--in': `var(--${row.label.channel}, 1)` }"
             >{{ row.label.text }}</span>
           </div>
-          <div v-if="state.phase === 'asking'" class="row" data-ask data-film-anchor="line" data-tier="ask">
+          <div v-if="state.phase === 'asking'" class="row" data-ask data-tier="ask">
             <span class="text">put it on your line? [y/N] </span><span class="cursor" :data-blink="blink" />
           </div>
           <div
             v-else-if="state.phase !== 'running'"
             class="row"
-            data-film-anchor="line"
             data-line
             data-prompt="true"
             :data-staged="state.staged ?? 'none'"
           >
-            <span class="prompt"><span class="folder">{{ state.folder }}</span> $ </span>
-            <span class="text">{{ state.line }}</span><span class="cursor" :data-blink="blink" />
+            <span data-film-anchor="command"><span class="prompt"><span class="folder">{{ state.folder }}</span> $ </span><span class="text">{{ state.line }}</span><span class="cursor" :data-blink="blink" /></span>
           </div>
           <div v-if="state.phase === 'spinning'" class="row spinner" data-spinner aria-hidden="true">
             <svg class="braille" viewBox="0 0 8 16">
