@@ -1,0 +1,313 @@
+{
+  "aligner": "pocketsphinx forced alignment checked against faster-whisper small, starts moved past gaps, disputes settled by cut-and-transcribe",
+  "takes": {
+    "narrator-1": {
+      "takeSha": "fb59eec848b8e1b2",
+      "clipSha": "7deb2f08c2cb91d7",
+      "clipMs": 3462,
+      "spoken": "Forget the flags. Type a question mark and say what you want.",
+      "words": [
+        {
+          "text": "Forget",
+          "startMs": 0,
+          "endMs": 270,
+          "onset": "aligned"
+        },
+        {
+          "text": "the",
+          "startMs": 288,
+          "endMs": 340,
+          "onset": "silence"
+        },
+        {
+          "text": "flags.",
+          "startMs": 340,
+          "endMs": 900,
+          "onset": "aligned"
+        },
+        {
+          "text": "Type",
+          "startMs": 1008,
+          "endMs": 1231,
+          "onset": "silence"
+        },
+        {
+          "text": "?",
+          "startMs": 1231,
+          "endMs": 2120,
+          "onset": "silence"
+        },
+        {
+          "text": "and",
+          "startMs": 2304,
+          "endMs": 2460,
+          "onset": "silence"
+        },
+        {
+          "text": "say",
+          "startMs": 2460,
+          "endMs": 2750,
+          "onset": "aligned"
+        },
+        {
+          "text": "what",
+          "startMs": 2750,
+          "endMs": 2950,
+          "onset": "aligned"
+        },
+        {
+          "text": "you",
+          "startMs": 2950,
+          "endMs": 3050,
+          "onset": "aligned"
+        },
+        {
+          "text": "want.",
+          "startMs": 3050,
+          "endMs": 3420,
+          "onset": "aligned"
+        }
+      ]
+    },
+    "narrator-2": {
+      "takeSha": "1543b3abc2d1e7b9",
+      "clipSha": "1fc7dee32ac654e5",
+      "clipMs": 1645,
+      "spoken": "Only looks? It runs.",
+      "words": [
+        {
+          "text": "Only",
+          "startMs": 0,
+          "endMs": 260,
+          "onset": "aligned"
+        },
+        {
+          "text": "looks?",
+          "startMs": 260,
+          "endMs": 710,
+          "onset": "aligned"
+        },
+        {
+          "text": "It",
+          "startMs": 821,
+          "endMs": 970,
+          "onset": "silence"
+        },
+        {
+          "text": "runs.",
+          "startMs": 970,
+          "endMs": 1610,
+          "onset": "aligned"
+        }
+      ]
+    },
+    "narrator-3": {
+      "takeSha": "66095696dd8308b4",
+      "clipSha": "fee44863e1ad610a",
+      "clipMs": 2247,
+      "spoken": "Changes something? It waits for your Enter.",
+      "words": [
+        {
+          "text": "Changes",
+          "startMs": 0,
+          "endMs": 450,
+          "onset": "aligned"
+        },
+        {
+          "text": "something?",
+          "startMs": 450,
+          "endMs": 1020,
+          "onset": "tail"
+        },
+        {
+          "text": "It",
+          "startMs": 1034,
+          "endMs": 1150,
+          "onset": "silence"
+        },
+        {
+          "text": "waits",
+          "startMs": 1150,
+          "endMs": 1510,
+          "onset": "aligned"
+        },
+        {
+          "text": "for",
+          "startMs": 1510,
+          "endMs": 1650,
+          "onset": "tail"
+        },
+        {
+          "text": "your",
+          "startMs": 1650,
+          "endMs": 1830,
+          "onset": "aligned"
+        },
+        {
+          "text": "Enter.",
+          "startMs": 1830,
+          "endMs": 2160,
+          "onset": "aligned"
+        }
+      ]
+    },
+    "narrator-4": {
+      "takeSha": "2503d889dc4fac75",
+      "clipSha": "c66ad3572c659848",
+      "clipMs": 614,
+      "spoken": "Or not.",
+      "words": [
+        {
+          "text": "Or",
+          "startMs": 0,
+          "endMs": 170,
+          "onset": "aligned"
+        },
+        {
+          "text": "not.",
+          "startMs": 170,
+          "endMs": 550,
+          "onset": "aligned"
+        }
+      ]
+    },
+    "narrator-5": {
+      "takeSha": "e848ecf42cc0fab0",
+      "clipSha": "99db11f7034370e8",
+      "clipMs": 1724,
+      "spoken": "Can't be undone? It asks first.",
+      "words": [
+        {
+          "text": "Can't",
+          "startMs": 0,
+          "endMs": 220,
+          "onset": "aligned"
+        },
+        {
+          "text": "be",
+          "startMs": 248,
+          "endMs": 350,
+          "onset": "silence"
+        },
+        {
+          "text": "undone?",
+          "startMs": 350,
+          "endMs": 900,
+          "onset": "aligned"
+        },
+        {
+          "text": "It",
+          "startMs": 909,
+          "endMs": 1040,
+          "onset": "silence"
+        },
+        {
+          "text": "asks",
+          "startMs": 1040,
+          "endMs": 1320,
+          "onset": "aligned"
+        },
+        {
+          "text": "first.",
+          "startMs": 1320,
+          "endMs": 1680,
+          "onset": "tail"
+        }
+      ]
+    },
+    "narrator-6": {
+      "takeSha": "2a850147fc05a14f",
+      "clipSha": "edb63ee17684382a",
+      "clipMs": 2754,
+      "spoken": "Pipe a diff in. A commit message comes out.",
+      "words": [
+        {
+          "text": "Pipe",
+          "startMs": 0,
+          "endMs": 254,
+          "onset": "aligned"
+        },
+        {
+          "text": "a",
+          "startMs": 254,
+          "endMs": 340,
+          "onset": "silence"
+        },
+        {
+          "text": "diff",
+          "startMs": 340,
+          "endMs": 660,
+          "onset": "aligned"
+        },
+        {
+          "text": "in.",
+          "startMs": 660,
+          "endMs": 1050,
+          "onset": "aligned"
+        },
+        {
+          "text": "A",
+          "startMs": 1063,
+          "endMs": 1150,
+          "onset": "silence"
+        },
+        {
+          "text": "commit",
+          "startMs": 1218,
+          "endMs": 1580,
+          "onset": "silence"
+        },
+        {
+          "text": "message",
+          "startMs": 1587,
+          "endMs": 2040,
+          "onset": "silence"
+        },
+        {
+          "text": "comes",
+          "startMs": 2078,
+          "endMs": 2240,
+          "onset": "silence"
+        },
+        {
+          "text": "out.",
+          "startMs": 2240,
+          "endMs": 2690,
+          "onset": "tail"
+        }
+      ]
+    },
+    "narrator-end": {
+      "takeSha": "18310d2f4e90959a",
+      "clipSha": "84667cabdc7ebb2a",
+      "clipMs": 1400,
+      "spoken": "That click stays yours.",
+      "words": [
+        {
+          "text": "That",
+          "startMs": 0,
+          "endMs": 210,
+          "onset": "aligned"
+        },
+        {
+          "text": "click",
+          "startMs": 283,
+          "endMs": 542,
+          "onset": "silence"
+        },
+        {
+          "text": "stays",
+          "startMs": 542,
+          "endMs": 910,
+          "onset": "silence"
+        },
+        {
+          "text": "yours.",
+          "startMs": 910,
+          "endMs": 1340,
+          "onset": "tail"
+        }
+      ]
+    }
+  }
+}

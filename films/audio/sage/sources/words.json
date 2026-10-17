@@ -1,0 +1,467 @@
+{
+  "aligner": "pocketsphinx forced alignment checked against faster-whisper small, starts moved past gaps, disputes settled by cut-and-transcribe",
+  "takes": {
+    "ask-1": {
+      "takeSha": "d46669befe5528ec",
+      "clipSha": "2ff5fe38f6e8386e",
+      "clipMs": 1534,
+      "spoken": "I want to join the standup",
+      "words": [
+        {
+          "text": "I",
+          "startMs": 0,
+          "endMs": 70,
+          "onset": "aligned"
+        },
+        {
+          "text": "want",
+          "startMs": 70,
+          "endMs": 280,
+          "onset": "aligned"
+        },
+        {
+          "text": "to",
+          "startMs": 280,
+          "endMs": 470,
+          "onset": "tail"
+        },
+        {
+          "text": "join",
+          "startMs": 470,
+          "endMs": 840,
+          "onset": "aligned"
+        },
+        {
+          "text": "the",
+          "startMs": 840,
+          "endMs": 910,
+          "onset": "tail"
+        },
+        {
+          "text": "standup",
+          "startMs": 910,
+          "endMs": 1480,
+          "onset": "aligned"
+        }
+      ]
+    },
+    "ask-2": {
+      "takeSha": "93f8f67d404a4b4e",
+      "clipSha": "c48614a8876fa409",
+      "clipMs": 986,
+      "spoken": "pay the invoice",
+      "words": [
+        {
+          "text": "pay",
+          "startMs": 0,
+          "endMs": 160,
+          "onset": "aligned"
+        },
+        {
+          "text": "the",
+          "startMs": 160,
+          "endMs": 410,
+          "onset": "tail"
+        },
+        {
+          "text": "invoice",
+          "startMs": 410,
+          "endMs": 930,
+          "onset": "aligned"
+        }
+      ]
+    },
+    "handback": {
+      "takeSha": "5e1202f0b04b1ec0",
+      "clipSha": "42065ce1266cfd5b",
+      "clipMs": 2636,
+      "spoken": "Stopped at Pay. It's yours to press.",
+      "words": [
+        {
+          "text": "Stopped",
+          "startMs": 0,
+          "endMs": 410,
+          "onset": "aligned"
+        },
+        {
+          "text": "at",
+          "startMs": 410,
+          "endMs": 530,
+          "onset": "aligned"
+        },
+        {
+          "text": "Pay.",
+          "startMs": 568,
+          "endMs": 980,
+          "onset": "silence"
+        },
+        {
+          "text": "It's",
+          "startMs": 1345,
+          "endMs": 1500,
+          "onset": "silence"
+        },
+        {
+          "text": "yours",
+          "startMs": 1500,
+          "endMs": 1680,
+          "onset": "aligned"
+        },
+        {
+          "text": "to",
+          "startMs": 1680,
+          "endMs": 1890,
+          "onset": "tail"
+        },
+        {
+          "text": "press.",
+          "startMs": 1944,
+          "endMs": 2390,
+          "onset": "silence"
+        }
+      ]
+    },
+    "narrator-1": {
+      "takeSha": "b250dac62df951c7",
+      "clipSha": "aedcede082f89174",
+      "clipMs": 1762,
+      "spoken": "A Mac assistant in the notch.",
+      "words": [
+        {
+          "text": "A",
+          "startMs": 0,
+          "endMs": 70,
+          "onset": "aligned"
+        },
+        {
+          "text": "Mac",
+          "startMs": 70,
+          "endMs": 369,
+          "onset": "aligned"
+        },
+        {
+          "text": "assistant",
+          "startMs": 369,
+          "endMs": 747,
+          "onset": "silence"
+        },
+        {
+          "text": "in",
+          "startMs": 747,
+          "endMs": 1140,
+          "onset": "silence"
+        },
+        {
+          "text": "the",
+          "startMs": 1140,
+          "endMs": 1230,
+          "onset": "aligned"
+        },
+        {
+          "text": "notch.",
+          "startMs": 1230,
+          "endMs": 1720,
+          "onset": "aligned"
+        }
+      ]
+    },
+    "narrator-2": {
+      "takeSha": "af1feea5f3db61c8",
+      "clipSha": "d54bb91f8a27db8a",
+      "clipMs": 1958,
+      "spoken": "No app to open. Just hold a key.",
+      "words": [
+        {
+          "text": "No",
+          "startMs": 0,
+          "endMs": 240,
+          "onset": "aligned"
+        },
+        {
+          "text": "app",
+          "startMs": 240,
+          "endMs": 370,
+          "onset": "tail"
+        },
+        {
+          "text": "to",
+          "startMs": 385,
+          "endMs": 480,
+          "onset": "silence"
+        },
+        {
+          "text": "open.",
+          "startMs": 480,
+          "endMs": 900,
+          "onset": "aligned"
+        },
+        {
+          "text": "Just",
+          "startMs": 1025,
+          "endMs": 1190,
+          "onset": "silence"
+        },
+        {
+          "text": "hold",
+          "startMs": 1190,
+          "endMs": 1490,
+          "onset": "aligned"
+        },
+        {
+          "text": "a",
+          "startMs": 1490,
+          "endMs": 1520,
+          "onset": "tail"
+        },
+        {
+          "text": "key.",
+          "startMs": 1574,
+          "endMs": 1910,
+          "onset": "silence"
+        }
+      ]
+    },
+    "narrator-3": {
+      "takeSha": "d59fc75e78d1a58f",
+      "clipSha": "618d11541faaa9e4",
+      "clipMs": 1554,
+      "spoken": "Three languages, live.",
+      "words": [
+        {
+          "text": "Three",
+          "startMs": 0,
+          "endMs": 210,
+          "onset": "aligned"
+        },
+        {
+          "text": "languages,",
+          "startMs": 210,
+          "endMs": 960,
+          "onset": "aligned"
+        },
+        {
+          "text": "live.",
+          "startMs": 980,
+          "endMs": 1450,
+          "onset": "silence"
+        }
+      ]
+    },
+    "narrator-4": {
+      "takeSha": "18f7585cba2e3814",
+      "clipSha": "4a2a12b36bdff05e",
+      "clipMs": 2224,
+      "spoken": "Then it does the steps. One by one.",
+      "words": [
+        {
+          "text": "Then",
+          "startMs": 0,
+          "endMs": 180,
+          "onset": "aligned"
+        },
+        {
+          "text": "it",
+          "startMs": 180,
+          "endMs": 310,
+          "onset": "aligned"
+        },
+        {
+          "text": "does",
+          "startMs": 362,
+          "endMs": 520,
+          "onset": "silence"
+        },
+        {
+          "text": "the",
+          "startMs": 520,
+          "endMs": 700,
+          "onset": "tail"
+        },
+        {
+          "text": "steps.",
+          "startMs": 700,
+          "endMs": 1210,
+          "onset": "aligned"
+        },
+        {
+          "text": "One",
+          "startMs": 1328,
+          "endMs": 1540,
+          "onset": "silence"
+        },
+        {
+          "text": "by",
+          "startMs": 1540,
+          "endMs": 1740,
+          "onset": "tail"
+        },
+        {
+          "text": "one.",
+          "startMs": 1740,
+          "endMs": 2160,
+          "onset": "aligned"
+        }
+      ]
+    },
+    "narrator-5": {
+      "takeSha": "fe35d4a834af20ed",
+      "clipSha": "8a435b1684df8be8",
+      "clipMs": 3113,
+      "spoken": "Changing something? It asks. You get five seconds.",
+      "words": [
+        {
+          "text": "Changing",
+          "startMs": 0,
+          "endMs": 360,
+          "onset": "aligned"
+        },
+        {
+          "text": "something?",
+          "startMs": 360,
+          "endMs": 1060,
+          "onset": "tail"
+        },
+        {
+          "text": "It",
+          "startMs": 1076,
+          "endMs": 1210,
+          "onset": "silence"
+        },
+        {
+          "text": "asks.",
+          "startMs": 1210,
+          "endMs": 1690,
+          "onset": "aligned"
+        },
+        {
+          "text": "You",
+          "startMs": 1805,
+          "endMs": 1970,
+          "onset": "silence"
+        },
+        {
+          "text": "get",
+          "startMs": 1970,
+          "endMs": 2140,
+          "onset": "aligned"
+        },
+        {
+          "text": "five",
+          "startMs": 2140,
+          "endMs": 2420,
+          "onset": "aligned"
+        },
+        {
+          "text": "seconds.",
+          "startMs": 2420,
+          "endMs": 3080,
+          "onset": "tail"
+        }
+      ]
+    },
+    "narrator-6": {
+      "takeSha": "1a78662249064906",
+      "clipSha": "6ba248680450406d",
+      "clipMs": 1207,
+      "spoken": "Return, and you're in.",
+      "words": [
+        {
+          "text": "Return,",
+          "startMs": 0,
+          "endMs": 500,
+          "onset": "aligned"
+        },
+        {
+          "text": "and",
+          "startMs": 617,
+          "endMs": 780,
+          "onset": "silence"
+        },
+        {
+          "text": "you're",
+          "startMs": 780,
+          "endMs": 930,
+          "onset": "aligned"
+        },
+        {
+          "text": "in.",
+          "startMs": 930,
+          "endMs": 1160,
+          "onset": "aligned"
+        }
+      ]
+    },
+    "narrator-7": {
+      "takeSha": "652f518c896aa502",
+      "clipSha": "f5521f55175b5549",
+      "clipMs": 1198,
+      "spoken": "Money? It stops.",
+      "words": [
+        {
+          "text": "Money?",
+          "startMs": 0,
+          "endMs": 420,
+          "onset": "aligned"
+        },
+        {
+          "text": "It",
+          "startMs": 423,
+          "endMs": 560,
+          "onset": "silence"
+        },
+        {
+          "text": "stops.",
+          "startMs": 560,
+          "endMs": 1160,
+          "onset": "aligned"
+        }
+      ]
+    },
+    "narrator-end": {
+      "takeSha": "4480b01e7eb7a720",
+      "clipSha": "923a2cdd64d726f4",
+      "clipMs": 1446,
+      "spoken": "That click stays yours.",
+      "words": [
+        {
+          "text": "That",
+          "startMs": 0,
+          "endMs": 240,
+          "onset": "aligned"
+        },
+        {
+          "text": "click",
+          "startMs": 277,
+          "endMs": 513,
+          "onset": "silence"
+        },
+        {
+          "text": "stays",
+          "startMs": 513,
+          "endMs": 920,
+          "onset": "silence"
+        },
+        {
+          "text": "yours.",
+          "startMs": 920,
+          "endMs": 1390,
+          "onset": "tail"
+        }
+      ]
+    },
+    "understood": {
+      "takeSha": "ba0a63913da2643a",
+      "clipSha": "09ee3eca96c7dfff",
+      "clipMs": 796,
+      "spoken": "Understood",
+      "words": [
+        {
+          "text": "Understood",
+          "startMs": 0,
+          "endMs": 750,
+          "onset": "aligned"
+        }
+      ]
+    }
+  }
+}
