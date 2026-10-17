@@ -213,7 +213,10 @@ export type Stage = {
 };
 
 export const createStage = ({ canvas, camera: preset, film, mobile, frame = 16 / 9, fog: depth }: StageOptions): Stage => {
-  const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true, preserveDrawingBuffer: film });
+  // Asked for here so a device without WebGL2 throws quietly to the poster, where three would log a console error first.
+  const context = canvas.getContext("webgl2", { antialias: true, preserveDrawingBuffer: film });
+  if (!context) throw new Error("WebGL2 unavailable");
+  const renderer = new WebGLRenderer({ canvas, context, alpha: true, antialias: true, preserveDrawingBuffer: film });
   renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1.5 : 2));
   renderer.toneMapping = ACESFilmicToneMapping;
   renderer.outputColorSpace = SRGBColorSpace;
@@ -327,6 +330,8 @@ export const createStage = ({ canvas, camera: preset, film, mobile, frame = 16 /
     environment.dispose();
     pmrem.dispose();
     renderer.dispose();
+    // Browsers cap live contexts at 16 and keep a detached one until GC, so page round trips would evict the oldest with a warning.
+    if (!context.isContextLost()) renderer.forceContextLoss();
   };
 
   return {
