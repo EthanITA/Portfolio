@@ -56,6 +56,4 @@ export const SHELL_SCRIPT = {
   presses,
   keys,
   beats,
-  // The terminal's beat stills are shot whole at this size, where its long lines wrap the way a narrow window wraps them.
-  beatFrame: { width: 560, height: 350 },
 } as const;

@@ -58,5 +58,4 @@ export const SIDECAR_SCRIPT = {
   presses,
   keys,
   beats,
-  beatFrame: { width: 1600, height: 1000 },
 } as const;

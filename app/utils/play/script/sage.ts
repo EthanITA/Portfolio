@@ -71,5 +71,4 @@ export const SAGE_SCRIPT = {
   voice,
   keys,
   beats,
-  beatFrame: { width: 1600, height: 1000 },
 } as const;
