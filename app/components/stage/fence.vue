@@ -3,7 +3,7 @@ import type { SceneMode } from "#shared/types/seekable";
 import type { Status } from "~/utils/stage/fence";
 import type { SceneSetup } from "~/utils/stage/scene";
 
-import { MOTION_DURATION } from "@cela/design/utils/motion";
+import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
 import { STAGE_CAMERA, hydrationSafe, toScreen } from "~/utils/stage/camera";
 import { CYCLE, FENCE, REST_MS, gateX, inFlight, pose, spec } from "~/utils/stage/fence";
 import { useScene } from "~/utils/stage/scene";
@@ -13,8 +13,9 @@ const emit = defineEmits<{ gate: [n: number] }>();
 
 const GATE = { height: 0.9, depth: 0.5, width: 0.06, reach: 0.32 } as const;
 const FRONT = GATE.depth / 2;
-const FOLLOW = { pan: 180, glow: 120, margin: 0.4 } as const;
-const RIPPLE = { step: 80, rise: 120, fall: MOTION_DURATION.base } as const;
+const FOLLOW = { ms: MOTION_DURATION.slow, margin: 0.4 } as const;
+// Gate 8 peaks at 400 ms, inside the 420 ms the heading's four words take to land.
+const RIPPLE = { step: 40, rise: 120, fall: MOTION_DURATION.base } as const;
 
 const SPOTS = Array.from({ length: FENCE.gates }, (_, i) => {
   const n = i + 1;
@@ -50,12 +51,11 @@ const overlays = new Map<number, HTMLElement>();
 const rects = new Map<number, [number, number, number, number]>();
 const sizes = new WeakMap<HTMLElement, string>();
 
-let ripplePending = false;
-const ripple = (): void => {
-  if (!film) ripplePending = true;
+// On the page's clock rather than the scene's, so a scene that goes live late joins the ripple in step with the heading.
+let rippleAt = -Infinity;
+const ripple = (at: number): void => {
+  if (!film && !reduced.value) rippleAt = at;
 };
-
-const ease = (from: number, to: number, dt: number, tau: number): number => to + (from - to) * Math.exp(-dt / tau);
 
 const bind = (k: number, el: unknown): void => {
   if (el instanceof HTMLElement) overlays.set(k, el);
@@ -110,8 +110,8 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
 
   const levels = SPOTS.map(() => 0);
   let pan = 0;
-  let placed = false;
-  let rippleAt = -Infinity;
+  let followed = -1;
+  let follow = { at: -Infinity, pan, levels: [...levels] };
 
   const framePx = (): number => Math.max(view.height, (view.width * 9) / 16);
   // A box narrower than the gates crops them under cover framing, so the camera eases along the line to whichever gate the page lights.
@@ -119,27 +119,32 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
     const visible = view.width / framePx() / unit;
     const span = gateX(FENCE.gates) - gateX(1) + 2 * (GATE.reach + FOLLOW.margin);
     const reach = Math.max(0, (span - visible) / 2);
-    return Math.min(reach, Math.max(-reach, gateX(Math.max(1, n))));
+    return Math.min(reach, Math.max(-reach, gateX(n)));
   };
 
   const frame = (ms: number, dt: number): boolean => {
-    stage.advance(dt);
+    const lerping = stage.advance(dt);
+    const calm = reduced.value && !filming;
     const lighting = !filming && Number.isInteger(light) && light >= 1 && light <= FENCE.gates ? light : 0;
-    if (ripplePending) {
-      rippleAt = ms;
-      ripplePending = false;
+    // The first frame and reduced motion cut, so a restored scroll opens on its gate.
+    if (lighting !== followed) {
+      follow = { at: followed < 0 || calm ? -Infinity : ms, pan, levels: [...levels] };
+      followed = lighting;
     }
-    const goal = filming ? 0 : panTo(lighting);
-    pan = placed ? ease(pan, goal, dt, FOLLOW.pan) : goal;
-    placed = true;
+    const k = MOTION_EASE.out(Math.min(1, (ms - follow.at) / FOLLOW.ms));
+    // Unlit, the camera holds the poster's framing, so the live canvas fades in over an identical image.
+    const goal = lighting ? panTo(lighting) : 0;
+    pan = follow.pan + (goal - follow.pan) * k;
     stage.camera.position.set(preset.position[0] + pan, preset.position[1], preset.position[2]);
     stage.camera.lookAt(preset.target[0] + pan, preset.target[1], preset.target[2]);
     stage.camera.updateMatrixWorld();
     if (gates.value) gates.value.style.transform = `translate3d(${-pan * unit * framePx()}px, 0, 0)`;
 
+    const rippled = performance.now() - rippleAt;
     const lit = SPOTS.map(({ n }, i) => {
-      levels[i] = ease(levels[i] ?? 0, n === lighting ? 1 : 0, dt, FOLLOW.glow);
-      const t = ms - rippleAt - i * RIPPLE.step;
+      const from = follow.levels[i] ?? 0;
+      levels[i] = from + ((n === lighting ? 1 : 0) - from) * k;
+      const t = rippled - i * RIPPLE.step;
       const wave = t < 0 || t >= RIPPLE.rise + RIPPLE.fall ? 0 : t < RIPPLE.rise ? t / RIPPLE.rise : 1 - (t - RIPPLE.rise) / RIPPLE.fall;
       return Math.max(levels[i] ?? 0, wave);
     });
@@ -200,7 +205,7 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
     }
     place();
     stage.render();
-    return true;
+    return !calm || lerping;
   };
 
   await stage.warm();
@@ -224,19 +229,28 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
   };
 };
 
-const { state, theme, clock, seekable } = useScene({
+const { state, theme, reduced, clock, kick, wake, seekable } = useScene({
   mode,
   duration: CYCLE,
   root: () => root.value ?? undefined,
   canvas: () => canvas.value ?? undefined,
   setup,
+  reducedOnDemand: true,
   start: film ? 0 : REST_MS,
 });
+
+// Reduced motion parks the loop, so the scene boots at mount and each light change wakes it for one still frame.
+const still = (): void => {
+  if (reduced.value) void kick();
+};
+onMounted(still);
+watch(() => light, still);
 
 const stop = (k: number): void => {
   const now = clock();
   if (clicks.has(k) || pose(k, now).status !== "flow") return;
   clicks.set(k, now);
+  wake();
 };
 
 const hover = (n: number): void => {
