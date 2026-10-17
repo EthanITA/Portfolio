@@ -11,10 +11,12 @@ export default {
   poster: 3000,
   title: { text: "AI Shell", at: 600, until: 3000 },
   captions: [
-    { text: "Looks: runs", at: m.outputFind, until: m.typeDist - 200 },
-    { text: "Changes: waits for Enter", at: m.stagedDist, until: m.killDist - 200 },
-    { text: "Can't be undone: asks first", at: m.askedPush, until: m.clear - 200 },
-    { text: "One answer from a pipe", at: m.enterPipe, until: FADE },
+    { text: "Forget the flags. Type ? and say what you want.", at: 3300, until: 7600 },
+    { text: "Only looks? It runs.", at: 7900, until: m.typeDist - 200 },
+    { text: "Changes something? It waits for your Enter.", at: 13_600, until: m.killDist - 200 },
+    { text: "Or not.", at: 18_200, until: m.enterPush - 200 },
+    { text: "Can't be undone? It asks first.", at: 22_400, until: m.answerNo - 200 },
+    { text: "Pipe a diff in. A commit message comes out.", at: 27_600, until: FADE },
   ],
   keys: SHELL_SCRIPT.keys,
   island: [
