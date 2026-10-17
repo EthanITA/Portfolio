@@ -72,7 +72,21 @@ const RISK: Record<RecordKey, number> = { push: 2, dist: 1, commit: 1, pipe: 0, 
 
 export const UNKNOWN = "This playground replays real recordings. Try one of the five asks.";
 
-export const SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+const BRAILLE = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+
+const DOT_AT: [number, number][] = [
+  [0, 0],
+  [0, 1],
+  [0, 2],
+  [1, 0],
+  [1, 1],
+  [1, 2],
+  [0, 3],
+  [1, 3],
+];
+
+// The widget's braille frames as dot positions, drawn because few fonts carry braille and each system substitutes its own.
+export const SPINNER: [number, number][][] = BRAILLE.map((frame) => DOT_AT.filter((_, bit) => ((frame.codePointAt(0) ?? 0x2800) - 0x2800) & (1 << bit)));
 
 export const SPIN_FRAME_MS = 90;
 
