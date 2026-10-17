@@ -25,6 +25,8 @@ export const hydrationSafe = (value: number): number => Math.round(value * 1e6) 
 
 export const ISLAND = { width: 2.4, height: 0.56, depth: 0.2, radius: 0.28, core: 0.86, lineGap: 0.12, line: 1.2 } as const;
 export const HALO_HEIGHT = 0.32;
+// Here rather than in island.ts, so the prerendered shares can find the glass's real edges without importing three.
+export const slabBevel = (depth: number): number => Math.min(0.06, depth / 3);
 
 export const restAt = (hero: CameraPreset, { distance, right, up }: { distance: number; right: number; up: number }): CameraPreset => {
   const height = 2 * distance * Math.tan((hero.fov * Math.PI) / 360);
@@ -33,8 +35,8 @@ export const restAt = (hero: CameraPreset, { distance, right, up }: { distance: 
   return { fov: hero.fov, position: [target[0], target[1] + distance * slope, distance], target };
 };
 
-// Fixed rather than measured from the layout, so one poster matches the first frame on every phone under cover framing.
-export const HERO_REST = { wide: { distance: 9, right: 16 / 27, up: 0 }, narrow: { distance: 12, right: 0, up: 0.257 } } as const;
+// Fixed rather than measured from the layout, so one poster per breakpoint matches the first frame; wide clears the 32 px gutter from 1024 px up.
+export const HERO_REST = { wide: { distance: 9, right: 0.56, up: 0 }, narrow: { distance: 12, right: 0, up: 0.257 } } as const;
 
 const phoneRest = restAt(STAGE_CAMERA.hero, HERO_REST.narrow);
 // The glass's front edge and the halo's foot are the island's outermost geometry, so the hero copy can clear it before three loads.
@@ -42,3 +44,7 @@ export const PHONE_REST_BAND = {
   top: hydrationSafe(toScreen(phoneRest, [0, ISLAND.height / 2, ISLAND.depth / 2]).top),
   bottom: hydrationSafe(toScreen(phoneRest, [0, -ISLAND.height / 2 - ISLAND.lineGap - HALO_HEIGHT / 2, 0]).top),
 } as const;
+
+const wideRest = restAt(STAGE_CAMERA.hero, HERO_REST.wide);
+// One share holds at every wide aspect since the rest shows the whole frame width; the glass's back edge projects furthest left.
+export const WIDE_REST_LEFT = hydrationSafe(0.5 + (toScreen(wideRest, [-ISLAND.width / 2, 0, slabBevel(ISLAND.depth) - ISLAND.depth / 2]).side * 9) / 16);

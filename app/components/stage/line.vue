@@ -22,6 +22,8 @@ const TIER_NAME: Record<Tier, string> = { runs: "Runs", waits: "Waits for you", 
 const PLACEHOLDER = "Type something you'd ask an agent to do";
 const PRESS = "Press it yourself";
 const ZONE: Record<Tier, number> = { runs: -2.2, waits: 0.9, stops: 0 };
+// Two lanes beside the zone labels leave a phone card five letters a line, so every ask gets the whole lane and wraps to two.
+const PHONE_SLOTS = 1;
 const FILM = {
   events: [
     ...EXAMPLES.slice(0, 4).map((text, i) => ({ at: i * LINE.every, send: text })),
@@ -108,7 +110,7 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
     const left = (-1 - origin.x) / unit;
     const right = (1 - origin.x) / unit;
     const gutter = (Math.max(0, ...[...(box.value?.querySelectorAll<HTMLElement>("[data-zone]") ?? [])].map((el) => el.offsetLeft + el.offsetWidth)) + 16) / perUnit;
-    slots = wide.matches ? 4 : 2;
+    slots = wide.matches ? 4 : PHONE_SLOTS;
     const start = left + gutter;
     const span = right - 0.15 - start;
     layout.slotWidth = span / slots;
@@ -245,7 +247,7 @@ const seed = (count: number): void => {
 
 seed(4);
 onMounted(() => {
-  if (!matchMedia("(min-width: 768px)").matches) seed(2);
+  if (!matchMedia("(min-width: 768px)").matches) seed(PHONE_SLOTS);
 });
 
 const interact = (): void => {

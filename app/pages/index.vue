@@ -5,7 +5,7 @@ import { links } from "~/utils/site/links";
 import { motionOn } from "~/utils/site/motion";
 import { flagships } from "~/utils/site/products";
 import { seo } from "~/utils/site/seo";
-import { PHONE_REST_BAND } from "~/utils/stage/camera";
+import { PHONE_REST_BAND, WIDE_REST_LEFT } from "~/utils/stage/camera";
 
 type Count = { to: number; after?: string; decimals?: number };
 type Measure = { share: number; caption?: string };
@@ -125,11 +125,11 @@ onBeforeUnmount(() => {
           <LazyStageHero :progress="heroProgress" />
         </SiteMount>
       </div>
-      <section ref="hero" class="hero" :style="{ '--island-bottom': PHONE_REST_BAND.bottom }">
+      <section ref="hero" class="hero" :style="{ '--island-bottom': PHONE_REST_BAND.bottom, '--island-left': WIDE_REST_LEFT }">
         <div ref="intro" class="intro">
           <h1 class="title">
             <span v-enter.now.words.wide class="first">I build AI products end to end.</span>
-            <span v-enter.now.wide="200" class="second">The agents write a lot of the code, and the standard is mine.</span>
+            <span v-enter.now.wide="200" class="second"><span class="clause">The agents write a lot of the code,</span> <span class="clause">and the standard is mine.</span></span>
           </h1>
           <p v-enter.now="320" class="roles">Software engineer at Klarna, AI product engineer at Moneyfarm, and founder of Cela, where I'm building Sidecar, Sage and AI Shell.</p>
           <div class="actions">
@@ -224,29 +224,40 @@ onBeforeUnmount(() => {
   @apply sticky top-0;
 }
 
-/* On phones the text starts 8 px under stage's island rest band, so the hero grows rather than overlap. */
+/* Under lg the text starts 8 px under stage's island rest band, so the hero grows rather than overlap. */
 .hero {
-  @apply relative flex min-h-160 flex-col justify-end overflow-hidden pb-16 max-md:min-h-svh max-md:pt-[max(13rem,calc(var(--island-bottom)*100svh_+_0.5rem))] max-md:short:pb-10 md:h-svh md:justify-center md:pt-20 md:pb-0;
+  @apply @container relative flex min-h-160 flex-col justify-end overflow-hidden pb-16 max-lg:min-h-svh max-lg:pt-[max(13rem,calc(var(--island-bottom)*100svh_+_0.5rem))] max-lg:short:pb-10 lg:h-svh lg:justify-center lg:pt-20 lg:pb-0;
 }
 
 .intro {
-  @apply relative mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 max-md:short:gap-4 sm:px-8;
+  @apply relative mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 max-lg:short:gap-4 sm:px-8;
 }
 
 .title {
-  @apply m-0 flex max-w-4xl flex-col gap-2 text-4xl font-bold tracking-tight max-md:short:text-3xl lg:text-5xl 2xl:text-6xl;
+  @apply m-0 flex max-w-4xl flex-col gap-2 text-4xl font-bold tracking-tight max-lg:short:text-3xl xl:text-5xl;
+}
+
+/* From lg the island's left cap sits at a fixed share of the hero's width, so the H1 stops one gutter short of it. */
+@variant lg {
+  .title {
+    max-width: min(var(--container-4xl), calc(var(--island-left) * 100cqw - --spacing(8) - max(--spacing(8), (100cqw - var(--container-7xl)) / 2 + --spacing(8))));
+  }
 }
 
 .second {
   @apply text-muted;
 }
 
+.clause {
+  @apply lg:block;
+}
+
 .roles {
-  @apply typo-body-lg max-w-xl text-muted max-md:short:typo-body;
+  @apply typo-body-lg max-w-xl text-muted max-lg:short:typo-body;
 }
 
 .actions {
-  @apply flex flex-col gap-3 max-md:short:flex-row sm:flex-row;
+  @apply flex flex-col gap-3 max-lg:short:flex-row sm:flex-row;
 }
 
 .action {
