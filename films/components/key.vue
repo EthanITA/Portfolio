@@ -3,9 +3,10 @@ import { Kbd } from "@cela/design";
 import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
 import { SAFE_MARGIN, type Cue } from "~~/films/scripts/script";
 
-const { keys, at, until, beside } = defineProps<{ keys: string; at: number; until: number; beside?: Pick<Cue, "at" | "until"> }>();
+const { keys, at, until, beside = [] } = defineProps<{ keys: string; at: number; until: number; beside?: Pick<Cue, "at" | "until">[] }>();
 
 const GAP = 24;
+const JOIN = 400;
 
 const band = useTemplateRef<HTMLElement>("band");
 const key = useTemplateRef<HTMLElement>("key");
@@ -18,26 +19,42 @@ onMounted(() => {
     .add(key.value, { opacity: [1, 0], duration: MOTION_DURATION.fast, ease: MOTION_EASE.out }, until);
 });
 
-let placed = false;
-const offset = { x: 0, y: 0 };
+type Offset = { x: number; y: number };
+
+let offsets: Offset[] = [];
 
 const progress = (ms: number, start: number, length: number): number => Math.min(1, Math.max(0, (ms - start) / length));
 
-onFrame((ms) => {
-  if (!band.value || !key.value || !beside) return;
-  if (!placed) {
-    const caption = band.value.parentElement?.querySelector(`[data-caption="${beside.at}"] .film-caption`)?.getBoundingClientRect();
-    const caps = key.value.querySelector(".film-key-caps")?.getBoundingClientRect();
-    if (!caption || !caps) return;
-    const frame = band.value.getBoundingClientRect();
-    if (caption.left - GAP - caps.width - frame.left >= SAFE_MARGIN) offset.x = caption.left - GAP - caps.right;
-    else offset.y = caption.top - GAP - caps.bottom;
-    placed = true;
+const toward = (from: Offset, to: Offset, amount: number): Offset => ({ x: from.x + (to.x - from.x) * amount, y: from.y + (to.y - from.y) * amount });
+
+// Captions that follow each other within JOIN hand the key straight on, so it glides between them instead of bouncing to the centre.
+const pose = (ms: number): Offset => {
+  let current = { x: 0, y: 0 };
+  for (const [index, caption] of beside.entries()) {
+    const offset = offsets[index];
+    if (ms < caption.at || !offset) break;
+    current = toward(current, offset, MOTION_EASE.out(progress(ms, caption.at, MOTION_DURATION.base)));
+    const next = beside[index + 1];
+    if (!next || next.at - caption.until > JOIN) current = toward(current, { x: 0, y: 0 }, MOTION_EASE.out(progress(ms, caption.until, MOTION_DURATION.fast)));
   }
-  const enter = MOTION_EASE.out(progress(ms, beside.at, MOTION_DURATION.base));
-  const leave = MOTION_EASE.out(progress(ms, beside.until, MOTION_DURATION.fast));
-  const shown = enter * (1 - leave);
-  band.value.style.translate = `${offset.x * shown}px ${offset.y * shown}px`;
+  return current;
+};
+
+onFrame((ms) => {
+  if (!band.value || !key.value || !beside.length) return;
+  if (!offsets.length) {
+    const caps = key.value.querySelector(".film-key-caps")?.getBoundingClientRect();
+    const frame = band.value.getBoundingClientRect();
+    const captions = beside.map((caption) => band.value?.parentElement?.querySelector(`[data-caption="${caption.at}"] .film-caption`)?.getBoundingClientRect());
+    if (!caps || captions.some((caption) => !caption)) return;
+    offsets = captions.map((caption) => {
+      if (!caption) return { x: 0, y: 0 };
+      if (caption.left - GAP - caps.width - frame.left >= SAFE_MARGIN) return { x: caption.left - GAP - caps.right, y: 0 };
+      return { x: 0, y: caption.top - GAP - caps.bottom };
+    });
+  }
+  const { x, y } = pose(ms);
+  band.value.style.translate = `${x}px ${y}px`;
 });
 </script>
 

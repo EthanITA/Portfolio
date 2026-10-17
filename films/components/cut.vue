@@ -9,7 +9,7 @@ const presses = computed(() =>
   script.keys.map((press) => {
     const at = press.at - 200;
     const until = press.until ?? press.at + 1000;
-    const beside = captions.value.find((caption) => caption.at < until && at < caption.until);
+    const beside = captions.value.filter((caption) => caption.at < until && at < caption.until);
     return { keys: press.key, at, until, beside };
   }),
 );
