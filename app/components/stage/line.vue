@@ -334,6 +334,11 @@ defineExpose({ ...seekable, restMs: FILM.rest });
   @apply flex flex-col gap-3;
 }
 
+/* TextInput's outline-none leaves --tw-outline-style at none, and @cela/design's focus-ring reads it, so the ring never draws. */
+.input:focus-visible {
+  @apply outline-solid;
+}
+
 .examples {
   @apply flex flex-wrap gap-2;
 }
