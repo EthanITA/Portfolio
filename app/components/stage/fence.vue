@@ -181,6 +181,7 @@ const { state, theme, clock, seekable } = useScene({
   root: () => root.value ?? undefined,
   canvas: () => canvas.value ?? undefined,
   setup,
+  start: film ? 0 : REST_MS,
 });
 
 const stop = (k: number): void => {
