@@ -20,7 +20,7 @@ const playing = ref(false);
 const video = useTemplateRef<HTMLVideoElement>("video");
 
 // The pressed button unmounts, so focus moves to the player to keep its controls on the keyboard.
-const watch = async (): Promise<void> => {
+const startFilm = async (): Promise<void> => {
   playing.value = true;
   await nextTick();
   video.value?.focus();
@@ -43,7 +43,7 @@ const watch = async (): Promise<void> => {
         </video>
         <template v-else>
           <img v-if="film" class="poster" :src="film.poster" alt="" width="1920" height="1080" decoding="async" />
-          <button v-press class="watch" type="button" :disabled="!film" @click="watch">
+          <button v-press class="watch" type="button" :disabled="!film" @click="startFilm">
             <svg class="play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" /></svg>
             Watch the film
           </button>
