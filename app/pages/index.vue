@@ -216,9 +216,9 @@ onBeforeUnmount(() => {
   @apply sticky top-0;
 }
 
-/* pt-52 is the nav, 8 clear, the island's 112 px band and 16 clear; the hero grows past 100svh only if that can't fit. */
+/* Stage's island rests above 33.2svh on phones, so the text starts 8 px under it and the hero grows rather than overlap. */
 .hero {
-  @apply relative flex min-h-160 flex-col justify-end overflow-hidden pb-16 max-md:min-h-svh max-md:pt-52 max-md:short:pb-10 md:h-svh md:justify-center md:pt-20 md:pb-0;
+  @apply relative flex min-h-160 flex-col justify-end overflow-hidden pb-16 max-md:min-h-svh max-md:pt-[max(13rem,calc(33.2svh_+_0.5rem))] max-md:short:pb-10 md:h-svh md:justify-center md:pt-20 md:pb-0;
 }
 
 .intro {
