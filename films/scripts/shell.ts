@@ -1,20 +1,22 @@
 import { SHELL_SCRIPT } from "../../app/utils/play/script/shell.ts";
-import type { FilmScript } from "./script.ts";
+import { GRID, type FilmScript } from "./script.ts";
 
-const m = SHELL_SCRIPT.moments;
-const LINE = 32_600;
-const FADE = 31_600;
+const LINE = 32_000;
 
 export default {
   name: "shell",
   duration: 35_000,
   poster: 3000,
-  title: { text: "AI Shell", at: 600, until: 3000 },
-  captions: [
-    { text: "Looks: runs", at: m.outputFind, until: m.typeDist - 200 },
-    { text: "Changes: waits for Enter", at: m.stagedDist, until: m.killDist - 200 },
-    { text: "Can't be undone: asks first", at: m.askedPush, until: m.clear - 200 },
-    { text: "One answer from a pipe", at: m.answerPipe, until: FADE },
+  close: LINE,
+  title: { text: "AI Shell", at: 500, until: 2000 },
+  lines: [
+    "Forget the flags. Type ? and say what you want.",
+    "Only looks? It runs.",
+    "Changes something? It waits for your Enter.",
+    "Or not.",
+    "Can't be undone? It asks first.",
+    "Pipe a diff in. A commit message comes out.",
+    "That click stays yours.",
   ],
   keys: SHELL_SCRIPT.keys,
   island: [
@@ -23,18 +25,15 @@ export default {
   ],
   rules: [],
   rig: {
-    at: 2400,
-    until: FADE,
+    at: 2000,
+    until: 30_500,
     shots: [
-      { at: 3200, duration: 2000, scale: 1.35, anchor: "line" },
-      { at: 8400, duration: 1800, scale: 1 },
-      { at: 10_700, duration: 2000, scale: 1.35, anchor: "line" },
-      { at: 16_000, duration: 1800, scale: 1 },
-      { at: 18_700, duration: 2000, scale: 1.35, anchor: "line" },
-      { at: 24_800, duration: 1800, scale: 1 },
-      { at: 27_400, duration: 2000, scale: 1.35, anchor: "line" },
-      { at: 31_000, duration: 600, scale: 0.96 },
+      { at: 4000, duration: 1000, scale: 1.35, anchor: "command" },
+      { at: 7000, duration: 1000, scale: 1 },
+      { at: 12_000, duration: 1000, scale: 1.35, anchor: "command" },
+      { at: 24_500, duration: 1000, scale: 1 },
+      { at: 28_000, duration: 1000, scale: 1.35, anchor: "command" },
     ],
   },
-  end: { text: "AI Shell · madong.me/shell", at: LINE + 200 },
+  end: { text: "AI Shell · madong.me/shell", at: LINE + GRID.beatMs },
 } satisfies FilmScript;

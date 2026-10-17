@@ -1,25 +1,37 @@
 import { SAGE_SCRIPT } from "../../app/utils/play/script/sage.ts";
-import type { FilmScript } from "./script.ts";
+import { GRID, type FilmScript } from "./script.ts";
 
-const LINE = 36_600;
+const LINE = 36_000;
 
 export default {
   name: "sage",
   duration: 40_000,
   poster: 3000,
-  title: { text: "Sage", at: 600, until: 3000 },
-  captions: [],
+  close: LINE,
+  title: { text: "Sage", at: 500, until: 2000 },
+  lines: [
+    "A Mac assistant in the notch.",
+    "No app to open. Just hold a key.",
+    "Three languages, live.",
+    "Then it does the steps. One by one.",
+    "Changing something? It asks. You get five seconds.",
+    "Return, and you're in.",
+    "Money? It stops.",
+    "Stopped at Pay. It's yours to press.",
+    "That click stays yours.",
+  ],
   keys: SAGE_SCRIPT.keys,
   island: [{ at: LINE - 600, shape: "island", draw: LINE, y: 0.25 }],
   rules: [],
   rig: {
-    until: 36_000,
+    at: 2000,
+    until: 34_500,
     shots: [
-      { at: 3000, duration: 2000, scale: 1.5, anchor: "notch" },
-      { at: 22_000, duration: 1800, scale: 1.4, anchor: "card" },
-      { at: 30_000, duration: 2200, scale: 1.5, anchor: "pay" },
-      { at: 35_400, duration: 600, scale: 0.96 },
+      { at: 4500, duration: 1000, scale: 1.5, anchor: "notch" },
+      { at: 20_500, duration: 1000, scale: 1.4, anchor: "card" },
+      { at: 26_000, duration: 1000, scale: 1 },
+      { at: 32_500, duration: 1000, scale: 1.5, anchor: "pay" },
     ],
   },
-  end: { text: "Sage · madong.me/sage", at: LINE + 200 },
+  end: { text: "Sage · madong.me/sage", at: LINE + GRID.beatMs },
 } satisfies FilmScript;

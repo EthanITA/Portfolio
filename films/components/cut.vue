@@ -1,18 +1,9 @@
 <script setup lang="ts">
-import type { Cue, FilmScript } from "~~/films/scripts/script";
+import type { FilmScript } from "~~/films/scripts/script";
 
-const { script, voice = [] } = defineProps<{ script: FilmScript; voice?: Cue[] }>();
+const { script } = defineProps<{ script: FilmScript }>();
 
-const captions = computed(() => [...script.captions, ...voice]);
-
-const presses = computed(() =>
-  script.keys.map((press) => {
-    const at = press.at - 200;
-    const until = press.until ?? press.at + 1000;
-    const beside = captions.value.find((caption) => caption.at < until && at < caption.until);
-    return { keys: press.key, at, until, beside };
-  }),
-);
+const presses = computed(() => script.keys.map((press) => ({ keys: press.key, at: press.at - 200, until: press.until ?? press.at + 1000 })));
 </script>
 
 <template>
@@ -23,8 +14,7 @@ const presses = computed(() =>
       <FilmRule v-for="rule in script.rules" :key="rule.at" :anchor="rule.anchor" :at="rule.at" />
     </FilmRig>
     <FilmTitle :at="script.title.at" :until="script.title.until" :tone="script.title.tone">{{ script.title.text }}</FilmTitle>
-    <FilmCaption v-for="caption in captions" :key="caption.at" :text="caption.text" :at="caption.at" :until="caption.until" :data-caption="caption.at" />
-    <FilmKey v-for="press in presses" :key="press.at" :keys="press.keys" :at="press.at" :until="press.until" :beside="press.beside" />
+    <FilmKey v-for="press in presses" :key="press.at" :keys="press.keys" :at="press.at" :until="press.until" />
     <FilmEnd :at="script.end.at">{{ script.end.text }}</FilmEnd>
   </FilmFrame>
 </template>

@@ -1,8 +1,15 @@
 <script setup lang="ts">
-import { Surface } from "@cela/design";
+import { Segmented, Surface } from "@cela/design";
 
-import { type Product, films } from "~/utils/site/films";
+import { type Cut, type Product, films } from "~/utils/site/films";
 import type { Beat, Run } from "~/utils/site/text";
+
+type Mode = "try" | "watch";
+
+const MODES: { label: string; value: Mode }[] = [
+  { label: "Try it", value: "try" },
+  { label: "Watch the film", value: "watch" },
+];
 
 const { slug, name, sub, lead, beats, builtWith, limit } = defineProps<{
   slug: Product;
@@ -15,15 +22,67 @@ const { slug, name, sub, lead, beats, builtWith, limit } = defineProps<{
 }>();
 
 const film = films[slug];
-const playing = ref(false);
+const route = useRoute();
+const mode = ref<Mode>("try");
+const loaded = ref(false);
+const wide = ref(true);
+const portraitMissing = ref(false);
 const video = useTemplateRef<HTMLVideoElement>("video");
 
-// The pressed button unmounts, so focus moves to the player to keep its controls on the keyboard.
-const startFilm = async (): Promise<void> => {
-  playing.value = true;
+// The landscape cut follows the portrait one, so a portrait file that 404s falls through to the letterboxed master.
+const cuts = computed<Cut[]>(() => {
+  if (!film) return [];
+  return wide.value || !film.portrait || portraitMissing.value ? [film.landscape] : [film.portrait, film.landscape];
+});
+const poster = computed(() => cuts.value[0]?.poster);
+
+const onPosterError = (): void => {
+  if (cuts.value.length > 1) portraitMissing.value = true;
+};
+
+const SM = "(min-width: 640px)";
+let query: MediaQueryList | undefined;
+
+// Both cuts share one timeline, so a paused player swaps orientation in place and keeps its position.
+const onQuery = async (event: MediaQueryListEvent): Promise<void> => {
+  const player = video.value;
+  if (player && !player.paused) return;
+  wide.value = event.matches;
+  if (!player) return;
+  const at = player.currentTime;
   await nextTick();
+  player.load();
+  player.currentTime = at;
+};
+
+const play = async (): Promise<void> => {
+  loaded.value = true;
+  await nextTick();
+  // Switching back before playback starts interrupts play(), and the pause is what the visitor asked for.
+  await video.value?.play().catch(() => undefined);
+};
+
+const choose = (next: Mode): void => {
+  mode.value = next;
+  history.replaceState(history.state, "", next === "watch" ? "#film" : `${location.pathname}${location.search}`);
+  if (next === "watch") void play();
+  else video.value?.pause();
+};
+
+// The pressed pill unmounts, so focus moves to the player to keep its controls on the keyboard.
+const startFilm = async (): Promise<void> => {
+  await play();
   video.value?.focus();
 };
+
+onMounted(() => {
+  query = matchMedia(SM);
+  wide.value = query.matches;
+  query.addEventListener("change", onQuery);
+  if (film && route.hash === "#film") mode.value = "watch";
+});
+
+onBeforeUnmount(() => query?.removeEventListener("change", onQuery));
 </script>
 
 <template>
@@ -34,25 +93,29 @@ const startFilm = async (): Promise<void> => {
       <p v-enter.now.wide="320" class="lead"><SiteRuns :runs="lead" /></p>
     </header>
 
-    <div v-enter.now.wide="420" class="film wrap">
-      <Surface class="frame" variant="raised" shape="island" pad="none">
-        <video v-if="playing && film" ref="video" class="video" controls autoplay playsinline preload="none" :poster="film.poster">
-          <source :src="film.webm" type='video/webm; codecs="vp9, opus"' />
-          <source :src="film.mp4" type='video/mp4; codecs="avc1.64002A, mp4a.40.2"' />
-        </video>
-        <template v-else>
-          <img v-if="film" class="poster" :src="film.poster" alt="" width="1920" height="1080" fetchpriority="high" decoding="async" />
-          <button v-press class="watch" type="button" :disabled="!film" @click="startFilm">
-            <svg class="play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" /></svg>
-            Watch the film
-          </button>
-        </template>
-      </Surface>
-    </div>
-
-    <div class="stage wrap">
+    <div id="film" v-enter.now.wide="420" class="stage wrap">
+      <div v-if="film" class="bar">
+        <Segmented :model-value="mode" :options="MODES" @update:model-value="choose" />
+      </div>
       <SiteMount name="play">
-        <slot />
+        <div v-show="mode === 'try'" class="layer">
+          <slot />
+        </div>
+        <Surface v-if="film" v-show="mode === 'watch'" class="film" variant="sunken" shape="island" pad="none">
+          <video v-if="loaded" ref="video" class="video" controls playsinline preload="none" :poster="poster" @ended="choose('try')">
+            <template v-for="source in cuts" :key="source.webm">
+              <source :src="source.webm" type='video/webm; codecs="vp9, opus"' />
+              <source :src="source.mp4" type='video/mp4; codecs="avc1.64002A, mp4a.40.2"' />
+            </template>
+          </video>
+          <template v-else>
+            <img class="poster" :src="poster" alt="" loading="lazy" decoding="async" @error="onPosterError" />
+            <button v-press class="watch" type="button" @click="startFilm">
+              <svg class="play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" /></svg>
+              Watch the film
+            </button>
+          </template>
+        </Surface>
       </SiteMount>
     </div>
 
@@ -97,13 +160,21 @@ const startFilm = async (): Promise<void> => {
   @apply typo-body-lg max-w-2xl text-muted;
 }
 
-.frame {
-  @apply relative grid aspect-video w-full place-items-center overflow-hidden;
+.stage {
+  @apply flex scroll-mt-20 flex-col gap-4;
+}
+
+.bar {
+  @apply sticky top-20 z-10 flex items-center justify-between gap-3 md:static;
+}
+
+.film {
+  @apply grid place-items-center overflow-hidden;
 }
 
 .poster,
 .video {
-  @apply absolute inset-0 size-full object-cover;
+  @apply absolute inset-0 size-full object-contain;
 }
 
 .video:focus-visible {
@@ -112,10 +183,6 @@ const startFilm = async (): Promise<void> => {
 
 .watch {
   @apply surface-raised relative z-10 inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border-0 px-5 typo-body-strong text-fg;
-
-  &:disabled {
-    @apply cursor-default text-muted;
-  }
 
   &:focus-visible {
     @apply focus-ring;

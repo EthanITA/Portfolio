@@ -216,16 +216,17 @@ onBeforeUnmount(() => {
   @apply sticky top-0;
 }
 
+/* Stage's island rests above 33.2svh on phones, so the text starts 8 px under it and the hero grows rather than overlap. */
 .hero {
-  @apply relative flex h-svh min-h-160 flex-col justify-end overflow-hidden pt-20 pb-16 md:justify-center md:pb-0;
+  @apply relative flex min-h-160 flex-col justify-end overflow-hidden pb-16 max-md:min-h-svh max-md:pt-[max(13rem,calc(33.2svh_+_0.5rem))] max-md:short:pb-10 md:h-svh md:justify-center md:pt-20 md:pb-0;
 }
 
 .intro {
-  @apply relative mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 sm:px-8;
+  @apply relative mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 max-md:short:gap-4 sm:px-8;
 }
 
 .title {
-  @apply m-0 flex max-w-4xl flex-col gap-2 text-4xl font-bold tracking-tight lg:text-5xl 2xl:text-6xl;
+  @apply m-0 flex max-w-4xl flex-col gap-2 text-4xl font-bold tracking-tight max-md:short:text-3xl lg:text-5xl 2xl:text-6xl;
 }
 
 .second {
@@ -233,11 +234,11 @@ onBeforeUnmount(() => {
 }
 
 .roles {
-  @apply typo-body-lg max-w-xl text-muted;
+  @apply typo-body-lg max-w-xl text-muted max-md:short:typo-body;
 }
 
 .actions {
-  @apply flex flex-col gap-3 sm:flex-row;
+  @apply flex flex-col gap-3 max-md:short:flex-row sm:flex-row;
 }
 
 .action {

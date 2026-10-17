@@ -1,5 +1,7 @@
 @import "@cela/design/css";
 
+@custom-variant short (@media (height < 44rem));
+
 /* Status hues as text, mixed toward ink until 4.5:1 on canvas, sunken and raised. */
 @theme inline {
   --color-warning-text: color-mix(in oklch, var(--warning), var(--ink) 30%);
