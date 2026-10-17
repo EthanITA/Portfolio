@@ -1,3 +1,5 @@
+import { SAGE_SCRIPT } from "../../../app/utils/play/script/sage";
+import { SHELL_SCRIPT } from "../../../app/utils/play/script/shell";
 import type { ClickVariant, KeyVariant, TickVariant, WhooshDirection } from "./lib/synth";
 
 export type FilmName = "sidecar" | "sage" | "shell";
@@ -11,10 +13,11 @@ export type CueSpec =
   | (Base & { sound: "click"; variant: ClickVariant })
   | (Base & { sound: "chime" })
   | (Base & { sound: "thud" })
-  | (Base & { sound: "line"; durMs: number })
+  | (Base & { sound: "line"; durMs: number; cutMs?: number })
+  | (Base & { sound: "marker" })
   | (Base & { sound: "whoosh"; durMs: number; fromHz: number; toHz: number; direction: WhooshDirection })
   | (Base & { sound: "voice"; voice: VoiceName; text: string })
-  | (Base & { sound: "typing"; endMs: number; text: string; seed: number; everyMs?: number });
+  | (Base & { sound: "typing"; endMs: number; text: string; seed: number; presses?: number[] });
 
 export type FilmSpec = {
   name: FilmName;
@@ -49,9 +52,73 @@ const whoosh = (id: string, at: number, durMs: number, direction: WhooshDirectio
 
 const quiet = (cue: CueSpec, gainDb = -6): CueSpec => ({ ...cue, gainDb });
 
-const typed = (id: string, at: number, everyMs: number, text: string, seed: number, marks: string, sheet: string): CueSpec => ({
-  id, at, sound: "typing", endMs: at + (text.length - 1) * everyMs, everyMs, text, seed, marks, sheet,
+const typing = (id: string, script: { text: string; at: number[] }, seed: number, marks: string, sheet: string): CueSpec => ({
+  id, at: script.at[0] ?? 0, sound: "typing", endMs: script.at.at(-1) ?? 0, presses: script.at, text: script.text, seed, marks, sheet,
 });
+
+const marker = (id: string, at: number, marks: string, sheet: string): CueSpec => ({ id, at, sound: "marker", marks, sheet });
+
+const sageCues = (): CueSpec[] => {
+  const { moments: m, words } = SAGE_SCRIPT;
+  return [
+    { id: "option-down", at: m.optionDown, sound: "key", variant: "down", marks: "the right Option key goes down", sheet: "3-9" },
+    quiet(whoosh("push-notch", m.optionDown, 1200, "still", "the camera pushes in as the island grows out of the notch", "3-9", 300, 1800)),
+    { id: "ask-1", at: m.wordsStart, sound: "voice", voice: "person", text: words.ask.text, marks: "the spoken ask, words appear live", sheet: "3-9" },
+    { id: "option-up", at: m.release, sound: "key", variant: "up", marks: "the key is released", sheet: "9-12" },
+    { id: "understood", at: m.understood, sound: "voice", voice: "sage", text: "Understood", marks: "Sage says Understood", sheet: "9-12" },
+    { id: "step-1", at: m.tick1, sound: "tick", variant: "high", marks: "Found Standup · 9:30 · Google Meet is ticked", sheet: "12-22" },
+    { id: "step-2", at: m.tick2, sound: "tick", variant: "high", marks: "Opened the call is ticked", sheet: "12-22" },
+    { id: "step-3", at: m.tick3, sound: "tick", variant: "high", marks: "Mic and camera off is ticked", sheet: "12-22" },
+    quiet(whoosh("card-in", m.cardIn, 1200, "still", "the camera pushes in on the confirm card Join the call?", "22-30", 300, 1800)),
+    { id: "line-fill", at: m.fillStart, sound: "line", durMs: SAGE_SCRIPT.fill, cutMs: m.returnKey - m.fillStart, marks: "the violet line fills and Return cuts it", sheet: "22-30" },
+    { id: "return", at: m.returnKey, sound: "click", variant: "soft", marks: "Return is pressed and the line is cut", sheet: "22-30" },
+    { id: "joined", at: m.joined + 60, sound: "chime", marks: "it joins the call", sheet: "22-30" },
+    { id: "option-down-2", at: m.hold2, sound: "key", variant: "down", marks: "the right Option key goes down again", sheet: "30-36" },
+    quiet(whoosh("push-pay", m.hold2, 1200, "still", "the camera pushes in on the second ask", "30-36", 300, 1800)),
+    { id: "ask-2", at: m.words2Start, sound: "voice", voice: "person", text: words.second.text, marks: "the second spoken ask", sheet: "30-36" },
+    { id: "option-up-2", at: m.release2, sound: "key", variant: "up", marks: "the key is released", sheet: "30-36" },
+    quiet(whoosh("scroll-to-pay", m.scrollToPay, 500, "still", "the page scrolls to Pay", "30-36", 350, 1600), -3),
+    { id: "stopped", at: m.payOutlined, sound: "thud", marks: "Pay is outlined, stopped at the line", sheet: "30-36" },
+    { id: "handback", at: m.handBack + 300, sound: "voice", voice: "sage", text: "Stopped at Pay. It's yours to press.", marks: "Sage hands Pay back", sheet: "30-36" },
+    quiet(whoosh("pull-back", 36_000, 600, "still", "the camera pulls back to the end card", "36-40", 1600, 300)),
+    { id: "line-end-card", at: 36_400, sound: "line", durMs: 600, marks: "the violet line draws on the end card", sheet: "36-40" },
+  ];
+};
+
+const shellCues = (): CueSpec[] => {
+  const { moments: m, presses } = SHELL_SCRIPT;
+  const click = (id: string, at: number, marks: string, sheet: string): CueSpec => ({ id, at, sound: "click", variant: "soft", marks, sheet });
+  const output = Array.from({ length: 5 }, (_, i): CueSpec => ({
+    id: `out-${i + 1}`, at: m.outputFind + i * 45, sound: "tick", variant: "high", gainDb: -2 * i, marks: `output line ${i + 1}`, sheet: "3-10",
+  }));
+  return [
+    quiet(whoosh("push-ask-1", m.typeFind, 1200, "still", "the camera pushes in on the prompt line", "3-10", 300, 1800)),
+    typing("ask-1-typing", presses.find, 21, "the first ask is typed", "3-10"),
+    click("enter-1", m.enterFind, "Enter, the spinner starts", "3-10"),
+    ...output,
+    marker("label-looks", m.outputFind, "label Looks: runs", "3-10"),
+    quiet(whoosh("push-ask-2", m.typeDist + 400, 1200, "still", "the camera pushes in on the prompt line", "10-18", 300, 1800)),
+    typing("ask-2-typing", presses.dist, 22, "the second ask is typed", "10-18"),
+    click("enter-2", m.enterDist, "Enter on the second ask, the spinner starts", "10-18"),
+    { id: "caution-note", at: m.stagedDist, sound: "tick", variant: "low", marks: "caution · deletes files lands with rm -r dist on the line", sheet: "10-18" },
+    marker("label-changes", m.stagedDist, "label Changes: waits for Enter", "10-18"),
+    { ...click("line-cleared", m.killDist, "ctrl U clears the staged rm -r dist from the line", "18-27"), gainDb: -5 },
+    typing("ask-3-typing", presses.push, 23, "the third ask is typed", "18-27"),
+    quiet(whoosh("push-ask-3", m.typePush + 400, 1200, "still", "the camera pushes in on the prompt line", "18-27", 300, 1800)),
+    click("enter-3", m.enterPush, "Enter on the third ask, the spinner starts", "18-27"),
+    { id: "danger", at: m.askedPush, sound: "thud", marks: "danger · changes something remote or published, and the y/N prompt", sheet: "18-27" },
+    marker("label-danger", m.askedPush, "label Can't be undone: asks first", "18-27"),
+    { id: "answer-no", at: m.answerNo, sound: "key", variant: "down", marks: "N answers the prompt and leaves an empty line", sheet: "18-27" },
+    marker("screen-clears", m.clear, "the screen clears for the pipe", "27-32"),
+    typing("ask-4-typing", presses.pipe, 24, "the pipe is typed", "27-32"),
+    quiet(whoosh("push-ask-4", m.typePipe + 500, 1200, "still", "the camera pushes in on the prompt line", "27-32", 300, 1800)),
+    click("enter-4", m.enterPipe, "Enter on the pipe", "27-32"),
+    { id: "subject-returns", at: m.answerPipe, sound: "chime", marks: "one conventional commit subject comes back", sheet: "27-32" },
+    marker("label-pipe", m.answerPipe, "label One answer from a pipe", "27-32"),
+    quiet(whoosh("pull-back", m.answerPipe + 900, 900, "still", "the camera pulls back to the end card", "32-35", 1600, 300)),
+    { id: "line-end-card", at: m.answerPipe + 1500, sound: "line", durMs: 600, marks: "the violet line draws on the end card", sheet: "32-35" },
+  ];
+};
 
 export const FILMS: Record<FilmName, FilmSpec> = {
   sidecar: {
@@ -91,65 +158,22 @@ export const FILMS: Record<FilmName, FilmSpec> = {
     name: "sage",
     durationMs: 40000,
     music: { source: "synth", take: 1, gainDb: 0, fadeInMs: 1200, fadeOutMs: 3000, startMs: 0 },
-    cues: [
-      { id: "option-down", at: 3000, sound: "key", variant: "down", marks: "the right Option key goes down", sheet: "3-9" },
-      quiet(whoosh("push-notch", 3000, 1200, "still", "the camera pushes in as the island grows out of the notch in 240 ms", "3-9", 300, 1800)),
-      { id: "ask-1", at: 4100, sound: "voice", voice: "person", text: "I want to join the standup", marks: "the spoken ask, words appear live", sheet: "3-9" },
-      { id: "option-up", at: 9000, sound: "key", variant: "up", marks: "the key is released", sheet: "9-12" },
-      { id: "understood", at: 9600, sound: "voice", voice: "sage", text: "Understood", marks: "Sage says Understood", sheet: "9-12" },
-      quiet(whoosh("island-works", 12000, 240, "still", "the island titles the goal and opens for the steps", "12-22", 400, 2000), -4),
-      { id: "step-1-in", at: 12600, sound: "tick", variant: "low", gainDb: -6, marks: "Found Standup · 9:30 · Google Meet appears", sheet: "12-22" },
-      { id: "step-1", at: 14500, sound: "tick", variant: "high", marks: "Found Standup · 9:30 · Google Meet is ticked", sheet: "12-22" },
-      { id: "step-2-in", at: 15000, sound: "tick", variant: "low", gainDb: -6, marks: "Opened the call appears", sheet: "12-22" },
-      { id: "step-2", at: 17000, sound: "tick", variant: "high", marks: "Opened the call is ticked", sheet: "12-22" },
-      { id: "step-3-in", at: 17500, sound: "tick", variant: "low", gainDb: -6, marks: "Mic and camera off appears", sheet: "12-22" },
-      { id: "step-3", at: 19500, sound: "tick", variant: "high", marks: "Mic and camera off is ticked", sheet: "12-22" },
-      quiet(whoosh("card-in", 22000, 1200, "still", "the camera pushes in on the confirm card Join the call?", "22-30", 300, 1800)),
-      { id: "line-fill", at: 22300, sound: "line", durMs: 4200, marks: "the violet line fills", sheet: "22-30" },
-      { id: "return", at: 26500, sound: "click", variant: "soft", marks: "Return is pressed and the line completes", sheet: "22-30" },
-      { id: "joined", at: 26650, sound: "chime", marks: "it joins the call", sheet: "22-30" },
-      quiet(whoosh("island-folds", 28400, 200, "still", "the island folds back into the notch", "22-30", 2000, 400), -4),
-      { id: "option-down-2", at: 30000, sound: "key", variant: "down", marks: "the right Option key goes down again", sheet: "30-36" },
-      quiet(whoosh("push-pay", 30000, 1400, "still", "the camera pushes in on the second ask", "30-36", 300, 1800)),
-      { id: "ask-2", at: 30400, sound: "voice", voice: "person", text: "pay the invoice", marks: "the second spoken ask", sheet: "30-36" },
-      { id: "option-up-2", at: 31600, sound: "key", variant: "up", marks: "the key is released", sheet: "30-36" },
-      quiet(whoosh("scroll-to-pay", 32700, 500, "still", "the page scrolls to Pay", "30-36", 350, 1600), -3),
-      { id: "pay-outline", at: 32700, sound: "line", durMs: 500, marks: "the violet line rises into Pay's outline", sheet: "30-36" },
-      { id: "stopped", at: 33200, sound: "thud", marks: "Pay is outlined, stopped at the line", sheet: "30-36" },
-      { id: "handback", at: 33300, sound: "voice", voice: "sage", text: "Stopped at Pay. It's yours to press.", marks: "Sage hands Pay back", sheet: "30-36" },
-      quiet(whoosh("pull-back", 36000, 600, "still", "the camera pulls back to the end card", "36-40", 1600, 300)),
-      { id: "line-end-card", at: 36400, sound: "line", durMs: 600, marks: "the violet line draws on the end card", sheet: "36-40" },
-    ],
+    cues: sageCues(),
   },
   shell: {
     name: "shell",
     durationMs: 35000,
     music: { source: "synth", take: 1, gainDb: 0, fadeInMs: 1200, fadeOutMs: 3000, startMs: 0 },
-    cues: [
-      quiet(whoosh("push-ask-1", 3200, 1400, "still", "the camera pushes in on the prompt line", "3-10", 300, 1800)),
-      typed("ask-1-typing", 3200, 38, "? find the five biggest files in here, skip node_modules and .git", 21, "the first ask is typed", "3-10"),
-      { id: "enter-1", at: 5900, sound: "click", variant: "soft", marks: "Enter, the spinner starts", sheet: "3-10" },
-      { id: "out-1", at: 7700, sound: "tick", variant: "high", marks: "the find command and its five output lines land", sheet: "3-10" },
-      { id: "label-looks", at: 7850, sound: "tick", variant: "low", marks: "label Looks: runs", sheet: "3-10" },
-      quiet(whoosh("push-ask-2", 10700, 1200, "still", "the camera pushes in on the prompt line", "10-18", 300, 1800)),
-      typed("ask-2-typing", 10300, 40, "? delete the dist folder", 22, "the second ask is typed", "10-18"),
-      { id: "enter-2", at: 11500, sound: "click", variant: "soft", marks: "Enter on the second ask, the spinner starts", sheet: "10-18" },
-      { id: "caution-note", at: 13300, sound: "tick", variant: "low", marks: "caution · deletes files lands with rm -r dist on the line", sheet: "10-18" },
-      { id: "label-changes", at: 13450, sound: "tick", variant: "low", marks: "label Changes: waits for Enter", sheet: "10-18" },
-      { id: "line-cleared", at: 18000, sound: "click", variant: "soft", gainDb: -5, marks: "the staged rm -r dist is cleared from the line", sheet: "18-27" },
-      typed("ask-3-typing", 18300, 38, "? force push my branch over main on origin", 23, "the third ask is typed", "18-27"),
-      quiet(whoosh("push-ask-3", 18700, 1200, "still", "the camera pushes in on the prompt line", "18-27", 300, 1800)),
-      { id: "enter-3", at: 20200, sound: "click", variant: "soft", marks: "Enter on the third ask, the spinner starts", sheet: "18-27" },
-      { id: "danger", at: 22000, sound: "thud", marks: "danger · changes something remote or published, and the y/N prompt", sheet: "18-27" },
-      { id: "label-danger", at: 22150, sound: "tick", variant: "low", marks: "label Can't be undone: asks first", sheet: "18-27" },
-      quiet(whoosh("screen-clears", 27000, 300, "still", "the screen clears for the pipe", "27-32", 1600, 300), -4),
-      typed("ask-4-typing", 27200, 26, "git show HEAD | ai -p 'Write one concise conventional commit subject for this change.'", 24, "the pipe is typed", "27-32"),
-      quiet(whoosh("push-ask-4", 27700, 1200, "still", "the camera pushes in on the prompt line", "27-32", 300, 1800)),
-      { id: "enter-4", at: 29700, sound: "click", variant: "soft", marks: "Enter on the pipe", sheet: "27-32" },
-      { id: "subject-returns", at: 30900, sound: "chime", marks: "one conventional commit subject comes back", sheet: "27-32" },
-      { id: "label-pipe", at: 31050, sound: "tick", variant: "low", gainDb: -3, marks: "label One answer from a pipe", sheet: "27-32" },
-      quiet(whoosh("pull-back", 31800, 900, "still", "the camera pulls back to the end card", "32-35", 1600, 300)),
-      { id: "line-end-card", at: 32400, sound: "line", durMs: 600, marks: "the violet line draws on the end card", sheet: "32-35" },
-    ],
+    cues: shellCues(),
   },
+};
+
+// Film fails its build on a missing id, so a silent marker stands in wherever the sound is gone.
+export const READ_BY_FILM: Record<FilmName, string[]> = {
+  sidecar: ["island-open", "undo", "redo", "artifacts-face", "pull-back", "line-end-card"],
+  sage: ["option-down", "option-up", "option-down-2", "option-up-2", "return", "push-notch", "card-in", "push-pay", "pull-back", "line-end-card"],
+  shell: [
+    "push-ask-1", "push-ask-2", "push-ask-3", "push-ask-4", "enter-1", "enter-2", "enter-3", "enter-4",
+    "label-looks", "label-changes", "label-danger", "label-pipe", "line-cleared", "screen-clears", "ask-2-typing-00", "pull-back", "line-end-card",
+  ],
 };

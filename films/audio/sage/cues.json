@@ -7,9 +7,9 @@
   "mix": {
     "file": "mix.wav",
     "targetLufs": -16,
-    "bedGainDb": 0.32,
+    "bedGainDb": 0.1,
     "integratedLufs": -16,
-    "truePeakDbtp": -2.2
+    "truePeakDbtp": -2.4
   },
   "cues": [
     {
@@ -34,14 +34,14 @@
       "audible": true,
       "onsetTolMs": 40,
       "sheet": "3-9",
-      "marks": "the camera pushes in as the island grows out of the notch in 240 ms"
+      "marks": "the camera pushes in as the island grows out of the notch"
     },
     {
       "id": "ask-1",
       "sound": "voice.person",
       "stem": "voice",
-      "atMs": 4100,
-      "atSample": 196800,
+      "atMs": 5800,
+      "atSample": 278400,
       "durMs": 1564,
       "audible": true,
       "onsetTolMs": 10,
@@ -53,8 +53,8 @@
       "id": "option-up",
       "sound": "key.up",
       "stem": "ui",
-      "atMs": 9000,
-      "atSample": 432000,
+      "atMs": 8600,
+      "atSample": 412800,
       "durMs": 120,
       "audible": true,
       "onsetTolMs": 1,
@@ -75,30 +75,6 @@
       "text": "Understood"
     },
     {
-      "id": "island-works",
-      "sound": "whoosh.still",
-      "stem": "ui",
-      "atMs": 12000,
-      "atSample": 576000,
-      "durMs": 240,
-      "audible": true,
-      "onsetTolMs": 40,
-      "sheet": "12-22",
-      "marks": "the island titles the goal and opens for the steps"
-    },
-    {
-      "id": "step-1-in",
-      "sound": "tick.low",
-      "stem": "ui",
-      "atMs": 12600,
-      "atSample": 604800,
-      "durMs": 90,
-      "audible": true,
-      "onsetTolMs": 1,
-      "sheet": "12-22",
-      "marks": "Found Standup · 9:30 · Google Meet appears"
-    },
-    {
       "id": "step-1",
       "sound": "tick.high",
       "stem": "ui",
@@ -111,18 +87,6 @@
       "marks": "Found Standup · 9:30 · Google Meet is ticked"
     },
     {
-      "id": "step-2-in",
-      "sound": "tick.low",
-      "stem": "ui",
-      "atMs": 15000,
-      "atSample": 720000,
-      "durMs": 90,
-      "audible": true,
-      "onsetTolMs": 1,
-      "sheet": "12-22",
-      "marks": "Opened the call appears"
-    },
-    {
       "id": "step-2",
       "sound": "tick.high",
       "stem": "ui",
@@ -133,18 +97,6 @@
       "onsetTolMs": 1,
       "sheet": "12-22",
       "marks": "Opened the call is ticked"
-    },
-    {
-      "id": "step-3-in",
-      "sound": "tick.low",
-      "stem": "ui",
-      "atMs": 17500,
-      "atSample": 840000,
-      "durMs": 90,
-      "audible": true,
-      "onsetTolMs": 1,
-      "sheet": "12-22",
-      "marks": "Mic and camera off appears"
     },
     {
       "id": "step-3",
@@ -172,15 +124,15 @@
     },
     {
       "id": "line-fill",
-      "sound": "line.4200",
+      "sound": "line.5000",
       "stem": "ui",
       "atMs": 22300,
       "atSample": 1070400,
-      "durMs": 4650,
+      "durMs": 4200,
       "audible": true,
       "onsetTolMs": 20,
       "sheet": "22-30",
-      "marks": "the violet line fills"
+      "marks": "the violet line fills and Return cuts it"
     },
     {
       "id": "return",
@@ -192,31 +144,19 @@
       "audible": true,
       "onsetTolMs": 1,
       "sheet": "22-30",
-      "marks": "Return is pressed and the line completes"
+      "marks": "Return is pressed and the line is cut"
     },
     {
       "id": "joined",
       "sound": "chime",
       "stem": "ui",
-      "atMs": 26650,
-      "atSample": 1279200,
+      "atMs": 26560,
+      "atSample": 1274880,
       "durMs": 1200,
       "audible": true,
       "onsetTolMs": 2,
       "sheet": "22-30",
       "marks": "it joins the call"
-    },
-    {
-      "id": "island-folds",
-      "sound": "whoosh.still",
-      "stem": "ui",
-      "atMs": 28400,
-      "atSample": 1363200,
-      "durMs": 200,
-      "audible": true,
-      "onsetTolMs": 40,
-      "sheet": "22-30",
-      "marks": "the island folds back into the notch"
     },
     {
       "id": "option-down-2",
@@ -236,7 +176,7 @@
       "stem": "ui",
       "atMs": 30000,
       "atSample": 1440000,
-      "durMs": 1400,
+      "durMs": 1200,
       "audible": true,
       "onsetTolMs": 40,
       "sheet": "30-36",
@@ -280,18 +220,6 @@
       "marks": "the page scrolls to Pay"
     },
     {
-      "id": "pay-outline",
-      "sound": "line.500",
-      "stem": "ui",
-      "atMs": 32700,
-      "atSample": 1569600,
-      "durMs": 800,
-      "audible": true,
-      "onsetTolMs": 12,
-      "sheet": "30-36",
-      "marks": "the violet line rises into Pay's outline"
-    },
-    {
       "id": "stopped",
       "sound": "thud",
       "stem": "ui",
@@ -307,8 +235,8 @@
       "id": "handback",
       "sound": "voice.sage",
       "stem": "voice",
-      "atMs": 33300,
-      "atSample": 1598400,
+      "atMs": 33500,
+      "atSample": 1608000,
       "durMs": 2636,
       "audible": true,
       "onsetTolMs": 10,
@@ -341,5 +269,55 @@
       "marks": "the violet line draws on the end card"
     }
   ],
-  "typing": []
+  "typing": [],
+  "ducks": [
+    {
+      "reason": "joined",
+      "fromMs": 26560,
+      "toMs": 27060,
+      "depthDb": -2.5,
+      "attackMs": 40,
+      "releaseMs": 600
+    },
+    {
+      "reason": "stopped",
+      "fromMs": 33200,
+      "toMs": 33500,
+      "depthDb": -2,
+      "attackMs": 30,
+      "releaseMs": 500
+    },
+    {
+      "reason": "voice ask-1",
+      "fromMs": 5800,
+      "toMs": 7364,
+      "depthDb": -6,
+      "attackMs": 120,
+      "releaseMs": 400
+    },
+    {
+      "reason": "voice understood",
+      "fromMs": 9600,
+      "toMs": 10426,
+      "depthDb": -9.17,
+      "attackMs": 120,
+      "releaseMs": 400
+    },
+    {
+      "reason": "voice ask-2",
+      "fromMs": 30400,
+      "toMs": 31416,
+      "depthDb": -8.29,
+      "attackMs": 120,
+      "releaseMs": 400
+    },
+    {
+      "reason": "voice handback",
+      "fromMs": 33500,
+      "toMs": 36136,
+      "depthDb": -6,
+      "attackMs": 120,
+      "releaseMs": 400
+    }
+  ]
 }

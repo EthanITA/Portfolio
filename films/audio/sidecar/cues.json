@@ -577,5 +577,15 @@
         22800
       ]
     }
+  ],
+  "ducks": [
+    {
+      "reason": "note-lands",
+      "fromMs": 25000,
+      "toMs": 25500,
+      "depthDb": -2.5,
+      "attackMs": 40,
+      "releaseMs": 600
+    }
   ]
 }
