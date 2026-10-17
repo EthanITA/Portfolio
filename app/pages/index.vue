@@ -224,9 +224,9 @@ onBeforeUnmount(() => {
   @apply sticky top-0;
 }
 
-/* Under lg the text starts 8 px under stage's island rest band, so the hero grows rather than overlap. */
+/* Under lg the text stays at least 8 px under stage's island rest band, so the hero grows rather than overlap. */
 .hero {
-  @apply @container relative flex min-h-160 flex-col justify-end overflow-hidden pb-16 max-lg:min-h-svh max-lg:pt-[max(13rem,calc(var(--island-bottom)*100svh_+_0.5rem))] max-lg:short:pb-10 lg:h-svh lg:justify-center lg:pt-20 lg:pb-0;
+  @apply @container relative flex min-h-160 flex-col justify-end overflow-hidden pb-16 max-lg:min-h-svh max-lg:pt-[max(13rem,calc(var(--island-bottom)*100svh_+_0.5rem))] max-lg:short:pb-10 md:max-lg:justify-center lg:h-svh lg:justify-center lg:pt-20 lg:pb-0;
 }
 
 .intro {
