@@ -32,8 +32,8 @@ export default {
     shots: [
       { at: 10_000, duration: 1000, scale: 1.5, anchor: "hunks" },
       { at: 16_000, duration: 1000, scale: 1 },
-      { at: 18_500, duration: 1000, scale: 1.4, anchor: "note" },
-      { at: 25_000, duration: 1000, scale: 1 },
+      { at: 20_000, duration: 1000, scale: 1.4, anchor: "note" },
+      { at: 23_000, duration: 1000, scale: 1 },
       { at: 28_500, duration: 1000, scale: 1.4, anchor: "history" },
       { at: 35_000, duration: 2000, scale: 0.9 },
     ],
