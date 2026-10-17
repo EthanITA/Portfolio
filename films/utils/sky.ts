@@ -153,7 +153,7 @@ const plan = ({ lines, measured, cut, fold, end, violet }: PlanOptions): { lines
     const words = line.rows.flatMap((row) => row.words);
     for (const word of words) {
       if (word.leave < arrives(word)) problems.push(`"${word.text}" in "${line.text}" leaves at ${word.leave} ms, before it is in at ${arrives(word)}`);
-      if (arrives(word) > end) problems.push(`"${word.text}" in "${line.text}" is in at ${arrives(word)} ms, after the film ends at ${end}`);
+      if (arrives(word) >= end) problems.push(`"${word.text}" in "${line.text}" is in at ${arrives(word)} ms, not before the film ends at ${end}`);
     }
     const next = timed[index + 1];
     if (next && next.at < gone(line)) problems.push(`"${next.text}" lands at ${next.at} ms while "${line.text}" is leaving until ${gone(line)}`);
