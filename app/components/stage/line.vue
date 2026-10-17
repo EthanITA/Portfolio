@@ -124,7 +124,7 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
   };
 
   const frame = (ms: number, dt: number): boolean => {
-    stage.advance(dt);
+    const lerping = stage.advance(dt);
     const calm = reduced.value && !filming;
 
     if (!filming && !calm && !quiet) {
@@ -187,7 +187,7 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
     }
     place();
     stage.render();
-    return !calm || ledger.actions.some((action) => settling(action, ms));
+    return !calm || lerping || ledger.actions.some((action) => settling(action, ms));
   };
 
   refresh = () => frame(clock(), 0);
