@@ -24,6 +24,7 @@ export type SceneOptions = {
   canvas: () => HTMLCanvasElement | undefined;
   setup: SceneSetup;
   reducedOnDemand?: boolean;
+  start?: number;
 };
 
 export type FilmSeekable = Seekable & { ready: () => Promise<void> };
@@ -40,7 +41,7 @@ export type Scene = {
 const LIVE_RATIO = 0.1;
 const MAX_DT = 100;
 
-export const useScene = ({ mode, duration, root, box = root, canvas, setup, reducedOnDemand }: SceneOptions): Scene => {
+export const useScene = ({ mode, duration, root, box = root, canvas, setup, reducedOnDemand, start = 0 }: SceneOptions): Scene => {
   const film = mode === "film";
   const state = ref<SceneState>("poster");
   const theme = ref<StageTheme>("light");
@@ -54,7 +55,7 @@ export const useScene = ({ mode, duration, root, box = root, canvas, setup, redu
   let pageVisible = true;
   let shown = false;
   let busy = true;
-  let clock = 0;
+  let clock = start;
   let last = 0;
   let raf = 0;
 
