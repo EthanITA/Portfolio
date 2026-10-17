@@ -24,11 +24,49 @@ const { positionals, values } = parseArgs({
   options: {
     cut: { type: "string", default: "16x9" },
     check: { type: "string", default: "24" },
-    port: { type: "string", default: "3105" },
+    port: { type: "string" },
   },
 });
 
 type Check = { name: string; pass: boolean; detail: string };
+
+const MARGIN = 48;
+
+type Placed = { name: string; left: number; right: number; top: number; bottom: number };
+
+const fit = async ({ url, script, width, height }: { url: string; script: FilmScript; width: number; height: number }): Promise<Check[]> => {
+  const samples = await Render.sample({
+    url,
+    width,
+    height,
+    scale: SCALE,
+    times: Array.from({ length: script.duration / 100 }, (_, n) => n * 100),
+    read: (): Placed[] =>
+      [".film-caption", ".film-key-caps", ".film-title [data-word]", ".film-end"].flatMap((selector) =>
+        [...document.querySelectorAll(selector)]
+          .filter((element) => {
+            let opacity = 1;
+            for (let node: Element | undefined = element; node; node = node.parentElement ?? undefined) opacity *= Number(getComputedStyle(node).opacity);
+            return opacity > 0.05;
+          })
+          .map((element) => {
+            const range = document.createRange();
+            range.selectNodeContents(element);
+            const box = selector === ".film-end" ? range.getBoundingClientRect() : element.getBoundingClientRect();
+            return { name: `${selector} "${element.textContent?.trim()}"`, left: box.left, right: box.right, top: box.top, bottom: box.bottom };
+          }),
+      ),
+  });
+  const closest = new Map<string, { margin: number; ms: number }>();
+  for (const { ms, value } of samples) {
+    for (const placed of value) {
+      const margin = Math.min(placed.left, width - placed.right, placed.top, height - placed.bottom);
+      const previous = closest.get(placed.name);
+      if (!previous || margin < previous.margin) closest.set(placed.name, { margin, ms });
+    }
+  }
+  return [...closest].map(([name, { margin, ms }]) => ({ name: `${name} inside the frame`, pass: margin >= MARGIN, detail: `${margin.toFixed(1)} px from the edge at ${ms} ms` }));
+};
 
 const verify = async ({ script, files, width, height, audio }: { script: FilmScript; files: string[]; width: number; height: number; audio: boolean }): Promise<Check[]> => {
   const checks: Check[] = [];
@@ -68,10 +106,16 @@ const film = async (name: string): Promise<boolean> => {
   if (!script || !cut) throw new Error(`usage: tsx films/render.ts <${Object.keys(SCRIPTS).join("|")}...> [--cut ${Object.keys(CUTS).join("|")}]`);
 
   const route = `/film/${name}`;
-  const server = await Render.serve({ route, port: Number(values.port), root });
+  const server = await Render.serve({ route, port: values.port ? Number(values.port) : undefined, root });
   try {
     const started = performance.now();
     const options = { url: `${server.origin}${route}`, width: cut.width, height: cut.height, scale: SCALE, fps: FPS };
+    const placement = await fit({ url: options.url, script, width: cut.width, height: cut.height });
+    const misplaced = placement.filter((check) => !check.pass);
+    if (misplaced.length) {
+      console.log(JSON.stringify({ film: `${name}${cut.suffix}`, misplaced }, undefined, 2));
+      return false;
+    }
     const frames = await Render.frames({
       ...options,
       dir: join(root, "films/out", `${name}${cut.suffix}`, "frames"),
@@ -92,7 +136,7 @@ const film = async (name: string): Promise<boolean> => {
     const index = Math.round((script.poster * FPS) / 1000);
     const posters = await Promise.all([".jpg", ".webp"].map((extension) => Encode.poster({ frames, index, out: `${base}-poster${extension}` })));
 
-    const checks = await verify({ script, files, width: frames.width, height: frames.height, audio: Boolean(audio) });
+    const checks = [...placement, ...(await verify({ script, files, width: frames.width, height: frames.height, audio: Boolean(audio) }))];
     const failed = checks.filter((check) => !check.pass);
     console.log(JSON.stringify({ film: `${name}${cut.suffix}`, seconds: Math.round((performance.now() - started) / 1000), frames: frames.count, audio: audio ?? "none", files, posters, checks, failed: failed.length }, undefined, 2));
     return !failed.length;
