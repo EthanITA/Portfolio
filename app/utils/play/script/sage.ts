@@ -1,4 +1,4 @@
-import type { Key } from "./typed.ts";
+import type { FeatureBeat, Key } from "./typed.ts";
 
 export const ASK = "I want to join the standup";
 export const SECOND_ASK = "pay the invoice";
@@ -51,6 +51,14 @@ const keys: Key[] = [
   { key: "opt", at: moments.hold2, until: moments.release2 },
 ];
 
+// The hold trace, the working ring and the countdown fill run through their beats, so those moments are the only motion in frame.
+const beats: FeatureBeat[] = [
+  { id: "talk", from: moments.optionDown, moment: 7000 },
+  { id: "steps", from: moments.goal, moment: moments.cardIn - 1000 },
+  { id: "asks", from: moments.cardIn, moment: 23_000 },
+  { id: "hands", from: moments.hold2, moment: moments.handBack + 1000 },
+];
+
 export const SAGE_SCRIPT = {
   duration: 40_000,
   // Half the countdown line, so the still shows the card waiting on Return.
@@ -62,4 +70,5 @@ export const SAGE_SCRIPT = {
   words,
   voice,
   keys,
+  beats,
 } as const;

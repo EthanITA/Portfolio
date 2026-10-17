@@ -5,6 +5,7 @@ import type { SageToy } from "~/utils/play/sage";
 import { Kbd } from "@cela/design";
 import { useReel } from "~/utils/play/reel";
 import { SAGE_REEL, sageToy, sizeOf } from "~/utils/play/sage";
+import { SAGE_SCRIPT } from "~/utils/play/script/sage";
 
 const { mode = "live", paused = false } = defineProps<{ mode?: SceneMode; paused?: boolean }>();
 
@@ -25,9 +26,10 @@ const reel = useReel({
       draw: (selector, to, options) => reel.draw(selector, to, options),
       turn: () => Number.parseFloat(root.value ? getComputedStyle(root.value).getPropertyValue("--turn") : "0") || 0,
     })),
+  beats: SAGE_SCRIPT.beats,
 });
 
-defineExpose({ ...reel.seekable, ...reel.control });
+defineExpose({ ...reel.seekable, ...reel.control, show: reel.show });
 
 const state = computed(() => reel.view.current);
 
@@ -204,7 +206,7 @@ const onSubmit = (): void => {
               <i class="bar" data-w="1/3" />
               <span class="pay-wrap">
                 <span class="pay" data-pay>Pay</span>
-                <i class="outline" :data-outlined="state.outlined" />
+                <i class="halo" :data-outlined="state.outlined" />
               </span>
             </span>
           </div>
@@ -229,6 +231,7 @@ const onSubmit = (): void => {
           <Kbd keys="esc" />
         </button>
       </div>
+      <PlayBeats v-if="mode === 'film'" :beats="SAGE_SCRIPT.beats" />
     </div>
   </PlayFrame>
 </template>
@@ -521,12 +524,12 @@ const onSubmit = (): void => {
   @apply inline-flex h-10 items-center rounded-full bg-fg px-6 typo-body-strong text-canvas;
 }
 
-.outline {
+.halo {
   @apply pointer-events-none absolute -inset-1.5 rounded-full border-2 border-primary;
   opacity: 0;
 }
 
-.outline[data-outlined="true"] {
+.halo[data-outlined="true"] {
   opacity: var(--pay, 1);
   scale: calc(1.08 - 0.08 * var(--pay, 1));
 }

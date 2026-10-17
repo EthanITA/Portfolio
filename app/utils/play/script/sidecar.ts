@@ -1,4 +1,4 @@
-import { typed, type Key } from "./typed.ts";
+import { typed, type FeatureBeat, type Key } from "./typed.ts";
 
 export const NOTE = "make this a chart";
 
@@ -42,6 +42,12 @@ const keys: Key[] = [
   { key: "cmd shift Z", at: moments.redoAgain },
 ];
 
+const beats: FeatureBeat[] = [
+  { id: "review", from: moments.edit3, moment: moments.acceptHunk + 500 },
+  { id: "comments", from: moments.artifacts, moment: moments.addToTray - 500 },
+  { id: "follows", from: moments.rejectHunk, moment: moments.reply + 1000 },
+];
+
 export const SIDECAR_SCRIPT = {
   duration: 45_000,
   still: 17_500,
@@ -51,4 +57,5 @@ export const SIDECAR_SCRIPT = {
   moments,
   presses,
   keys,
+  beats,
 } as const;

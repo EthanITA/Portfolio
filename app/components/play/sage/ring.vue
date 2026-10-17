@@ -21,7 +21,7 @@ const WAVE = `M40 60 ${Array.from({ length: 7 }, (_, index) => {
 </script>
 
 <template>
-  <svg class="ring" :data-look="look" viewBox="0 0 120 120" aria-hidden="true">
+  <svg class="glyph" :data-look="look" viewBox="0 0 120 120" aria-hidden="true">
     <g class="spin">
       <path class="arc" data-ring-arc :d="CIRCLE" />
       <path class="tail" data-ring-tail :d="CIRCLE" />
@@ -41,7 +41,7 @@ const WAVE = `M40 60 ${Array.from({ length: 7 }, (_, index) => {
 </template>
 
 <style scoped>
-.ring {
+.glyph {
   @apply size-5.5 flex-none overflow-visible;
   fill: none;
   stroke-linecap: round;
@@ -97,37 +97,37 @@ const WAVE = `M40 60 ${Array.from({ length: 7 }, (_, index) => {
   transform-origin: 60px 60px;
 }
 
-.ring[data-look="working"] .arc,
-.ring[data-look="working"] .tail,
-.ring[data-look="needsYou"] .arc {
+.glyph[data-look="working"] .arc,
+.glyph[data-look="working"] .tail,
+.glyph[data-look="needsYou"] .arc {
   @apply stroke-primary;
 }
 
-.ring[data-look="needsYou"] .arc {
+.glyph[data-look="needsYou"] .arc {
   stroke-width: 15;
 }
 
-.ring[data-look="needsYou"] .tail {
+.glyph[data-look="needsYou"] .tail {
   @apply opacity-0;
 }
 
-.ring[data-look="thinking"] .head,
-.ring[data-look="askingBack"] .dot,
-.ring[data-look="working"] .thread,
-.ring[data-look="listening"] .wave {
+.glyph[data-look="thinking"] .head,
+.glyph[data-look="askingBack"] .dot,
+.glyph[data-look="working"] .thread,
+.glyph[data-look="listening"] .wave {
   @apply opacity-100;
 }
 
-.ring[data-look="waiting"] .line[data-for="waiting"] {
+.glyph[data-look="waiting"] .line[data-for="waiting"] {
   @apply opacity-60;
 }
 
-.ring[data-look="askingBack"] .line[data-for="askingBack"],
-.ring[data-look="working"] .line[data-for="working"] {
+.glyph[data-look="askingBack"] .line[data-for="askingBack"],
+.glyph[data-look="working"] .line[data-for="working"] {
   @apply opacity-100;
 }
 
-.ring[data-look="needsYou"] .line[data-for="needsYou"] {
+.glyph[data-look="needsYou"] .line[data-for="needsYou"] {
   @apply opacity-25;
   stroke-width: 7;
 }

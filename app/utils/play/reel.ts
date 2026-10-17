@@ -1,10 +1,12 @@
 import type { SceneMode, Seekable } from "#shared/types/seekable";
-import type { EasingParam, Timeline, Timer } from "animejs";
+import type { EasingParam, JSAnimation, Timeline, Timer } from "animejs";
 import type { Ref, ShallowRef } from "vue";
+import type { FeatureBeat } from "./script/typed";
 
 import { MOTION_EASE, prefersReducedMotion } from "@cela/design/utils/motion";
 import { animate, createTimeline, createTimer, svg } from "animejs";
 import { onBeforeUnmount, onMounted, reactive, readonly, ref, shallowReactive, toRaw, watch, watchEffect } from "vue";
+import { useInvite } from "./invite";
 
 export type Driver = "demo" | "visitor";
 
@@ -54,6 +56,7 @@ export type ReelOptions<S> = {
   root: Readonly<ShallowRef<HTMLElement | null>>; // external contract: useTemplateRef
   visible: Readonly<Ref<boolean>>;
   visitor: (state: S) => Visitor<S>;
+  beats?: FeatureBeat[];
 };
 
 export type PlayControl = {
@@ -68,6 +71,7 @@ export type ReelHandle<S> = {
   reduced: Ref<boolean>;
   seekable: Seekable & { ready: () => Promise<void> };
   control: PlayControl;
+  show: (beat: string) => void;
   takeOver: () => void;
   ensureVisitor: () => S;
   playDemo: () => void;
@@ -76,6 +80,9 @@ export type ReelHandle<S> = {
 };
 
 export const HANDOVER_MS = 280;
+
+// Show me starts this far before the beat's action, so the eye lands before the typing does.
+export const SHOW_LEAD_MS = 500;
 
 export const CARET_MS = 530;
 
@@ -156,7 +163,7 @@ export const Reels = {
   },
 };
 
-export const useReel = <S extends object>({ reel, mode, root, visible, visitor }: ReelOptions<S>): ReelHandle<S> => {
+export const useReel = <S extends object>({ reel, mode, root, visible, visitor, beats: shown = [] }: ReelOptions<S>): ReelHandle<S> => {
   const beats = [...reel.beats].sort((a, b) => a.at - b.at);
   const sorted: Reel<S> = {
     ...reel,
@@ -164,6 +171,7 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor }
     channels: Reels.bridged(reel.channels, (channel) => channel.name),
     drawn: Reels.bridged(reel.drawn ?? [], (tween) => tween.selector),
   };
+  const invite = useInvite();
   const view: { current: S } = shallowReactive({ current: Reels.replay(sorted, mode === "film" ? 0 : reel.loop.from) });
   const driver = ref<Driver>("demo");
   const reduced = ref(false);
@@ -173,7 +181,13 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor }
   let pending: number | undefined;
   let handover: Timer | undefined;
   let rewinding = false;
+  let fade: JSAnimation | undefined;
   let live: Visitor<S> | undefined;
+  let moving: JSAnimation[] = [];
+
+  const own = (animation: JSAnimation): void => {
+    moving = [...moving.filter((one) => !one.completed), animation];
+  };
 
   const sync = (ms: number, force = false): void => {
     const next = Reels.signature(sorted, ms);
@@ -244,9 +258,13 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor }
     if (!timeline || !el) return;
     timeline.pause();
     rewinding = true;
-    animate(el, { "--loop": [1, 0], duration: 180, ease: MOTION_EASE.out, composition: "none" }).then(() => {
+    const out = animate(el, { "--loop": [1, 0], duration: 180, ease: MOTION_EASE.out, composition: "none" });
+    fade = out;
+    out.then(() => {
+      // A Show me during the fade has already moved the playhead, so the loop start must not win.
+      if (fade !== out) return;
       seek(reel.loop.from);
-      animate(el, { "--loop": [0, 1], duration: 300, ease: MOTION_EASE.out, composition: "none" });
+      fade = animate(el, { "--loop": [0, 1], duration: 300, ease: MOTION_EASE.out, composition: "none" });
       rewinding = false;
       resume();
     });
@@ -266,7 +284,7 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor }
     driver.value = "visitor";
     if (!timeline) return;
     timeline.pause();
-    const from = reduced.value ? reel.still : timeline.currentTime;
+    const from = timeline.currentTime;
     const to = reduced.value ? from : Reels.settleAt(sorted, from);
     if (to <= from) {
       adopt(from);
@@ -299,19 +317,35 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor }
     return view.current;
   };
 
-  const playDemo = (): void => {
+  const restart = (ms: number): void => {
     if (mode === "film") return;
     handover?.pause();
     handover = undefined;
     live?.stop();
     live = undefined;
+    // A visitor's tween still running would keep writing its variable over the rebuilt timeline.
+    for (const one of moving) one.cancel();
+    moving = [];
     driver.value = "demo";
     const el = root.value;
     if (!el) return;
+    fade?.cancel();
+    fade = undefined;
+    rewinding = false;
     timeline = build(el);
     el.style.setProperty("--loop", "1");
-    seek(reduced.value ? reel.still : reel.loop.from);
+    seek(ms);
     resume();
+  };
+
+  const playDemo = (): void => restart(reduced.value ? reel.still : reel.loop.from);
+
+  // Under reduced motion nothing plays, so Show me holds the beat's moment instead of running up to it.
+  const show = (id: string): void => {
+    const beat = shown.find((one) => one.id === id);
+    if (mode === "film" || !beat) return;
+    invite.dismiss();
+    restart(reduced.value ? beat.moment : Math.max(reel.loop.from, beat.from - SHOW_LEAD_MS));
   };
 
   const tween: ReelHandle<S>["tween"] = (name, value, { duration = 300, ease = MOTION_EASE.out } = {}) => {
@@ -321,13 +355,13 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor }
       el.style.setProperty(`--${name}`, String(Array.isArray(value) ? value[1] : value));
       return;
     }
-    animate(el, { [`--${name}`]: value, duration, ease, composition: "none" });
+    own(animate(el, { [`--${name}`]: value, duration, ease, composition: "none" }));
   };
 
   const draw: ReelHandle<S>["draw"] = (selector, to, { duration = 180, ease = MOTION_EASE.out } = {}) => {
     const path = root.value?.querySelector(selector);
     if (!path) return;
-    animate(svg.createDrawable(path), { draw: to, duration: reduced.value ? 0 : duration, ease, composition: "none" });
+    own(animate(svg.createDrawable(path), { draw: to, duration: reduced.value ? 0 : duration, ease, composition: "none" }));
   };
 
   onMounted(() => {
@@ -347,6 +381,7 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor }
   onBeforeUnmount(() => {
     handover?.pause();
     live?.stop();
+    for (const one of moving) one.cancel();
     timeline?.pause();
     timeline = undefined;
   });
@@ -369,6 +404,7 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor }
       },
       demo: playDemo,
     },
+    show,
     takeOver,
     ensureVisitor,
     playDemo,

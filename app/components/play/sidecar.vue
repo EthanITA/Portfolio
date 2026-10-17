@@ -4,6 +4,7 @@ import type { Face, SidecarToy } from "~/utils/play/sidecar";
 
 import { Segmented, Surface, Toast } from "@cela/design";
 import { useReel } from "~/utils/play/reel";
+import { SIDECAR_SCRIPT } from "~/utils/play/script/sidecar";
 import { SIDECAR_REEL, sidecarToy } from "~/utils/play/sidecar";
 
 const { mode = "live", paused = false } = defineProps<{ mode?: SceneMode; paused?: boolean }>();
@@ -19,9 +20,10 @@ const reel = useReel({
   root,
   visible: playing,
   visitor: (state) => (toy = sidecarToy(state, { tween: (name, value, options) => reel.tween(name, value, options) })),
+  beats: SIDECAR_SCRIPT.beats,
 });
 
-defineExpose({ ...reel.seekable, ...reel.control });
+defineExpose({ ...reel.seekable, ...reel.control, show: reel.show });
 
 const state = computed(() => reel.view.current);
 const isVisitor = computed(() => reel.driver.value === "visitor");
@@ -137,6 +139,7 @@ watch(
       >
         {{ state.flight.text }}
       </div>
+      <PlayBeats v-if="mode === 'film'" :beats="SIDECAR_SCRIPT.beats" />
     </div>
   </PlayFrame>
 </template>

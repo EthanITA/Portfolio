@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { SceneMode } from "#shared/types/seekable";
-import type { DiffLine, SidecarState, TreeRow } from "~/utils/play/sidecar";
+import type { SidecarState, TreeRow } from "~/utils/play/sidecar";
 
 import { Kbd } from "@cela/design";
 import { prefersReducedMotion } from "@cela/design/utils/motion";
@@ -18,8 +18,6 @@ const emit = defineEmits<{
   cancel: [];
   save: [];
 }>();
-
-const SIGN: Record<DiffLine["mark"], string> = { add: "+", remove: "−", same: " " };
 
 const tree = computed(() => Sidecar.tree(state.files));
 const file = computed(() => state.files.find((one) => one.path === state.selected));
@@ -142,43 +140,7 @@ const entranceOf = (row: TreeRow): string => {
         </header>
         <div ref="diff" class="diff">
           <div class="hunks" data-film-anchor="hunks">
-            <div
-              v-for="hunk in file.hunks"
-              :key="hunk.id"
-              class="hunk"
-              :data-hunk="hunk.id"
-              :data-verdict="hunk.verdict"
-              :style="{ '--v': `var(--v-${hunk.id}, 1)` }"
-            >
-              <span class="seam">
-                <button
-                  aria-label="Accept the hunk"
-                  class="arrow"
-                  data-tone="accept"
-                  :data-chosen="hunk.verdict === 'accepted'"
-                  :disabled="hunk.verdict !== 'pending'"
-                  type="button"
-                  @click="emit('hunk', hunk.id, true)"
-                >
-                  <PlaySidecarIcon name="check" />
-                </button>
-                <button
-                  aria-label="Reject the hunk, then say why"
-                  class="arrow"
-                  data-tone="reject"
-                  :data-chosen="hunk.verdict === 'rejected'"
-                  :disabled="hunk.verdict !== 'pending'"
-                  type="button"
-                  @click="emit('hunk', hunk.id, false)"
-                >
-                  <PlaySidecarIcon name="x" />
-                </button>
-              </span>
-              <div v-for="line in hunk.lines" :key="`${line.mark}${line.line}`" class="row" :data-mark="line.mark">
-                <span class="num">{{ line.line }}</span>
-                <span class="sign">{{ SIGN[line.mark] }}</span>
-                <span class="code">{{ line.text }}</span>
-              </div>
+            <PlaySidecarHunk v-for="hunk in file.hunks" :key="hunk.id" :hunk="hunk" @decide="emit('hunk', hunk.id, $event)">
               <PlaySidecarNote
                 v-if="state.composing && state.spot === hunk.id"
                 :draft="state.draft"
@@ -188,7 +150,7 @@ const entranceOf = (row: TreeRow): string => {
                 @draft="emit('draft', $event)"
                 @save="emit('save')"
               />
-            </div>
+            </PlaySidecarHunk>
           </div>
         </div>
       </template>
@@ -359,106 +321,25 @@ button.name {
 .dot:focus-visible,
 .name:focus-visible,
 .travel:focus-visible,
-.action:focus-visible,
-.arrow:focus-visible {
+.action:focus-visible {
   @apply focus-ring;
 }
 
+/* The top inset matches the arrows' overhang above the hunk, so the clip never shaves the first one. */
 .diff {
-  @apply flex min-h-0 flex-1 flex-col overflow-hidden p-2;
+  @apply flex min-h-0 flex-1 flex-col overflow-hidden p-2 pt-2.5;
 }
 
 .hunks {
   @apply flex flex-col gap-2;
 }
 
-.hunk {
-  @apply relative flex flex-col rounded-lg border border-border py-1;
-}
-
-.hunk::after {
-  @apply pointer-events-none absolute inset-0 rounded-lg border-l-2;
-  content: "";
-  opacity: var(--v);
-}
-
-.hunk[data-verdict="accepted"]::after {
-  @apply border-success bg-success/8;
-}
-
-.hunk[data-verdict="rejected"]::after {
-  @apply border-error bg-error/6;
-}
-
-.hunk[data-verdict="pending"]::after {
-  @apply hidden;
-}
-
-.row {
-  @apply flex h-5 min-w-0 items-center font-mono typo-mono-micro whitespace-pre text-fg;
-}
-
-.row[data-mark="add"] {
-  @apply bg-success-soft;
-}
-
-.row[data-mark="remove"] {
-  @apply bg-error-soft;
-}
-
-.row[data-mark="same"] {
-  @apply text-muted;
-}
-
-.hunk[data-verdict="rejected"] .row[data-mark="add"] .code {
-  @apply text-muted line-through;
-}
-
-.num {
-  @apply w-9 flex-none pr-2 text-right text-muted tabular-nums;
-}
-
-.sign {
-  @apply w-3 flex-none text-muted;
-}
-
-.code {
-  @apply min-w-0 truncate;
-}
-
-.seam {
-  @apply absolute -top-2.5 right-2 z-10 inline-flex items-center gap-px rounded-full border border-border-strong bg-raised p-px;
-}
-
-.arrow {
-  @apply relative hit-area grid h-5 w-6 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 text-muted;
-  --hit-x: calc(100% + 1px);
-}
-
-.arrow:disabled {
-  @apply cursor-default;
-}
-
-.hunk:not([data-verdict="pending"]) .arrow:not([data-chosen="true"]) {
-  @apply hidden;
-}
-
-.arrow[data-tone="accept"][data-chosen="true"] {
-  @apply bg-success-soft text-success;
-}
-
-.arrow[data-tone="reject"][data-chosen="true"] {
-  @apply bg-error-soft text-error;
-}
-
 @media (hover: hover) and (pointer: fine) {
-  .dot[data-tone="accept"]:hover:not(:disabled),
-  .arrow[data-tone="accept"]:hover:not(:disabled) {
+  .dot[data-tone="accept"]:hover:not(:disabled) {
     @apply bg-success-soft text-success;
   }
 
-  .dot[data-tone="reject"]:hover:not(:disabled),
-  .arrow[data-tone="reject"]:hover:not(:disabled) {
+  .dot[data-tone="reject"]:hover:not(:disabled) {
     @apply bg-error-soft text-error;
   }
 }
@@ -520,9 +401,8 @@ button.name {
     @apply py-1;
   }
 
-  /* The top inset matches the arrows' overhang above the hunk, so they stay inside the scroll box. */
   .diff {
-    @apply overflow-y-auto overscroll-contain pt-2.5;
+    @apply overflow-y-auto overscroll-contain;
   }
 }
 </style>
