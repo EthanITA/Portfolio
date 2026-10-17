@@ -11,24 +11,6 @@ const side = [
   { title: "Education", entries: cv.education },
 ];
 
-// Printing from a dark page would put light ink on white paper, so print always runs in the light theme.
-let restore: string | undefined;
-const toLight = (): void => {
-  restore = document.documentElement.dataset.theme;
-  document.documentElement.dataset.theme = "light";
-};
-const back = (): void => {
-  if (restore) document.documentElement.dataset.theme = restore;
-};
-
-onMounted(() => {
-  window.addEventListener("beforeprint", toLight);
-  window.addEventListener("afterprint", back);
-});
-onBeforeUnmount(() => {
-  window.removeEventListener("beforeprint", toLight);
-  window.removeEventListener("afterprint", back);
-});
 </script>
 
 <template>
