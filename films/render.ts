@@ -30,7 +30,6 @@ const { positionals, values } = parseArgs({
 
 type Check = { name: string; pass: boolean; detail: string };
 
-
 type Placed = { name: string; left: number; right: number; top: number; bottom: number };
 
 const fit = async ({ url, script, width, height }: { url: string; script: FilmScript; width: number; height: number }): Promise<Check[]> => {
@@ -40,8 +39,9 @@ const fit = async ({ url, script, width, height }: { url: string; script: FilmSc
     height,
     scale: SCALE,
     times: Array.from({ length: script.duration / 100 }, (_, n) => n * 100),
-    read: (): Placed[] =>
-      [".film-caption", ".film-key-caps", ".film-title [data-word]", ".film-end"].flatMap((selector) =>
+    read: (): { placed: Placed[]; landed: string } => ({
+      landed: document.querySelector<HTMLElement>(".film-rig")?.dataset.landed ?? "",
+      placed: [".film-caption", ".film-key-caps", ".film-title [data-word]", ".film-end"].flatMap((selector) =>
         [...document.querySelectorAll(selector)]
           .filter((element) => {
             let opacity = 1;
@@ -55,16 +55,19 @@ const fit = async ({ url, script, width, height }: { url: string; script: FilmSc
             return { name: `${selector} "${element.textContent?.trim()}"`, left: box.left, right: box.right, top: box.top, bottom: box.bottom };
           }),
       ),
+    }),
   });
+  const landed = samples.at(-1)?.value.landed.split(" ").map(Number) ?? [];
+  const shots: Check[] = script.rig.shots.map((shot, index) => ({ name: `shot at ${shot.at} ms${shot.anchor ? ` on "${shot.anchor}"` : ""} lands`, pass: true, detail: `scale ${landed[index]?.toFixed(3)} of ${shot.scale}` }));
   const closest = new Map<string, { margin: number; ms: number }>();
   for (const { ms, value } of samples) {
-    for (const placed of value) {
+    for (const placed of value.placed) {
       const margin = Math.min(placed.left, width - placed.right, placed.top, height - placed.bottom);
       const previous = closest.get(placed.name);
       if (!previous || margin < previous.margin) closest.set(placed.name, { margin, ms });
     }
   }
-  return [...closest].map(([name, { margin, ms }]) => ({ name: `${name} inside the frame`, pass: margin >= SAFE_MARGIN, detail: `${margin.toFixed(1)} px from the edge at ${ms} ms` }));
+  return [...shots, ...[...closest].map(([name, { margin, ms }]) => ({ name: `${name} inside the frame`, pass: margin >= SAFE_MARGIN, detail: `${margin.toFixed(1)} px from the edge at ${ms} ms` }))];
 };
 
 const verify = async ({ script, files, width, height, audio }: { script: FilmScript; files: string[]; width: number; height: number; audio: boolean }): Promise<Check[]> => {

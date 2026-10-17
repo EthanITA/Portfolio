@@ -20,7 +20,10 @@ let views: View[] | undefined;
 
 onFrame(async (ms) => {
   if (!rig.value) return;
-  views ??= await Camera.measure({ shots, rig: rig.value, at: measure });
+  if (!views) {
+    views = await Camera.measure({ shots, rig: rig.value, at: measure });
+    rig.value.dataset.landed = views.map((view) => view.scale.toFixed(3)).join(" ");
+  }
   const { x, y, scale } = Camera.view({ shots, views, ms });
   rig.value.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
 });
