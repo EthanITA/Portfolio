@@ -10,9 +10,8 @@ import type { SceneSetup } from "~/utils/stage/scene";
 
 import { Chip, Kbd, TextInput } from "@cela/design";
 import { pulse } from "@cela/design/utils/motion";
-import type { CameraPreset } from "~/utils/stage/camera";
 
-import { STAGE_CAMERA, floorFraction } from "~/utils/stage/camera";
+import { STAGE_CAMERA, toScreen } from "~/utils/stage/camera";
 import { LINE, TIERS, createLedger, pose, settling } from "~/utils/stage/line";
 import { useScene } from "~/utils/stage/scene";
 
@@ -43,17 +42,17 @@ const canvas = useTemplateRef<HTMLCanvasElement>("canvas");
 const text = ref("");
 const views = shallowRef<View[]>([]);
 const announcement = ref("");
-const tops = (camera: CameraPreset): Record<Tier, number> => ({
-  runs: floorFraction(camera, ZONE.runs) * 100,
-  waits: floorFraction(camera, ZONE.waits) * 100,
-  stops: floorFraction(camera, ZONE.stops) * 100,
-});
-const labelTop = ref(tops(STAGE_CAMERA.line));
+const ZONE_TOP: Record<Tier, { "--top": number }> = {
+  runs: { "--top": toScreen(STAGE_CAMERA.line, [0, 0, ZONE.runs]).top },
+  waits: { "--top": toScreen(STAGE_CAMERA.line, [0, 0, ZONE.waits]).top },
+  stops: { "--top": toScreen(STAGE_CAMERA.line, [0, 0, ZONE.stops]).top },
+};
 
 const overlays = new Map<number, HTMLElement>();
 const rects = new Map<number, [number, number, number, number]>();
 const sizes = new WeakMap<HTMLElement, string>();
 const ledger = createLedger(() => reduced.value);
+const auto = { next: 0, index: 0 };
 let slots = 4;
 let refresh: () => void = () => {};
 
@@ -67,6 +66,7 @@ const place = (): void => {
     const el = overlays.get(id);
     if (!el) return;
     el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    el.dataset.placed = "";
     const size = `${Math.round(width)}x${Math.round(height)}`;
     if (sizes.get(el) === size) return;
     sizes.set(el, size);
@@ -107,23 +107,20 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
     const left = (-1 - origin.x) / unit;
     const right = (1 - origin.x) / unit;
     const gutter = (Math.max(0, ...[...(box.value?.querySelectorAll<HTMLElement>("[data-zone]") ?? [])].map((el) => el.offsetLeft + el.offsetWidth)) + 16) / perUnit;
-    slots = filming || wide.matches ? 4 : 2;
+    slots = wide.matches ? 4 : 2;
     const start = left + gutter;
     const span = right - 0.15 - start;
     layout.slotWidth = span / slots;
     layout.slotX = Array.from({ length: slots }, (_, i) => start + layout.slotWidth * (i + 0.5));
-    layout.size = (wide.matches || filming ? 17 : 14) / perUnit;
+    layout.size = (wide.matches ? 17 : 14) / perUnit;
     layout.width = width;
     layout.height = height;
-    labelTop.value = tops({ ...STAGE_CAMERA.line, fov: stage.camera.fov });
   };
 
   const project = (x: number, y: number, z: number): [number, number] => {
     const point = new Vector3(x, y, z).project(stage.camera);
     return [((point.x + 1) / 2) * layout.width, ((1 - point.y) / 2) * layout.height];
   };
-
-  const auto = { next: 0, index: 0 };
 
   const frame = (ms: number, dt: number): boolean => {
     stage.advance(dt);
@@ -215,18 +212,38 @@ const { state, theme, reduced, clock, kick, seekable } = useScene({
   canvas: () => canvas.value ?? undefined,
   setup,
   reducedOnDemand: true,
+  start: film ? 0 : FILM.rest,
 });
 
-if (film) {
+// Live opens on the film's rest frame, which is what the poster shows, so the canvas fades in over the same stage.
+const seed = (count: number): void => {
+  slots = count;
+  ledger.actions.length = 0;
+  Object.assign(auto, { next: 0, index: 0 });
+  const until = film ? Infinity : FILM.rest;
   FILM.events.forEach((event) => {
-    if ("send" in event) ledger.send(event.send, event.at, 4);
-    else if ("release" in event) ledger.release(event.at);
+    if (event.at > until) return;
+    if ("send" in event) {
+      ledger.send(event.send, event.at, count);
+      auto.index++;
+      auto.next = event.at + LINE.every;
+    } else if ("release" in event) ledger.release(event.at);
     else {
       const target = ledger.actions.find((action) => action.text === event.press);
       if (target) ledger.press(event.at, target.id);
     }
   });
-}
+  const at = film ? 0 : FILM.rest;
+  views.value = ledger.actions.flatMap((action) => {
+    const { status } = pose(action, at);
+    return status === "gone" ? [] : [{ id: action.id, text: action.text, tier: action.tier, status }];
+  });
+};
+
+seed(4);
+onMounted(() => {
+  if (!matchMedia("(min-width: 768px)").matches) seed(2);
+});
 
 const interact = (): void => {
   quiet = true;
@@ -283,8 +300,8 @@ defineExpose({ ...seekable, restMs: FILM.rest });
 </script>
 
 <template>
-  <div ref="root" class="line" data-scene="line" :data-state="state" :data-theme-applied="theme" @pointerdown.capture="interact" @keydown.capture="interact">
-    <form class="ask" @submit.prevent="submit">
+  <div ref="root" class="line" data-scene="line" :data-mode="mode" :data-state="state" :data-theme-applied="theme" @pointerdown.capture="interact" @keydown.capture="interact">
+    <form v-if="!film" class="ask" @submit.prevent="submit">
       <TextInput v-model="text" class="input" :placeholder="PLACEHOLDER" :aria-label="PLACEHOLDER" maxlength="60" enterkeyhint="send" />
       <div class="examples">
         <Chip v-for="example in EXAMPLES" :key="example" @click="choose(example)">{{ example }}</Chip>
@@ -293,7 +310,7 @@ defineExpose({ ...seekable, restMs: FILM.rest });
     <div ref="box" class="stage">
       <StagePoster v-if="!film" name="line" :theme="theme" />
       <canvas ref="canvas" class="canvas" />
-      <span v-for="tier in TIERS" :key="tier" class="zone" :data-zone="tier" :style="{ top: `${labelTop[tier]}%` }">{{ TIER_NAME[tier] }}</span>
+      <span v-for="tier in TIERS" :key="tier" class="zone" :data-zone="tier" :style="ZONE_TOP[tier]">{{ TIER_NAME[tier] }}</span>
       <div v-for="view in views" :key="view.id" :ref="(el: unknown) => bind(view.id, el)" class="action" :data-action="view.id" :data-tier="view.tier" :data-status="view.status">
         <template v-if="view.status === 'waiting'">
           <button type="button" class="release" :aria-label="`${view.text} · ${TIER_NAME.waits}`" @click="release(view.id)" />
@@ -302,7 +319,7 @@ defineExpose({ ...seekable, restMs: FILM.rest });
         <button v-else-if="view.status === 'stopped'" type="button" class="press" @click="press(view.id)">{{ PRESS }}</button>
       </div>
     </div>
-    <p class="announce" aria-live="polite">{{ announcement }}</p>
+    <p v-if="!film" class="announce" aria-live="polite">{{ announcement }}</p>
   </div>
 </template>
 
@@ -320,7 +337,7 @@ defineExpose({ ...seekable, restMs: FILM.rest });
 }
 
 .stage {
-  @apply relative min-h-0 flex-1 overflow-hidden rounded-box bg-canvas;
+  @apply @container-size relative min-h-0 flex-1 overflow-hidden rounded-box bg-canvas;
 }
 
 .canvas {
@@ -329,14 +346,26 @@ defineExpose({ ...seekable, restMs: FILM.rest });
 
 .zone {
   @apply typo-eyebrow pointer-events-none absolute left-4 -translate-y-1/2 text-muted;
+  /* The canvas crops like a 16:9 cover poster, so one frame height is the larger of the box height and its width over 16:9. */
+  top: calc(50% + (var(--top) - 0.5) * max(100cqh, 56.25cqw));
 }
 
 .zone[data-zone="stops"] {
   @apply text-primary;
 }
 
+/* Posters are rendered in film mode; the live labels sit over them, so the film keeps their space but not their ink. */
+.line[data-mode="film"] .zone {
+  @apply invisible;
+}
+
+/* The rest frame's controls prerender for their copy and stay hidden until the scene has placed them over their chips. */
 .action {
-  @apply pointer-events-none absolute top-0 left-0;
+  @apply pointer-events-none invisible absolute top-0 left-0;
+
+  &[data-placed] {
+    @apply visible;
+  }
 }
 
 .release {
