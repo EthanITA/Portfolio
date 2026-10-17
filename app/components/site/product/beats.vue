@@ -13,7 +13,7 @@ const { slug, beats } = defineProps<{ slug: Product; beats: ProductPage["beats"]
       <h2 :id="`${slug}-beats`" v-enter.words class="heading">{{ beats.heading }}</h2>
       <p v-enter class="line">{{ beats.line }}</p>
     </div>
-    <div class="cards">
+    <div class="cards" :data-count="beats.items.length">
       <Surface v-for="beat in beats.items" :key="beat.glyph" v-enter.stagger as="article" class="card" data-glyph-host>
         <div class="card-head">
           <h3 class="name">{{ beat.title }}</h3>
@@ -44,6 +44,10 @@ const { slug, beats } = defineProps<{ slug: Product; beats: ProductPage["beats"]
 
 .cards {
   @apply grid gap-4 md:grid-cols-2;
+
+  &[data-count="3"] {
+    @apply md:grid-cols-3;
+  }
 }
 
 .card {
