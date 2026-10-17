@@ -24,9 +24,9 @@ export default {
     shots: [
       { at: 0, duration: 0, scale: 0.96 },
       { at: 3000, duration: 900, scale: 1 },
-      { at: 10_000, duration: 2000, scale: 1.5, anchor: "review" },
+      { at: 10_000, duration: 2000, scale: 1.5, anchor: "hunks" },
       { at: 14_500, duration: 1800, scale: 1 },
-      { at: 18_000, duration: 2200, scale: 1.5, anchor: "artifacts" },
+      { at: 18_800, duration: 2000, scale: 1.4, anchor: "note" },
       { at: 24_500, duration: 1800, scale: 1 },
       { at: 28_200, duration: 1800, scale: 1.4, anchor: "history" },
       { at: 34_000, duration: 3000, scale: 0.9 },

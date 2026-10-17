@@ -17,7 +17,7 @@ export default {
     shots: [
       { at: 3000, duration: 2000, scale: 1.5, anchor: "notch" },
       { at: 22_000, duration: 1800, scale: 1.4, anchor: "card" },
-      { at: 30_000, duration: 2200, scale: 1.5, anchor: "pay" },
+      { at: 31_600, duration: 1800, scale: 1.5, anchor: "pay" },
       { at: 35_400, duration: 600, scale: 0.96 },
     ],
   },
