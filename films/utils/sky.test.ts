@@ -46,13 +46,15 @@ describe("Sky.plan", () => {
     assert.deepEqual(rows(first({ text: "Or not." })), ["Or not."]);
     assert.equal(first({ text: "No app to open. Just hold a key." }).size, "6xl");
     assert.deepEqual(rows(first({ text: "A companion window for Claude Code.", cut: "tall" })), ["A companion window", "for Claude Code."]);
-    assert.deepEqual([first({ text: "Changed your mind? ⌘Z takes back 50 decisions.", cut: "tall" }).rows.length, first({ text: "one two three four five six seven eight nine ten eleven twelve", cut: "tall" }).rows.length], [2, 3]);
+    assert.deepEqual([first({ text: "A companion window for Claude Code.", cut: "tall" }).rows.length, first({ text: "one two three four five six seven eight nine ten eleven twelve", cut: "tall" }).rows.length], [2, 3]);
   });
 
-  it("breaks where the rows come out most equal, with a sentence boundary winning a near tie", () => {
+  it("breaks at a sentence end whenever the rows fit, and where they come out most equal otherwise", () => {
     assert.deepEqual(rows(first({ text: "No app to open. Just hold a key." })), ["No app to open.", "Just hold a key."]);
+    assert.deepEqual(rows(first({ text: "Forget the flags. Type ? and say what you want." })), ["Forget the flags.", "Type ? and say what you want."]);
     assert.deepEqual(rows(first({ text: "Changing something? It asks. You get five seconds." })), ["Changing something? It asks.", "You get five seconds."]);
-    assert.deepEqual(rows(first({ text: "Forget the flags. Type ? and say what you want." })), ["Forget the flags. Type ?", "and say what you want."]);
+    assert.deepEqual(rows(first({ text: "A companion window for Claude Code." })), ["A companion window", "for Claude Code."]);
+    assert.deepEqual(rows(first({ text: "one two three. four five six seven eight nine ten eleven twelve", cut: "tall" })), ["one two three.", "four five six seven eight", "nine ten eleven twelve"]);
   });
 
   it("refuses a line that fits no size", () => {

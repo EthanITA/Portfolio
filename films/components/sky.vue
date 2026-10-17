@@ -175,6 +175,7 @@ onFrame((ms) => {
 }
 .film-sky-chip {
   @apply kbd-cap h-[1.4em] min-w-[1.4em] rounded-[0.35em] px-[0.3em] align-top text-[0.7em];
+  color: inherit;
 }
 .film-sky-word[data-tone="ink"] {
   @apply text-fg;

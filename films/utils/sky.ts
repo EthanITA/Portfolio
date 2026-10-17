@@ -11,7 +11,6 @@ export const SKY = {
   swell: 1.08,
   exit: MOTION_DURATION.fast,
   trail: 20,
-  tie: 0.1,
 } as const;
 
 export const STEPS = {
@@ -47,15 +46,16 @@ const CODE = new Set(["?", "⌘Z"]);
 
 const letters = (text: string): string[] => [...new Intl.Segmenter("en", { granularity: "grapheme" }).segment(text)].map(({ segment }) => segment);
 
-const sentence = (word: string): boolean => /[.?!]$/u.test(word);
+// A "?" chip is a code token, so it never ends a sentence.
+const sentence = (word: string): boolean => !CODE.has(word) && /[.?!]$/u.test(word);
 
 const splits = (count: number, rows: number): number[][] =>
   rows <= 1 ? [[]] : Array.from({ length: count - rows + 1 }, (_, index) => index + 1).flatMap((first) => splits(count - first, rows - 1).map((rest) => [first, ...rest.map((at) => at + first)]));
 
 type Option = { breaks: number[]; widths: number[]; widest: number; sentences: number };
 
-const balance = ({ words, widths, space, rows, measure }: { words: string[]; widths: number[]; space: number; rows: number; measure: number }): Option | undefined => {
-  const fits = splits(words.length, rows)
+const options = ({ words, widths, space, rows, measure }: { words: string[]; widths: number[]; space: number; rows: number; measure: number }): Option[] =>
+  splits(words.length, rows)
     .map((breaks): Option => {
       const edges = [0, ...breaks, words.length];
       const rowWidths = breaks.concat(words.length).map((end, index) => {
@@ -65,21 +65,20 @@ const balance = ({ words, widths, space, rows, measure }: { words: string[]; wid
       return { breaks, widths: rowWidths, widest: Math.max(...rowWidths), sentences: breaks.filter((at) => sentence(words[at - 1] ?? "")).length };
     })
     .filter((option) => option.widest <= measure);
-  if (!fits.length) return undefined;
-  const best = Math.min(...fits.map((option) => option.widest));
-  const tied = fits.filter((option) => option.widest <= best * (1 + SKY.tie));
-  const most = Math.max(...tied.map((option) => option.sentences));
-  return tied.filter((option) => option.sentences === most).reduce((pick, option) => (option.widest < pick.widest ? option : pick));
+
+const better = (pick: Option, option: Option): Option => {
+  if (option.sentences !== pick.sentences) return option.sentences > pick.sentences ? option : pick;
+  if (option.widths.length !== pick.widths.length) return option.widths.length < pick.widths.length ? option : pick;
+  return option.widest < pick.widest ? option : pick;
 };
 
 const layout = ({ words, measured, cut }: { words: string[]; measured: Partial<Record<Size, Widths>>; cut: Cut }): { size: Size; widths: Widths; option: Option } | undefined => {
   for (const step of STEPS[cut]) {
     const widths = measured[step.size];
     if (!widths) continue;
-    for (const rows of step.rows) {
-      const option = balance({ words, widths: widths.words, space: widths.space, rows: Math.min(rows, words.length), measure: WINDOW[cut].width });
-      if (option) return { size: step.size, widths, option };
-    }
+    const fits = step.rows.flatMap((rows) => options({ words, widths: widths.words, space: widths.space, rows: Math.min(rows, words.length), measure: WINDOW[cut].width }));
+    const [first, ...rest] = fits;
+    if (first) return { size: step.size, widths, option: rest.reduce(better, first) };
   }
   return undefined;
 };
