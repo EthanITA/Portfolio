@@ -1,6 +1,6 @@
 import type { FilmScript, Key } from "./script.ts";
 
-// SAGE_SCRIPT's keys from app/utils/play/script/sage.ts on overhaul/play; becomes that import once it lands on feat/overhaul.
+// SAGE_SCRIPT's keys from app/utils/play/script/sage.ts, mirrored until it imports "./typed.ts" and loads under node.
 const PLAY = {
   keys: [
     { key: "opt", at: 3000, until: 8600 },
