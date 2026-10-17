@@ -1,28 +1,26 @@
 import { SAMPLE_RATE, type Stereo, blank, samplesAt } from "./audio";
 import { biquad, rng } from "./dsp";
 
-export type Layer = "kick" | "clap" | "hat" | "bass" | "pluck" | "stab";
+export type Layer = "kick" | "clap" | "hat" | "bass" | "pluck";
 
-export type Section = {
-  bar: number;
-  layers: Layer[];
-  patterns?: Partial<Record<Layer, number[]>>;
-  once?: Layer[];
-};
+export type Section = { beat: number; layers: Layer[] };
 
 export type GrooveStyle = {
   bpm: number;
   swing: number;
-  downbeatMs: number;
-  closeBar: number;
+  closeBeat: number;
+  stabsMs: number[];
   progression: number[][];
-  levelsDb: Record<Layer, number>;
+  levelsDb: Record<Layer | "stab", number>;
   patterns: Record<Layer, number[]>;
   sections: Section[];
   pumpDepth: number;
   wet: number;
 };
 
+export type Hit = { step: number; at: number; velocity: number };
+
+const STEPS_PER_BEAT = 4;
 const STEPS_PER_BAR = 16;
 const TABLE = 4096;
 const FIFTH_STEP = 10;
@@ -154,23 +152,27 @@ const stabChord = (freqs: number[], lengthS: number): Float32Array => {
   return out;
 };
 
-const sectionAt = (style: GrooveStyle, bar: number): Section | undefined => [...style.sections].reverse().find((s) => bar >= s.bar);
+const sectionAt = (style: GrooveStyle, beat: number): Section | undefined => [...style.sections].reverse().find((s) => beat >= s.beat);
 
-const levelOf = (style: GrooveStyle, layer: Layer, bar: number, beatInBar: number): number => {
-  const on = (b: number): boolean => Boolean(sectionAt(style, b)?.layers.includes(layer));
-  if (!on(bar)) return 0;
-  if (!on(bar - 1)) return Math.min(1, (beatInBar + 1) / 4) ** 1.5;
-  return 1;
+const beatSamplesOf = (style: GrooveStyle): number => (60 / style.bpm) * SAMPLE_RATE;
+
+export const scheduleLayer = (style: GrooveStyle, layer: Layer): Hit[] => {
+  const stepSamples = beatSamplesOf(style) / STEPS_PER_BEAT;
+  const hits: Hit[] = [];
+  for (let step = 0; step < style.closeBeat * STEPS_PER_BEAT; step++) {
+    const inBar = wrap(step, STEPS_PER_BAR);
+    const velocity = style.patterns[layer][inBar] ?? 0;
+    if (!velocity || !sectionAt(style, Math.floor(step / STEPS_PER_BEAT))?.layers.includes(layer)) continue;
+    hits.push({ step, at: Math.round(step * stepSamples + (inBar % 2 === 1 ? style.swing * stepSamples : 0)), velocity });
+  }
+  return hits;
 };
 
 export const renderGroove = (style: GrooveStyle, durationMs: number, seed: number): Stereo => {
   const total = samplesAt(durationMs);
   const rand = rng(seed);
-  const beatSamples = (60 / style.bpm) * SAMPLE_RATE;
-  const stepSamples = beatSamples / 4;
-  const downbeat = samplesAt(style.downbeatMs);
-  const firstStep = -Math.floor(downbeat / stepSamples);
-  const lastStep = Math.ceil((total - downbeat) / stepSamples);
+  const beatSamples = beatSamplesOf(style);
+  const stepSamples = beatSamples / STEPS_PER_BEAT;
 
   const drums = blank(total);
   const bass = blank(total);
@@ -182,29 +184,7 @@ export const renderGroove = (style: GrooveStyle, durationMs: number, seed: numbe
   const clap = noiseHit(rand, 160, 0.045, biquad("bandpass", 1500, 0.9), [0, 0.011, 0.022]);
   const hats = [noiseHit(rand, 90, 0.016, biquad("highpass", 7200)), noiseHit(rand, 220, 0.07, biquad("highpass", 6500))];
 
-  const voices = (layer: Layer): Array<{ at: number; velocity: number; step: number }> => {
-    const out: Array<{ at: number; velocity: number; step: number }> = [];
-    const spent = new Set<number>();
-    for (let step = firstStep; step < lastStep; step++) {
-      const bar = Math.floor(step / STEPS_PER_BAR);
-      if (bar >= style.closeBar) break;
-      const inBar = wrap(step, STEPS_PER_BAR);
-      const section = sectionAt(style, bar);
-      const velocity = (section?.patterns?.[layer] ?? style.patterns[layer])[inBar] ?? 0;
-      if (!velocity) continue;
-      const single = section?.once?.includes(layer) ? section : undefined;
-      const level = single ? 1 : levelOf(style, layer, bar, Math.floor(inBar / 4));
-      if (!level) continue;
-      if (single) {
-        if (spent.has(single.bar)) continue;
-        spent.add(single.bar);
-      }
-      const at = Math.round(downbeat + step * stepSamples + (inBar % 2 === 1 ? style.swing * stepSamples : 0));
-      if (at < 0 || at >= total) continue;
-      out.push({ at, velocity: velocity * level, step });
-    }
-    return out;
-  };
+  const voices = (layer: Layer): Hit[] => scheduleLayer(style, layer).filter((hit) => hit.at < total);
 
   const kickGain = gain(style.levelsDb.kick);
   for (const v of voices("kick")) {
@@ -222,33 +202,35 @@ export const renderGroove = (style: GrooveStyle, durationMs: number, seed: numbe
     place(drums, v.at, hats[OPEN_HAT_STEPS.includes(wrap(v.step, STEPS_PER_BAR)) ? 1 : 0]!, g * l, g * r);
   });
 
-  const chordAt = (step: number): number[] => style.progression[wrap(Math.floor(step / STEPS_PER_BAR), style.progression.length)]!;
+  const chordAt = (samples: number): number[] => style.progression[wrap(Math.floor(samples / (beatSamples * 4)), style.progression.length)]!;
 
   const bassGain = gain(style.levelsDb.bass);
   for (const v of voices("bass")) {
-    const chord = chordAt(v.step);
+    const chord = chordAt(v.at);
     const note = wrap(v.step, STEPS_PER_BAR) === FIFTH_STEP ? chord[0]! - 17 : chord[0]! - 24;
     place(bass, v.at, bassNote(midi(note), (stepSamples * 1.6) / SAMPLE_RATE), v.velocity * bassGain, v.velocity * bassGain);
   }
 
   const pluckGain = gain(style.levelsDb.pluck);
   voices("pluck").forEach((v, i) => {
-    const chord = chordAt(v.step);
+    const chord = chordAt(v.at);
     const [l, r] = pan(Math.sin(i * 1.9) * 0.6);
     place(plucks, v.at, pluckNote(midi(chord[i % chord.length]! + 12)), v.velocity * pluckGain * l, v.velocity * pluckGain * r);
   });
 
   const stabGain = gain(style.levelsDb.stab);
-  for (const v of voices("stab")) {
-    place(stabs, v.at, stabChord(chordAt(v.step).map(midi), (stepSamples * 1.7) / SAMPLE_RATE), v.velocity * stabGain, v.velocity * stabGain);
+  for (const ms of style.stabsMs) {
+    const at = samplesAt(ms);
+    if (at < total) place(stabs, at, stabChord(chordAt(at).map(midi), (stepSamples * 1.7) / SAMPLE_RATE), stabGain, stabGain);
   }
 
   const closing = style.progression[0]!;
-  const closeAt = Math.round(downbeat + style.closeBar * STEPS_PER_BAR * stepSamples);
+  const closeAt = Math.round(style.closeBeat * beatSamples);
   if (closeAt < total) {
+    const ringS = (total - closeAt) / SAMPLE_RATE;
     place(drums, closeAt, kick, kickGain, kickGain);
-    place(bass, closeAt, bassNote(midi(closing[0]! - 24), 2.4), bassGain, bassGain);
-    place(stabs, closeAt, stabChord(closing.map(midi), 2.6), stabGain, stabGain);
+    place(bass, closeAt, bassNote(midi(closing[0]! - 24), Math.min(2.4, ringS)), bassGain, bassGain);
+    place(stabs, closeAt, stabChord(closing.map(midi), ringS), stabGain, stabGain);
     kicks.push(closeAt);
   }
 
