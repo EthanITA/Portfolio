@@ -5,7 +5,6 @@ import { chromium, type Page } from "playwright";
 
 const root = resolve(import.meta.dirname, "../..");
 const site = join(root, ".output/public");
-const PORT = 4104;
 const BEATS = [
   [0.04, 0.14],
   [0.3, 0.48],
@@ -44,7 +43,10 @@ const server = createServer(async (request, response) => {
   }
   response.writeHead(404).end();
 });
-await new Promise<void>((done) => server.listen(PORT, done));
+// Any free port, so checks from several worktrees can run at once.
+await new Promise<void>((done) => server.listen(0, done));
+const address = server.address();
+const PORT = typeof address === "object" && address ? address.port : 0;
 
 const probe = (page: Page): Promise<Probe> =>
   page.evaluate(() => {

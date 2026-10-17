@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
+import { SAGE_SCRIPT } from "../../../app/utils/play/script/sage";
 import { MAX_TRUE_PEAK, ROOT, TARGET_LUFS, compose, rawBed } from "./build";
 import { FILMS, type FilmName } from "./films";
 import { SAMPLE_RATE, type Stereo, blank, decode, durationOf, measure, run, samplesAt, toDb } from "./lib/audio";
@@ -292,6 +293,17 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
   const copy = await readFile(COPY, "utf8");
   const spoken = cues.cues.filter((c) => c.stem === "voice");
   report(spoken.every((c) => c.text && copy.includes(c.text)), "voiced strings are copy.md strings", spoken.length ? spoken.map((c) => `"${c.text}"`).join(", ") : "no voice in this film");
+
+  if (name === "sage") {
+    const misfits = SAGE_SCRIPT.voice.flatMap((window) => {
+      const cue = spoken.find((c) => c.text === window.line);
+      if (!cue) return [`  no voice cue says "${window.line}"`];
+      const end = cue.atMs + cue.durMs;
+      return cue.atMs === window.at && end <= window.until ? [] : [`  "${window.line}" runs ${cue.atMs} to ${end} ms and play gives it ${window.at} to ${window.until} ms`];
+    });
+    report(misfits.length === 0, "each voice line fits the window play gives it", SAGE_SCRIPT.voice.map((w) => `"${w.line}" ${w.at} to ${w.until}`).join(", "));
+    misfits.forEach((l) => console.log(l));
+  }
 
   if (rebuild) {
     const before = createHash("sha256").update(await readFile(join(dir, "mix.wav"))).digest("hex");

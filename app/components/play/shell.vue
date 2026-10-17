@@ -106,7 +106,11 @@ const onInput = (event: Event): void => {
             <span class="prompt"><span class="folder">{{ state.folder }}</span> $ </span>
             <span class="text">{{ state.line }}</span><span class="cursor" :data-blink="blink" />
           </div>
-          <div v-if="state.phase === 'spinning'" class="row spinner" data-spinner aria-hidden="true">{{ SPINNER[state.spin] }}</div>
+          <div v-if="state.phase === 'spinning'" class="row spinner" data-spinner aria-hidden="true">
+            <svg class="braille" viewBox="0 0 8 16">
+              <circle v-for="[x, y] in SPINNER[state.spin]" :key="`${x}${y}`" :cx="2 + x * 4" :cy="2 + y * 4" r="1.25" />
+            </svg>
+          </div>
         </div>
       </Surface>
 
@@ -182,6 +186,10 @@ const onInput = (event: Event): void => {
 
 .spinner {
   @apply text-primary;
+}
+
+.braille {
+  @apply inline-block h-4 w-2 fill-current align-text-bottom;
 }
 
 .label {
