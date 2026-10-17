@@ -1,8 +1,10 @@
 import { SAGE_SCRIPT } from "../../../app/utils/play/script/sage";
 import { SHELL_SCRIPT } from "../../../app/utils/play/script/shell";
+import { SIDECAR_SCRIPT } from "../../../app/utils/play/script/sidecar";
 import sageFilm from "../../../films/scripts/sage";
 import type { FilmScript } from "../../../films/scripts/script";
 import shellFilm from "../../../films/scripts/shell";
+import sidecarFilm from "../../../films/scripts/sidecar";
 import type { ClickVariant, KeyVariant, TickVariant, WhooshDirection } from "./lib/synth";
 
 export type FilmName = "sidecar" | "sage" | "shell";
@@ -60,7 +62,10 @@ const typing = (id: string, script: { text: string; at: number[] }, seed: number
 
 const MAX_WHOOSH_MS = 1200;
 
+const MAX_PULL_BACK_MS = 1000;
+
 const RANGES = {
+  sidecar: [[0, 3], [3, 10], [10, 18], [18, 28], [28, 34], [34, 41], [41, 45]],
   sage: [[0, 3], [3, 9], [9, 12], [12, 22], [22, 30], [30, 36], [36, 40]],
   shell: [[0, 3], [3, 10], [10, 18], [18, 27], [27, 32], [32, 35]],
 } as const;
@@ -75,14 +80,16 @@ const camera = (film: FilmScript): CueSpec[] => {
   const seen = new Map<string, number>();
   const last = film.rig.shots.length - 1;
   return film.rig.shots.flatMap((shot, index): CueSpec[] => {
-    const durMs = Math.min(shot.duration, MAX_WHOOSH_MS);
     if (shot.anchor) {
+      const durMs = Math.min(shot.duration, MAX_WHOOSH_MS);
       const name = `push-${shot.anchor}`;
       const count = (seen.get(name) ?? 0) + 1;
       seen.set(name, count);
       return [quiet(whoosh(count > 1 ? `${name}-${count}` : name, shot.at, durMs, "still", `the camera pushes in on the ${shot.anchor}`, "", 300, 1800))];
     }
-    return index === last && shot.scale < 1 ? [quiet(whoosh("pull-back", shot.at, durMs, "still", "the camera pulls back to the end card", "", 1600, 300))] : [];
+    return index === last && shot.scale < 1
+      ? [quiet(whoosh("pull-back", shot.at, Math.min(shot.duration, MAX_PULL_BACK_MS), "still", "the camera pulls back to the end card", "", 1600, 300))]
+      : [];
   });
 };
 
@@ -140,39 +147,41 @@ const shellCues = (): CueSpec[] => {
   ]);
 };
 
+const sidecarCues = (): CueSpec[] => {
+  const { moments: m, presses } = SIDECAR_SCRIPT;
+  const click = (id: string, at: number, variant: ClickVariant, marks: string): CueSpec => ({ id, at, sound: "click", variant, marks, sheet: "" });
+  const tick = (id: string, at: number, variant: TickVariant, marks: string): CueSpec => ({ id, at, sound: "tick", variant, marks, sheet: "" });
+  return withSheets("sidecar", [
+    whoosh("islandOpen", sidecarFilm.island[0]?.open ?? 1000, 500, "still", "the island opens into the title", ""),
+    tick("row1", m.row1, "high", "first edit lands in the Review list"),
+    tick("row2", m.row2, "high", "second edit lands in the Review list"),
+    tick("row3", m.row3, "high", "third edit lands in the Review list"),
+    click("acceptHunk", m.acceptHunk, "approve", "a hunk is approved"),
+    click("rejectHunk", m.rejectHunk, "reject", "a hunk is rejected and the toast confirms"),
+    tick("tellLands", m.tellLands, "low", "the reject lands in the terminal as a message"),
+    tick("reply", m.reply, "low", "Claude answers that it saw the reject"),
+    click("select", m.select, "soft", "a paragraph is selected"),
+    typing("typeNote", presses.note, 11, "the note is typed"),
+    click("addToTray", m.addToTray, "soft", "Enter adds the note to the tray"),
+    click("send", m.send, "soft", "the note is sent"),
+    whoosh("noteArc", m.send, m.noteLands - m.send, "rtl", "the note arcs into the terminal", ""),
+    { id: "noteLands", at: m.noteLands, sound: "chime", marks: "the note lands as Marco's own message", sheet: "" },
+    click("undo", m.undo, "soft", "cmd Z takes the last decision back"),
+    tick("undoStacks", m.undo + 100, "low", "the decision history changes"),
+    click("redo", m.redo, "soft", "cmd shift Z redoes it"),
+    tick("redoStacks", m.redo + 100, "low", "the decision history changes"),
+    { id: "seam", at: sidecarFilm.rules.find((rule) => rule.anchor === "seam")?.at ?? 36_000, sound: "line", durMs: 600, marks: "the violet line between terminal and island draws", sheet: "" },
+    ...camera(sidecarFilm),
+    endCard(sidecarFilm),
+  ]);
+};
+
 export const FILMS: Record<FilmName, FilmSpec> = {
   sidecar: {
     name: "sidecar",
     durationMs: 45000,
     music: { source: "synth", take: 1, gainDb: 0, fadeInMs: 1200, fadeOutMs: 3000, startMs: 0 },
-    cues: [
-      whoosh("island-open", 1200, 700, "still", "the island opens into the title", "0-3"),
-      whoosh("sidecar-in", 4000, 600, "rtl", "Sidecar slides in on the right", "3-10"),
-      { id: "edit-1", at: 5000, sound: "tick", variant: "high", marks: "first edit lands in the Review list", sheet: "3-10" },
-      { id: "edit-2", at: 6400, sound: "tick", variant: "high", marks: "second edit lands in the Review list", sheet: "3-10" },
-      { id: "edit-3", at: 7800, sound: "tick", variant: "high", marks: "third edit lands in the Review list", sheet: "3-10" },
-      { id: "approve", at: 11000, sound: "click", variant: "approve", marks: "a hunk is approved", sheet: "10-18" },
-      { id: "reject-1", at: 12400, sound: "click", variant: "reject", marks: "first line rejected", sheet: "10-18" },
-      { id: "reject-2", at: 12900, sound: "click", variant: "reject", marks: "second line rejected", sheet: "10-18" },
-      { id: "toast", at: 13400, sound: "tick", variant: "high", marks: "the toast confirms", sheet: "10-18" },
-      whoosh("reject-travels", 14200, 500, "rtl", "the reject travels to the terminal", "10-18"),
-      { id: "claude-answers", at: 16000, sound: "tick", variant: "low", marks: "Claude answers that it saw the reject", sheet: "10-18" },
-      whoosh("artifacts-face", 18000, 1500, "still", "the camera pushes in on the Artifacts face", "18-28"),
-      { id: "select", at: 20000, sound: "click", variant: "soft", marks: "a paragraph is selected", sheet: "18-28" },
-      { id: "note-typing", at: 21000, sound: "typing", endMs: 22800, text: "make this a chart", seed: 11, marks: "the note is typed", sheet: "18-28" },
-      { id: "note-send", at: 23400, sound: "click", variant: "soft", marks: "the note is sent", sheet: "18-28" },
-      whoosh("note-arcs", 23600, 1200, "rtl", "the note arcs into the terminal", "18-28"),
-      { id: "note-lands", at: 25000, sound: "chime", marks: "the note lands as Marco's own message", sheet: "18-28" },
-      { id: "undo", at: 28800, sound: "click", variant: "soft", marks: "cmd Z takes the last decision back", sheet: "28-34" },
-      { id: "redo", at: 30400, sound: "click", variant: "soft", marks: "cmd shift Z redoes it", sheet: "28-34" },
-      { id: "history-1", at: 31200, sound: "tick", variant: "low", marks: "decision history stacks", sheet: "28-34" },
-      { id: "history-2", at: 31600, sound: "tick", variant: "low", marks: "decision history stacks", sheet: "28-34" },
-      { id: "history-3", at: 32000, sound: "tick", variant: "low", marks: "decision history stacks", sheet: "28-34" },
-      { id: "history-4", at: 32400, sound: "tick", variant: "low", marks: "decision history stacks", sheet: "28-34" },
-      whoosh("pull-back", 34000, 3000, "still", "slow pull-back over terminal and island", "34-41", 200, 1200),
-      { id: "line-between", at: 36000, sound: "line", durMs: 600, marks: "the violet line between terminal and island draws", sheet: "34-41" },
-      { id: "line-end-card", at: 41400, sound: "line", durMs: 600, marks: "the violet line draws on the end card", sheet: "41-45" },
-    ],
+    cues: sidecarCues(),
   },
   sage: {
     name: "sage",
