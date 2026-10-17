@@ -15,9 +15,18 @@ const radius = ref(0);
         <FilmRule v-for="rule in script.rules" :key="rule.at" :anchor="rule.anchor" :at="rule.at" />
       </FilmRig>
     </FilmWindow>
-    <FilmLine :script="script" />
-    <FilmSky :script="script" />
-    <FilmTitle :text="script.title.text" :at="script.title.at" :until="script.title.until" :tone="script.title.tone" />
-    <FilmEnd :at="script.end.at">{{ script.end.text }}</FilmEnd>
+    <div class="film-over">
+      <FilmLine :script="script" />
+      <FilmSky :script="script" />
+      <FilmTitle :text="script.title.text" :at="script.title.at" :until="script.title.until" :tone="script.title.tone" />
+      <FilmEnd :at="script.end.at">{{ script.end.text }}</FilmEnd>
+    </div>
   </FilmFrame>
 </template>
+
+<style scoped>
+/* One frame-sized layer over the window, or Chrome squashes these into layers whose shifting bounds raster differently by what was seeked before. */
+.film-over {
+  @apply absolute inset-0 will-change-transform;
+}
+</style>
