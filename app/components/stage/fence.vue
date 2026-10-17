@@ -261,7 +261,7 @@ defineExpose({ ...seekable, restMs: REST_MS, ripple });
 </script>
 
 <template>
-  <div ref="root" class="fence" data-scene="fence" :data-state="state" :data-theme-applied="theme" :data-light="light || undefined">
+  <div ref="root" class="fence" data-scene="fence" :data-state="state" :data-theme-applied="theme" :data-light="light">
     <StagePoster v-if="!film" name="fence" :theme="theme" />
     <canvas ref="canvas" class="canvas" />
     <div v-if="!film" ref="gates" class="gates">
