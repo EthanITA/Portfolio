@@ -2,7 +2,7 @@
 import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
 import { type JSAnimation, type ScrollObserver, animate, onScroll, stagger, svg } from "animejs";
 
-import { type FrameFormat, sequencePath } from "~/utils/scroll/frames";
+import { screen } from "~/utils/scroll/frames";
 import type { Product } from "~/utils/site/films";
 import { SCRUB_SMOOTH, motionOn } from "~/utils/site/motion";
 
@@ -44,8 +44,6 @@ const years = computed(() =>
     return to ? { to, from: before ?? to } : undefined;
   }),
 );
-
-const still = (slug: Product, format: FrameFormat): string => sequencePath(`screens/${slug}-800`, format);
 
 const nodes = (): HTMLElement[] => Array.from(root.value?.querySelectorAll<HTMLElement>("[data-node]") ?? []);
 
@@ -152,8 +150,8 @@ onBeforeUnmount(() => {
         <div v-if="item.show" class="show" data-enter>
           <div v-if="item.show.kind === 'stills'" class="stills" aria-hidden="true">
             <picture v-for="slug in item.show.slugs" :key="slug" class="still">
-              <source type="image/avif" :srcset="still(slug, 'avif')" />
-              <img class="image" :src="still(slug, 'webp')" width="800" height="500" alt="" loading="lazy" decoding="async" />
+              <source type="image/avif" :srcset="screen(slug, 800, 'avif')" />
+              <img class="image" :src="screen(slug, 800, 'webp')" width="800" height="500" alt="" loading="lazy" decoding="async" />
             </picture>
           </div>
           <p v-else-if="item.show.kind === 'count'" class="count">
