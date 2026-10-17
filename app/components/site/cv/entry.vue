@@ -9,7 +9,7 @@ const { entry } = defineProps<{ entry: CvEntry }>();
     <div class="head">
       <h3 class="title">{{ entry.title }}</h3>
       <div class="sub">
-        <span class="org">{{ entry.org }}</span>
+        <span class="org">{{ entry.org }}</span>{{ " " }}
         <span class="when">{{ entry.when }}</span>
       </div>
     </div>

@@ -128,12 +128,12 @@ onBeforeUnmount(() => {
       <section ref="hero" class="hero" :style="{ '--island-bottom': PHONE_REST_BAND.bottom, '--island-left': WIDE_REST_LEFT }">
         <div ref="intro" class="intro">
           <h1 class="title">
-            <span v-enter.now.words.wide class="first">I build AI products end to end.</span>
+            <span v-enter.now.words.wide class="first">I build AI products end to end.</span>{{ " " }}
             <span v-enter.now.wide="200" class="second"><span class="clause">The agents write a lot of the code,</span> <span class="clause">and the standard is mine.</span></span>
           </h1>
           <p v-enter.now="320" class="roles">Software engineer at Klarna, AI product engineer at Moneyfarm, and founder of Cela, where I'm building Sidecar, Sage and AI Shell.</p>
           <div class="actions">
-            <a v-enter.now="420" v-press class="btn btn-primary action" href="#sequence" @click="toWork">See the work</a>
+            <a v-enter.now="420" v-press class="btn btn-primary action" href="#sequence" @click="toWork">See the work</a>{{ " " }}
             <NuxtLink v-enter.now="480" v-press class="btn btn-outline action" to="/cv">Read the CV</NuxtLink>
           </div>
         </div>
@@ -166,7 +166,7 @@ onBeforeUnmount(() => {
             <span v-if="entry.count" class="number">
               <SiteCount v-bind="entry.count" @start="counting.add(entry.name)" /><span v-if="entry.total" class="total"> of {{ entry.total }}</span>
             </span>
-            <span v-else class="since">{{ entry.label }}</span>
+            <span v-else class="since">{{ entry.label }}</span>{{ " " }}
             <span v-if="entry.count" class="label">{{ entry.label }}</span>
           </p>
           <div v-if="entry.measure" class="measure">

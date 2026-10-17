@@ -87,8 +87,8 @@ onBeforeUnmount(() => {
     <div ref="waits" class="waits">
       <div v-for="(wait, at) in WAITS" :key="wait.label" class="wait">
         <button v-if="live" class="label press" type="button" @click="start(at)">{{ wait.label }}</button>
-        <span v-else class="label">{{ wait.label }}</span>
-        <span class="seconds">{{ wait.seconds }} s</span>
+        <span v-else class="label">{{ wait.label }}</span>{{ " " }}
+        <span class="seconds">{{ wait.seconds }} s</span>{{ " " }}
         <span class="end">
           <span class="track" aria-hidden="true"><span class="fill" data-fill :data-ends="wait.ends" /></span>
           <span class="status" :data-shown="ended[at]">

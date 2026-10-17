@@ -10,7 +10,7 @@ const { slug, numbers } = defineProps<{ slug: Product; numbers: Stat[] }>();
     <h2 :id="`${slug}-numbers`" v-enter.words class="heading">The numbers</h2>
     <ul class="row">
       <li v-for="stat in numbers" :key="stat.label" v-enter.stagger class="stat">
-        <span class="value"><SiteCount :to="stat.to" :before="stat.before" /><span v-if="stat.unit" class="unit">{{ stat.unit }}</span></span>
+        <span class="value"><SiteCount :to="stat.to" :before="stat.before" /><span v-if="stat.unit" class="unit">{{ stat.unit }}</span></span>{{ " " }}
         <span class="label">{{ stat.label }}</span>
       </li>
     </ul>
