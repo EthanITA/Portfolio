@@ -1,19 +1,7 @@
-import type { FilmScript, Key } from "./script.ts";
+import { SHELL_SCRIPT } from "../../app/utils/play/script/shell.ts";
+import type { FilmScript } from "./script.ts";
 
-// SHELL_SCRIPT's moments and keys from app/utils/play/script/shell.ts, mirrored until it imports "./typed.ts" and loads under node.
-const PLAY = {
-  moments: { outputFind: 7700, typeDist: 10_300, stagedDist: 13_300, killDist: 18_000, askedPush: 22_000, clear: 26_400, answerPipe: 30_900 },
-  keys: [
-    { key: "enter", at: 5900 },
-    { key: "enter", at: 11_500 },
-    { key: "ctrl U", at: 18_000 },
-    { key: "enter", at: 20_200 },
-    { key: "N", at: 25_000 },
-    { key: "enter", at: 29_700 },
-  ] satisfies Key[],
-};
-
-const m = PLAY.moments;
+const m = SHELL_SCRIPT.moments;
 const LINE = 32_600;
 const FADE = 31_600;
 
@@ -28,7 +16,7 @@ export default {
     { text: "Can't be undone: asks first", at: m.askedPush, until: m.clear - 200 },
     { text: "One answer from a pipe", at: m.answerPipe, until: FADE },
   ],
-  keys: PLAY.keys,
+  keys: SHELL_SCRIPT.keys,
   island: [
     { at: 0, until: 3000, shape: "line", draw: 400 },
     { at: LINE - 600, shape: "island", draw: LINE, y: 0.25 },
