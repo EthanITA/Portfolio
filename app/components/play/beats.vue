@@ -1,18 +1,23 @@
 <script setup lang="ts">
-import type { PlayBeat } from "~/utils/play/script/beats";
+import type { FeatureBeat } from "~/utils/play/script/typed";
 
-const { beats } = defineProps<{ beats: PlayBeat[] }>();
+import { REGIONS } from "~/utils/play/regions";
+
+const { beats } = defineProps<{ beats: FeatureBeat[] }>();
+
+// Rounded, since 0.022 * 100 lands a hair under 2.2 and the renderer's crop would snap a pixel taller.
+const percent = (fraction: number): string => `${Math.round(fraction * 1e6) / 1e4}%`;
+
+const placed = computed(() =>
+  beats.flatMap((beat) => {
+    const region = REGIONS[beat.id];
+    return region ? [{ id: beat.id, style: { left: percent(region.x), top: percent(region.y), width: percent(region.size), height: percent(region.size) } }] : [];
+  }),
+);
 </script>
 
 <template>
-  <span
-    v-for="beat in beats"
-    :key="beat.id"
-    class="beat"
-    :data-beat="beat.id"
-    :style="{ left: `${beat.region.x * 100}%`, top: `${beat.region.y * 100}%`, width: `${beat.region.size * 100}%`, height: `${beat.region.size * 100}%` }"
-    aria-hidden="true"
-  />
+  <span v-for="beat in placed" :key="beat.id" class="beat" :data-beat="beat.id" :style="beat.style" aria-hidden="true" />
 </template>
 
 <style scoped>

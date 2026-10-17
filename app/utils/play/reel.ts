@@ -1,11 +1,12 @@
 import type { SceneMode, Seekable } from "#shared/types/seekable";
 import type { EasingParam, JSAnimation, Timeline, Timer } from "animejs";
 import type { Ref, ShallowRef } from "vue";
-import type { PlayBeat } from "./script/beats";
+import type { FeatureBeat } from "./script/typed";
 
 import { MOTION_EASE, prefersReducedMotion } from "@cela/design/utils/motion";
 import { animate, createTimeline, createTimer, svg } from "animejs";
 import { onBeforeUnmount, onMounted, reactive, readonly, ref, shallowReactive, toRaw, watch, watchEffect } from "vue";
+import { useInvite } from "./invite";
 
 export type Driver = "demo" | "visitor";
 
@@ -55,7 +56,7 @@ export type ReelOptions<S> = {
   root: Readonly<ShallowRef<HTMLElement | null>>; // external contract: useTemplateRef
   visible: Readonly<Ref<boolean>>;
   visitor: (state: S) => Visitor<S>;
-  beats?: PlayBeat[];
+  beats?: FeatureBeat[];
 };
 
 export type PlayControl = {
@@ -167,6 +168,7 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor, 
     channels: Reels.bridged(reel.channels, (channel) => channel.name),
     drawn: Reels.bridged(reel.drawn ?? [], (tween) => tween.selector),
   };
+  const invite = useInvite();
   const view: { current: S } = shallowReactive({ current: Reels.replay(sorted, mode === "film" ? 0 : reel.loop.from) });
   const driver = ref<Driver>("demo");
   const reduced = ref(false);
@@ -327,10 +329,12 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor, 
 
   const playDemo = (): void => restart(reduced.value ? reel.still : reel.loop.from);
 
-  // Under reduced motion nothing plays, so Show me holds the beat's still instead of running up to it.
+  // Under reduced motion nothing plays, so Show me holds the beat's moment instead of running up to it.
   const show = (id: string): void => {
     const beat = shown.find((one) => one.id === id);
-    if (beat) restart(reduced.value ? beat.still : beat.from);
+    if (mode === "film" || !beat) return;
+    invite.dismiss();
+    restart(reduced.value ? beat.moment : beat.from);
   };
 
   const tween: ReelHandle<S>["tween"] = (name, value, { duration = 300, ease = MOTION_EASE.out } = {}) => {

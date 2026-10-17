@@ -1,4 +1,4 @@
-import { typed, type Key } from "./typed.ts";
+import { typed, type FeatureBeat, type Key } from "./typed.ts";
 
 export const ASK_FIND = "? find the five biggest files in here, skip node_modules and .git";
 export const ASK_DIST = "? delete the dist folder";
@@ -39,6 +39,14 @@ const keys: Key[] = [
   { key: "enter", at: moments.enterPipe },
 ];
 
+// Each moment sits in a 300 ms window where the caret is on and nothing else moves, since the caret blinks every 530 ms.
+const beats: FeatureBeat[] = [
+  { id: "looks", from: moments.typeFind, moment: moments.outputFind },
+  { id: "changes", from: moments.typeDist, moment: 15_100 },
+  { id: "undone", from: moments.typePush, moment: moments.askedPush },
+  { id: "pipe", from: moments.typePipe, moment: moments.answerPipe },
+];
+
 export const SHELL_SCRIPT = {
   duration: 35_000,
   still: 15_500,
@@ -47,4 +55,7 @@ export const SHELL_SCRIPT = {
   moments,
   presses,
   keys,
+  beats,
+  // The terminal's beat stills are shot whole at this size, where its long lines wrap the way a narrow window wraps them.
+  beatFrame: { width: 560, height: 350 },
 } as const;

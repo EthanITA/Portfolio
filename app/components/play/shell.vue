@@ -4,7 +4,7 @@ import type { ShellToy } from "~/utils/play/shell";
 
 import { Kbd, Surface } from "@cela/design";
 import { useCaret, useReel } from "~/utils/play/reel";
-import { BEATS } from "~/utils/play/script/beats";
+import { SHELL_SCRIPT } from "~/utils/play/script/shell";
 import { SHELL_REEL, SPINNER, shellToy } from "~/utils/play/shell";
 
 const { mode = "live", paused = false } = defineProps<{ mode?: SceneMode; paused?: boolean }>();
@@ -20,7 +20,7 @@ const reel = useReel({
   root,
   visible: playing,
   visitor: (state) => (toy = shellToy(state, { tween: (name, value) => reel.tween(name, value) })),
-  beats: BEATS.shell.beats,
+  beats: SHELL_SCRIPT.beats,
 });
 
 defineExpose({ ...reel.seekable, ...reel.control, show: reel.show });
@@ -138,7 +138,7 @@ const onInput = (event: Event): void => {
           <Kbd :keys="twin.caps" />
         </button>
       </div>
-      <PlayBeats v-if="mode === 'film'" :beats="BEATS.shell.beats" />
+      <PlayBeats v-if="mode === 'film'" :beats="SHELL_SCRIPT.beats" />
     </div>
   </PlayFrame>
 </template>
