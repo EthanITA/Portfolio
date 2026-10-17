@@ -24,7 +24,7 @@ const { positionals, values } = parseArgs({
   options: {
     cut: { type: "string", default: "16x9" },
     check: { type: "string", default: "24" },
-    port: { type: "string", default: "3105" },
+    port: { type: "string" },
   },
 });
 
@@ -106,7 +106,7 @@ const film = async (name: string): Promise<boolean> => {
   if (!script || !cut) throw new Error(`usage: tsx films/render.ts <${Object.keys(SCRIPTS).join("|")}...> [--cut ${Object.keys(CUTS).join("|")}]`);
 
   const route = `/film/${name}`;
-  const server = await Render.serve({ route, port: Number(values.port), root });
+  const server = await Render.serve({ route, port: values.port ? Number(values.port) : undefined, root });
   try {
     const started = performance.now();
     const options = { url: `${server.origin}${route}`, width: cut.width, height: cut.height, scale: SCALE, fps: FPS };

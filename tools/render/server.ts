@@ -1,4 +1,6 @@
 import { spawn } from "node:child_process";
+import { createServer } from "node:net";
+import { resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
 export type Server = { origin: string; stop: () => void };
@@ -23,13 +25,40 @@ const settle = async ({ url, timeout }: { url: string; timeout: number }): Promi
   return code;
 };
 
-export const serve = async ({ route, port = 3105, root, timeout = 180_000 }: { route: string; port?: number; root: string; timeout?: number }): Promise<Server> => {
-  const origin = `http://localhost:${port}`;
-  const running = await settle({ url: `${origin}${route}`, timeout });
-  if (running === 200) return { origin, stop: () => {} };
-  if (running) throw new Error(`${origin}${route} answered ${running}; the server on :${port} has to run with FILM=1`);
+const freePort = (): Promise<number> =>
+  new Promise((done, fail) => {
+    const probe = createServer();
+    probe.once("error", fail);
+    probe.listen(0, "localhost", () => {
+      const address = probe.address();
+      const port = address && typeof address === "object" ? address.port : 0;
+      probe.close(() => done(port));
+    });
+  });
 
-  const child = spawn("pnpm", ["exec", "nuxt", "dev", "--port", String(port), "--host", "localhost"], {
+const owner = async (origin: string): Promise<string> => {
+  try {
+    const response = await fetch(`${origin}/__film/root`, { signal: AbortSignal.timeout(10_000) });
+    return response.ok ? await response.text() : "";
+  } catch {
+    return "";
+  }
+};
+
+export const serve = async ({ route, port, root, timeout = 180_000 }: { route: string; port?: number; root: string; timeout?: number }): Promise<Server> => {
+  const listen = port || (await freePort());
+  const origin = `http://localhost:${listen}`;
+  if (port) {
+    const running = await settle({ url: `${origin}${route}`, timeout });
+    if (running === 200) {
+      const tree = await owner(origin);
+      if (resolve(tree || "/") !== resolve(root)) throw new Error(`:${port} serves ${tree || "a tree without the film module"}, not ${root}; stop that server or leave out --port`);
+      return { origin, stop: () => {} };
+    }
+    if (running) throw new Error(`${origin}${route} answered ${running}; the server on :${port} has to run with FILM=1`);
+  }
+
+  const child = spawn("pnpm", ["exec", "nuxt", "dev", "--port", String(listen), "--host", "localhost"], {
     cwd: root,
     env: { ...process.env, FILM: "1" },
     stdio: "ignore",
@@ -55,5 +84,5 @@ export const serve = async ({ route, port = 3105, root, timeout = 180_000 }: { r
     await sleep(1000);
   }
   stop();
-  throw new Error(`nuxt dev on :${port} did not serve ${route} within ${timeout} ms`);
+  throw new Error(`nuxt dev on :${listen} did not serve ${route} within ${timeout} ms`);
 };
