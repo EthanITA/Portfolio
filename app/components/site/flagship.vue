@@ -76,7 +76,7 @@ onBeforeUnmount(() => tilt?.revert());
 }
 
 .name {
-  @apply typo-heading-xl m-0;
+  @apply typo-heading-xl m-0 text-balance;
 }
 
 .text {

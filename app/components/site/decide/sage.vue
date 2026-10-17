@@ -81,14 +81,14 @@ onBeforeUnmount(() => {
     <ul ref="keys" class="keys">
       <li v-for="key in KEYS" :key="key" class="key">
         {{ key }}
-        <svg class="ring" aria-hidden="true"><rect width="100%" height="100%" rx="14" /></svg>
+        <svg class="halo" aria-hidden="true"><rect width="100%" height="100%" rx="14" /></svg>
       </li>
     </ul>
     <div ref="waits" class="waits">
       <div v-for="(wait, at) in WAITS" :key="wait.label" class="wait">
         <button v-if="live" class="label press" type="button" @click="start(at)">{{ wait.label }}</button>
-        <span v-else class="label">{{ wait.label }}</span>
-        <span class="seconds">{{ wait.seconds }} s</span>
+        <span v-else class="label">{{ wait.label }}</span>{{ " " }}
+        <span class="seconds">{{ wait.seconds }} s</span>{{ " " }}
         <span class="end">
           <span class="track" aria-hidden="true"><span class="fill" data-fill :data-ends="wait.ends" /></span>
           <span class="status" :data-shown="ended[at]">
@@ -114,7 +114,7 @@ onBeforeUnmount(() => {
   @apply typo-body-strong relative flex h-12 items-center justify-center rounded-lg border border-border bg-raised text-fg shadow-xs;
 }
 
-.ring {
+.halo {
   @apply pointer-events-none absolute -inset-1.5 size-[calc(100%+0.75rem)] overflow-visible fill-none stroke-primary stroke-2;
 }
 

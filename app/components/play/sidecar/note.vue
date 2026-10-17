@@ -16,7 +16,7 @@ onMounted(() => {
 
 <template>
   <div class="note" data-film-anchor="note" data-note>
-    <Surface class="card" pad="none" variant="glass">
+    <Surface class="sheet" pad="none" variant="glass">
       <div ref="field">
         <Textarea
           :model-value="draft"
@@ -43,8 +43,9 @@ onMounted(() => {
   transform-origin: top left;
 }
 
-.card {
-  @apply flex flex-col gap-2 p-2.5 shadow-lg;
+/* Not .card, which @cela/design also styles globally, so the hairline the note was reviewed with is stated here. */
+.sheet {
+  @apply flex flex-col gap-2 border border-border p-2.5 shadow-lg;
 }
 
 .foot {

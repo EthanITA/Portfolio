@@ -48,13 +48,13 @@ const onKey = (event: KeyboardEvent): void => {
 
 const onFace = (face: Face): void => act((live) => live.face(face));
 
-// Closing the note removes the field that held focus, so focus goes back to the frame instead of the page.
+// Closing the visitor's note removes the field that held focus, so focus goes back to the frame instead of the page.
 watch(
   () => state.value.composing,
   (isOpen) => {
-    if (isOpen || mode === "film") return;
+    if (isOpen || mode === "film" || !isVisitor.value) return;
     const frame = root.value?.closest<HTMLElement>("[data-driver]");
-    if (frame && !frame.contains(document.activeElement)) frame.focus();
+    if (frame && !frame.contains(document.activeElement)) frame.focus({ preventScroll: true });
   },
   { flush: "post" },
 );

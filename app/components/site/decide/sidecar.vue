@@ -124,8 +124,8 @@ onBeforeUnmount(() => {
       <div class="side">
         <div v-for="hunk in HUNKS" :key="hunk.id" class="hunk">
           <div v-for="(pair, row) in hunk.pairs" :key="row" class="row" :data-mark="pair.before.mark">
-            <span class="num">{{ pair.before.line }}</span>
-            <span class="sign">{{ SIGN[pair.before.mark] }}</span>
+            <span class="num">{{ pair.before.line }}</span>{{ " " }}
+            <span class="sign">{{ SIGN[pair.before.mark] }}</span>{{ " " }}
             <span class="code">{{ pair.before.text }}</span>
           </div>
         </div>
@@ -134,8 +134,8 @@ onBeforeUnmount(() => {
         <div class="side after">
           <div v-for="hunk in HUNKS" :key="hunk.id" class="hunk">
             <div v-for="(pair, row) in hunk.pairs" :key="row" class="row" :data-mark="pair.after.mark">
-              <span class="num">{{ pair.after.line }}</span>
-              <span class="sign">{{ SIGN[pair.after.mark] }}</span>
+              <span class="num">{{ pair.after.line }}</span>{{ " " }}
+              <span class="sign">{{ SIGN[pair.after.mark] }}</span>{{ " " }}
               <span class="code">{{ pair.after.text }}</span>
             </div>
           </div>

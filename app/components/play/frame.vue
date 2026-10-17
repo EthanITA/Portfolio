@@ -96,8 +96,10 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* The demo moves its own nodes at rest, so none of them may anchor the page's scroll. */
 .play-frame {
   @apply relative size-full overflow-hidden;
+  overflow-anchor: none;
 }
 
 .play-frame[data-mode="live"]:focus-visible {

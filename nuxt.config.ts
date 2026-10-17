@@ -99,6 +99,12 @@ export default defineNuxtConfig({
     },
     // Vite writes its build manifest into the public root, and it maps the module graph down to local store paths.
     "nitro:build:public-assets": (nitro) => rm(join(nitro.options.output.publicDir, "manifest.json"), { force: true }),
+    // @nuxtjs/robots pushes a noindex onto /404.html as if it were a client-only shell, but the prerendered error page carries its own.
+    "nitro:init": (nitro) => {
+      nitro.hooks.hook("prerender:generate", (route) => {
+        if (route.route === "/404.html") route.contents = route.contents?.replace(/<meta name="robots" content="[^"]*" \/>/, "");
+      });
+    },
   },
   modules: ["@nuxtjs/seo", "@nuxt/fonts", "@pinia/nuxt"],
   // Cloudflare Pages answers a folder index with a 308 to its trailing slash, and every canonical is slashless.

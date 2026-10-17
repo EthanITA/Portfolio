@@ -128,12 +128,12 @@ onBeforeUnmount(() => {
       <section ref="hero" class="hero" :style="{ '--island-bottom': PHONE_REST_BAND.bottom, '--island-left': WIDE_REST_LEFT }">
         <div ref="intro" class="intro">
           <h1 class="title">
-            <span v-enter.now.words.wide class="first">I build AI products end to end.</span>
+            <span v-enter.now.words.wide class="first">I build AI products end to end.</span>{{ " " }}
             <span v-enter.now.wide="200" class="second"><span class="clause">The agents write a lot of the code,</span> <span class="clause">and the standard is mine.</span></span>
           </h1>
           <p v-enter.now="320" class="roles">Software engineer at Klarna, AI product engineer at Moneyfarm, and founder of Cela, where I'm building Sidecar, Sage and AI Shell.</p>
           <div class="actions">
-            <a v-enter.now="420" v-press class="btn btn-primary action" href="#sequence" @click="toWork">See the work</a>
+            <a v-enter.now="420" v-press class="btn btn-primary action" href="#sequence" @click="toWork">See the work</a>{{ " " }}
             <NuxtLink v-enter.now="480" v-press class="btn btn-outline action" to="/cv">Read the CV</NuxtLink>
           </div>
         </div>
@@ -166,7 +166,7 @@ onBeforeUnmount(() => {
             <span v-if="entry.count" class="number">
               <SiteCount v-bind="entry.count" @start="counting.add(entry.name)" /><span v-if="entry.total" class="total"> of {{ entry.total }}</span>
             </span>
-            <span v-else class="since">{{ entry.label }}</span>
+            <span v-else class="since">{{ entry.label }}</span>{{ " " }}
             <span v-if="entry.count" class="label">{{ entry.label }}</span>
           </p>
           <div v-if="entry.measure" class="measure">
@@ -234,7 +234,7 @@ onBeforeUnmount(() => {
 }
 
 .title {
-  @apply m-0 flex max-w-4xl flex-col gap-2 text-4xl font-bold tracking-tight max-lg:short:text-3xl xl:text-5xl;
+  @apply m-0 flex max-w-4xl flex-col gap-2 text-4xl font-bold tracking-tight text-balance max-lg:short:text-3xl xl:text-5xl;
 }
 
 /* From lg the island's left cap sits at a fixed share of the hero's width, so the H1 stops one gutter short of it. */
@@ -253,7 +253,7 @@ onBeforeUnmount(() => {
 }
 
 .roles {
-  @apply typo-body-lg max-w-xl text-muted max-lg:short:typo-body;
+  @apply typo-body-lg max-w-prose text-pretty text-muted max-lg:short:typo-body;
 }
 
 .actions {
@@ -284,7 +284,7 @@ onBeforeUnmount(() => {
 }
 
 .small {
-  @apply typo-caption max-w-xl text-muted;
+  @apply typo-caption max-w-prose text-muted;
 }
 
 /* The bleed lines the text up with the heading, and the clip drops the hairlines cells draw past the edge. */
@@ -302,7 +302,7 @@ onBeforeUnmount(() => {
 }
 
 .number {
-  @apply font-mono text-6xl font-medium tracking-tight whitespace-nowrap text-primary tabular-nums;
+  @apply numeral;
 }
 
 /* "272 of 272" at the number's size needs 346 px against a 277 px cell at lg, so the total steps down. */

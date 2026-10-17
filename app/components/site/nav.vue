@@ -131,7 +131,7 @@ onBeforeUnmount(() => {
                       <NuxtLink class="item" :to="item.to">{{ item.label }}</NuxtLink>
                     </li>
                   </ul>
-                  <span ref="underline" class="underline" aria-hidden="true" />
+                  <span ref="underline" class="current" aria-hidden="true" />
                 </div>
               </div>
             </div>
@@ -219,7 +219,7 @@ onBeforeUnmount(() => {
   }
 }
 
-.underline {
+.current {
   @apply pointer-events-none absolute bottom-2 left-0 h-0.5 w-px origin-left rounded-full bg-primary;
 
   &[data-visible="false"] {
@@ -283,6 +283,11 @@ onBeforeUnmount(() => {
   &:focus-visible {
     @apply focus-ring;
   }
+}
+
+/* The fold only collapses the reveal, which @cela/design's stretched inner never reports, so the inner takes its content's width. */
+.bar .pill :deep(.responsive-box-inner) {
+  width: max-content;
 }
 
 .bar[data-tween="grow"] :deep(.responsive-box[data-animated="true"]) {

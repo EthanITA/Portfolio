@@ -14,8 +14,8 @@ const { slug, beats } = defineProps<{ slug: Product; beats: ProductPage["beats"]
       <p v-enter class="line">{{ beats.line }}</p>
     </div>
     <div class="cards" :data-count="beats.items.length">
-      <Surface v-for="beat in beats.items" :key="beat.glyph" v-enter.stagger as="article" class="card" data-glyph-host>
-        <div class="card-head">
+      <Surface v-for="beat in beats.items" :key="beat.glyph" v-enter.stagger as="article" class="beat" data-glyph-host>
+        <div class="beat-head">
           <h3 class="name">{{ beat.title }}</h3>
           <SiteGlyph :name="beat.glyph" />
         </div>
@@ -50,11 +50,11 @@ const { slug, beats } = defineProps<{ slug: Product; beats: ProductPage["beats"]
   }
 }
 
-.card {
+.beat {
   @apply flex flex-col gap-3;
 }
 
-.card-head {
+.beat-head {
   @apply flex items-start justify-between gap-4;
 }
 

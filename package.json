@@ -11,6 +11,7 @@
     "generate": "nuxt generate",
     "postinstall": "nuxt prepare",
     "preview": "nuxt preview",
+    "sweep": "tsx tools/site/sweep.ts",
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {

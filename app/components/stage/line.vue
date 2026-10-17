@@ -353,7 +353,11 @@ defineExpose({ ...seekable, restMs: FILM.rest });
     <div ref="box" class="stage">
       <StagePoster v-if="!film" name="line" :theme="theme" />
       <canvas ref="canvas" class="canvas" />
-      <span v-for="tier in TIERS" :key="tier" class="zone" :data-zone="tier" :style="ZONE_TOP[tier]">{{ TIER_NAME[tier] }}</span>
+      <template v-for="tier in TIERS" :key="tier">
+        <span class="zone" :data-zone="tier" :style="ZONE_TOP[tier]">{{ TIER_NAME[tier] }}</span>
+        <!-- A line break between inline siblings compiles to nothing, so the text twin would read "RunsWaits for you". -->
+        {{ " " }}
+      </template>
       <div v-for="view in views" :key="view.id" :ref="(el: unknown) => bind(view.id, el)" class="action" :data-action="view.id" :data-tier="view.tier" :data-status="view.status">
         <template v-if="view.status === 'waiting'">
           <button type="button" class="release" :aria-label="`${view.text} · ${TIER_NAME.waits}`" @click="release(view.id)" />

@@ -174,13 +174,13 @@ onBeforeUnmount(() => {
             </picture>
           </div>
           <p v-else-if="item.show.kind === 'count'" class="count">
-            <SiteCount class="figure" :to="item.show.to" :after="item.show.after" manual :go="reached[i]" />
+            <SiteCount class="figure" :to="item.show.to" :after="item.show.after" manual :go="reached[i]" />{{ " " }}
             <span class="label">{{ item.show.label }}</span>
           </p>
           <ul v-else class="bars">
             <li v-for="bar in item.show.bars" :key="bar.value" class="bar">
               <span class="track" aria-hidden="true"><span class="fill" :data-fill="bar.share" :style="{ '--share': bar.share }" /></span>
-              <span class="value">{{ bar.value }}</span>
+              <span class="value">{{ bar.value }}</span>{{ " " }}
               <span v-if="bar.note" class="note">{{ bar.note }}</span>
             </li>
           </ul>

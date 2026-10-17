@@ -5,6 +5,9 @@ import type { TransitionProps } from "vue";
 export type EnterOptions = { delay?: number; distance?: number; words?: boolean; line?: boolean; scale?: boolean };
 
 const LINE_MS = 600;
+const WORD_STEP_MS = 40;
+// The content plan caps a heading's entrance at 700 ms, so past ten words the step tightens instead.
+const WORDS_MS = 700;
 
 // MOTION_SPRING's values: the design's own factories call createSpring, which warns on every call under animejs 4.5.
 export const SPRING = {
@@ -42,7 +45,7 @@ export const enter = (el: HTMLElement, { delay = 0, distance = 12, words = false
     for (const part of parts) part.style.opacity = "0";
     el.dataset.entered = "";
     animate(parts, {
-      delay: stagger(40, { start: delay }),
+      delay: stagger(Math.min(WORD_STEP_MS, (WORDS_MS - MOTION_DURATION.base) / parts.length), { start: delay }),
       duration: MOTION_DURATION.base,
       ease: MOTION_EASE.out,
       opacity: [0, 1],

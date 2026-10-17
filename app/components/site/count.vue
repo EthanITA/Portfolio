@@ -62,5 +62,5 @@ onBeforeUnmount(() => observer?.disconnect());
 </script>
 
 <template>
-  <span ref="el">{{ format(to) }}</span>
+  <span ref="el" data-counter>{{ format(to) }}</span>
 </template>
