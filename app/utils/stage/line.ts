@@ -4,7 +4,7 @@ export const TIERS = ["runs", "waits", "stops"] as const;
 export type Tier = (typeof TIERS)[number];
 
 const WORDS: [Tier, RegExp][] = [
-  ["stops", /\b(pay|send|buy|push|publish|deploy|transfer|wire)\b/],
+  ["stops", /\b(pay|send|buy|order|sign|share|push|publish|deploy|transfer|wire)\b/],
   ["waits", /\b(delete|remove|rm|overwrite|move|rename|install|join|change|write|edit|update|book)\b/],
   ["runs", /\b(find|list|show|search|read|count|check|look|open|grep|see|get)\b/],
 ];

@@ -1,4 +1,5 @@
 <script lang="ts">
+// Outside setup so the first touch silences autoplay for the whole page session, across route changes.
 let quiet = false;
 </script>
 
@@ -51,6 +52,7 @@ const labelTop = ref(tops(STAGE_CAMERA.line));
 
 const overlays = new Map<number, HTMLElement>();
 const rects = new Map<number, [number, number, number, number]>();
+const sizes = new WeakMap<HTMLElement, string>();
 const ledger = createLedger(() => reduced.value);
 let slots = 4;
 let refresh: () => void = () => {};
@@ -65,8 +67,11 @@ const place = (): void => {
     const el = overlays.get(id);
     if (!el) return;
     el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-    el.style.width = `${width}px`;
-    el.style.height = `${height}px`;
+    const size = `${Math.round(width)}x${Math.round(height)}`;
+    if (sizes.get(el) === size) return;
+    sizes.set(el, size);
+    el.style.width = `${Math.round(width)}px`;
+    el.style.height = `${Math.round(height)}px`;
   });
 };
 
@@ -286,7 +291,7 @@ defineExpose({ ...seekable, restMs: FILM.rest });
       </div>
     </form>
     <div ref="box" class="stage">
-      <StagePoster v-if="!film" name="line" />
+      <StagePoster v-if="!film" name="line" :theme="theme" />
       <canvas ref="canvas" class="canvas" />
       <span v-for="tier in TIERS" :key="tier" class="zone" :data-zone="tier" :style="{ top: `${labelTop[tier]}%` }">{{ TIER_NAME[tier] }}</span>
       <div v-for="view in views" :key="view.id" :ref="(el: unknown) => bind(view.id, el)" class="action" :data-action="view.id" :data-tier="view.tier" :data-status="view.status">

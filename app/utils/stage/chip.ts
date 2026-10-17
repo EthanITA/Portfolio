@@ -83,8 +83,7 @@ const checkMark = (): HTMLCanvasElement => {
 export const createChip = (stage: Stage, { text, size, maxWidth, lines = 2 }: ChipOptions): Chip => {
   const font = `500 ${Math.round(size * PX)}px ${fontStack()}`;
   const pad = size * 0.9;
-  const [probe, measure] = canvas2d(1, 1);
-  void probe;
+  const [, measure] = canvas2d(1, 1);
   if (measure) measure.font = font;
   const rows = measure ? wrap(measure, text, (maxWidth - pad * 2) * PX, lines) : [text];
   const textWidth = measure ? Math.max(...rows.map((row) => measure.measureText(row).width)) / PX : text.length * size * 0.6;
