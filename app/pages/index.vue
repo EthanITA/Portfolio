@@ -15,6 +15,7 @@ type Work = { name: string; text: string; count?: Count; total?: number; label: 
 
 const DRIFT = 0.3;
 
+definePageMeta({ endsOnContact: true });
 useHead({ titleTemplate: "%s" });
 useSeoMeta({ title: seo.home.title, description: seo.home.description });
 useSchemaOrg([defineWebPage({ "@type": "ProfilePage", mainEntity: { "@id": links.identity } })]);
@@ -281,9 +282,8 @@ onBeforeUnmount(() => {
   @apply typo-display m-0 text-balance sm:text-4xl;
 }
 
-/* 35em is section 7's 70 measure; max-w-prose's 65ch reads 95 because this face's zero is 0.73em wide. */
 .body {
-  @apply typo-body-lg max-w-[35em] text-pretty text-muted;
+  @apply typo-body-lg max-w-prose text-pretty text-muted;
 }
 
 .small {
