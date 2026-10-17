@@ -66,7 +66,7 @@ void main() {
     vec2 centreUv = 0.25 * (aStartTop.xy + aStartTop.zw + aStartBottom.xy + aStartBottom.zw);
     vec2 centre = uFit.xy + centreUv * uFit.zw;
     vec3 axis = normalize(vec3(aMotion.y, aMotion.z, 0.35));
-    vec3 local = rotate(vec3(start - centre, 0.0), axis, aState.y * aMotion.w * 1.6);
+    vec3 local = rotate(vec3(start - centre, 0.0), axis, aState.y * aMotion.w * 0.25);
     vec2 drift = (centre - uView * 0.5) * 0.4 + aMotion.yz * uView.y * 0.12;
     point = vec3(centre + local.xy + drift * aState.x, local.z + aState.y * uDepth * 1.3);
   }
