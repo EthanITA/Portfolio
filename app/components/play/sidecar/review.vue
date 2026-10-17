@@ -62,7 +62,7 @@ const entranceOf = (row: TreeRow): string => {
           :data-selected="row.path === state.selected"
           :style="{ '--depth': row.depth, '--in': entranceOf(row) }"
         >
-          <button v-if="row.kind === 'file'" class="name" type="button" @click="emit('select', row.path)">{{ row.name }}</button>
+          <button v-if="row.kind === 'file'" class="name" type="button" @click="emit('select', row.path)"><span class="label">{{ row.name }}</span></button>
           <span v-else class="name">{{ row.name }}</span>
           <span class="pill" :data-armed="state.confirming === row.path">
             <span v-if="row.kind === 'dir' && state.confirming !== row.path" class="count">{{ pendingOf(row) }}</span>
@@ -94,13 +94,13 @@ const entranceOf = (row: TreeRow): string => {
         <li v-for="entry in history" :key="entry.key" class="entry" data-entry>{{ entry.label }}</li>
       </ol>
       <footer v-if="state.files.length || undoTop || redoTop" class="all">
-        <button v-if="undoTop" :aria-label="`Undo ${undoTop.label}`" class="travel" data-undo :title="`Undo ${undoTop.label}`" type="button" @click="emit('undo')">
+        <button v-if="undoTop" :aria-label="`⌘Z, Undo ${undoTop.label}`" class="travel" data-undo :title="`Undo ${undoTop.label}`" type="button" @click="emit('undo')">
           <PlaySidecarIcon name="undo" />
-          <Kbd keys="cmd Z" />
+          <Kbd aria-hidden="true" keys="cmd Z" />
         </button>
-        <button v-if="redoTop" :aria-label="`Redo ${redoTop.label}`" class="travel" data-redo :title="`Redo ${redoTop.label}`" type="button" @click="emit('redo')">
+        <button v-if="redoTop" :aria-label="`⌘⇧Z, Redo ${redoTop.label}`" class="travel" data-redo :title="`Redo ${redoTop.label}`" type="button" @click="emit('redo')">
           <PlaySidecarIcon name="redo" />
-          <Kbd keys="cmd shift Z" />
+          <Kbd aria-hidden="true" keys="cmd shift Z" />
         </button>
         <span class="spacer" />
         <button class="action" data-tone="danger" :disabled="!pendingAll" type="button" @click="emit('under', '*', false)">
@@ -219,11 +219,11 @@ const entranceOf = (row: TreeRow): string => {
 }
 
 .churn [data-mark="add"] {
-  @apply text-success;
+  @apply text-success-text;
 }
 
 .churn [data-mark="remove"] {
-  @apply text-error;
+  @apply text-error-text;
 }
 
 .tree {
@@ -245,8 +245,14 @@ const entranceOf = (row: TreeRow): string => {
   @apply min-w-0 flex-1 truncate border-0 bg-transparent p-0 text-left font-mono typo-caption text-fg;
 }
 
+/* The truncation moves to the label, because the button's own overflow would clip its hit area. */
 button.name {
-  @apply cursor-pointer;
+  @apply relative hit-area cursor-pointer overflow-visible;
+  --hit-y: calc(--spacing(7) + 1px);
+}
+
+.label {
+  @apply block truncate;
 }
 
 .node[data-kind="dir"] .name {
@@ -266,11 +272,13 @@ button.name {
 }
 
 .ask {
-  @apply py-0 pr-0.5 pl-1 typo-meta-semibold whitespace-nowrap text-error;
+  @apply py-0 pr-0.5 pl-1 typo-meta-semibold whitespace-nowrap text-error-text;
 }
 
 .dot {
-  @apply grid h-4 w-5 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 text-muted;
+  @apply relative hit-area grid h-4 w-6 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 text-muted;
+  --hit-x: calc(100% + 1px);
+  --hit-y: calc(--spacing(7) + 1px);
 }
 
 .pill[data-armed="true"] .dot[data-tone="reject"] {
@@ -305,12 +313,17 @@ button.name {
   @apply flex-1;
 }
 
+.all > button {
+  --hit-x: calc(100% + --spacing(1.5));
+  --hit-y: calc(--spacing(7) + --spacing(1.5));
+}
+
 .travel {
-  @apply inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-raised px-2 text-fg;
+  @apply relative hit-area inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-raised px-2 text-fg;
 }
 
 .action {
-  @apply h-7 cursor-pointer rounded-full border border-border bg-raised px-3 typo-caption-strong whitespace-nowrap text-fg;
+  @apply relative hit-area h-7 cursor-pointer rounded-full border border-border bg-raised px-3 typo-caption-strong whitespace-nowrap text-fg;
 }
 
 .action[data-tone="primary"] {
@@ -318,7 +331,7 @@ button.name {
 }
 
 .action[data-tone="danger"] {
-  @apply text-error;
+  @apply text-error-text;
 }
 
 .action:disabled {
@@ -380,7 +393,7 @@ button.name {
 }
 
 .num {
-  @apply w-9 flex-none pr-2 text-right text-subtle tabular-nums;
+  @apply w-9 flex-none pr-2 text-right text-muted tabular-nums;
 }
 
 .sign {
@@ -396,7 +409,8 @@ button.name {
 }
 
 .arrow {
-  @apply grid h-5 w-6 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 text-muted;
+  @apply relative hit-area grid h-5 w-6 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 text-muted;
+  --hit-x: calc(100% + 1px);
 }
 
 .arrow:disabled {
@@ -427,6 +441,12 @@ button.name {
   }
 }
 
+@media (pointer: coarse) {
+  .travel > .kbd {
+    @apply hidden;
+  }
+}
+
 @container (max-width: 560px) {
   .review {
     grid-template-columns: minmax(0, 1fr);
@@ -434,7 +454,7 @@ button.name {
   }
 
   .tree {
-    @apply max-h-32 flex-none;
+    @apply max-h-32 flex-none overflow-y-auto;
   }
 
   .history {

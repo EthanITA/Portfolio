@@ -6,7 +6,7 @@ import { CanvasTexture, Mesh, MeshBasicMaterial, PlaneGeometry, SRGBColorSpace, 
 import { breath, createIsland, createLine, createStage, ISLAND, slab, STAGE_CAMERA } from "~/utils/stage/island";
 
 import { sequencePath } from "./frames";
-import { SEQUENCE, type Theme } from "./sequence";
+import { SEQUENCE } from "./sequence";
 import { SCREENS, type Screen } from "./tiles";
 
 export type Quads = Record<Screen, [number, number][]>;
@@ -45,13 +45,13 @@ const held = breath(SHOT.open[0]);
 const span = ([from, to]: readonly [number, number], ms: number): number => Math.min(Math.max((ms - from) / (to - from), 0), 1);
 const mix = (from: number, to: number, t: number): number => from + (to - from) * t;
 
-const placeholder = (theme: Theme): Texture => {
+const placeholder = (): Texture => {
   const canvas = document.createElement("canvas");
   canvas.width = 1600;
   canvas.height = 1000;
   const context = canvas.getContext("2d");
   if (context) {
-    context.fillStyle = theme === "dark" ? "#18181b" : "#ffffff";
+    context.fillStyle = "#ffffff";
     context.fillRect(0, 0, canvas.width, canvas.height);
   }
   const texture = new CanvasTexture(canvas);
@@ -59,7 +59,7 @@ const placeholder = (theme: Theme): Texture => {
   return texture;
 };
 
-export const createSequenceScene = ({ canvas, theme }: { canvas: HTMLCanvasElement; theme: Theme }): SequenceScene => {
+export const createSequenceScene = ({ canvas }: { canvas: HTMLCanvasElement }): SequenceScene => {
   const stage = createStage({ canvas, camera: STAGE_CAMERA.hero, film: true, frame: SEQUENCE.aspect });
   stage.resize(canvas.clientWidth, canvas.clientHeight);
   const island = createIsland(stage);
@@ -78,13 +78,13 @@ export const createSequenceScene = ({ canvas, theme }: { canvas: HTMLCanvasEleme
     const body = new Mesh(slab({ width: third, height: coreHeight, depth: coreDepth, radius: SCREEN.radius }), stage.material("core"));
     const face = new Mesh(
       new PlaneGeometry(SCREEN.face, SCREEN.face / 1.6),
-      new MeshBasicMaterial({ map: placeholder(theme), toneMapped: false, transparent: true, opacity: 0 }),
+      new MeshBasicMaterial({ map: placeholder(), toneMapped: false, transparent: true, opacity: 0 }),
     );
     body.add(face);
     body.visible = false;
     stage.scene.add(body);
     const load = loader
-      .loadAsync(sequencePath(`${theme}/screens/${screen}-1600`, "avif"))
+      .loadAsync(sequencePath(`screens/${screen}-1600`, "avif"))
       .then((texture) => {
         texture.colorSpace = SRGBColorSpace;
         face.material.map?.dispose();

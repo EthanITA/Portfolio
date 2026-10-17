@@ -178,7 +178,7 @@ onBeforeUnmount(() => {
 }
 
 .group {
-  @apply typo-eyebrow-sm leading-snug text-subtle;
+  @apply typo-eyebrow-sm leading-snug text-muted;
 }
 
 .items {

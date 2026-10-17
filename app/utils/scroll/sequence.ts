@@ -21,12 +21,9 @@ export const BEAT_RANGES = [
 
 export const BEAT_FADE = { in: 0.04, out: 0.03, rise: 16 } as const;
 
-export type Theme = "light" | "dark";
-
 export type Rect = { x: number; y: number; width: number; height: number };
 
-export const frameAt = (progress: number): number =>
-  Math.round((Math.min(Math.max(progress, 0), SEQUENCE.breakAt) / SEQUENCE.breakAt) * (SEQUENCE.frames - 1));
+export const framePosition = (progress: number): number => (Math.min(Math.max(progress, 0), SEQUENCE.breakAt) / SEQUENCE.breakAt) * (SEQUENCE.frames - 1);
 
 const clamp01 = (value: number): number => Math.min(Math.max(value, 0), 1);
 

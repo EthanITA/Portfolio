@@ -1,3 +1,6 @@
+import { rm } from "node:fs/promises";
+import { join } from "node:path";
+
 import tailwindcss from "@tailwindcss/vite";
 import tailwindAutoReference from "vite-plugin-vue-tailwind-auto-reference";
 
@@ -10,8 +13,8 @@ const markdown = (page: PageSeo): { title: string; href: string; description: st
   description: page.description,
 });
 
-// Runs before first paint: a stored dark choice never flashes light, and entrances hide only when they will play.
-const headScript = `(function(){var d=document.documentElement;try{d.dataset.theme=localStorage.getItem("cela-theme")==="dark"?"dark":"light"}catch(e){d.dataset.theme="light"}d.dataset.motion=matchMedia("(prefers-reduced-motion: reduce)").matches?"off":"on";if(d.dataset.motion==="on"&&matchMedia("(hover: hover) and (pointer: fine) and (min-width: 1024px)").matches)d.dataset.motionWide="";setTimeout(function(){if(!("ready" in d.dataset))d.dataset.motion="off"},3000)})()`;
+// Runs before first paint, so entrances hide only when they will play.
+const headScript = `(function(){var d=document.documentElement;d.dataset.motion=matchMedia("(prefers-reduced-motion: reduce)").matches?"off":"on";if(d.dataset.motion==="on"&&matchMedia("(hover: hover) and (pointer: fine) and (min-width: 1024px)").matches)d.dataset.motionWide="";setTimeout(function(){if(!("ready" in d.dataset))d.dataset.motion="off"},3000)})()`;
 
 const aiCrawlers = [
   "GPTBot",
@@ -64,6 +67,9 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
+      // Light only until the dark palette is retuned in @cela/design; the stamp also beats an OS dark preference without JS.
+      htmlAttrs: { "data-theme": "light" },
+      meta: [{ name: "color-scheme", content: "light" }],
       link: [
         { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
         { rel: "icon", href: "/favicon.ico", sizes: "32x32" },
@@ -91,6 +97,8 @@ export default defineNuxtConfig({
     "build:manifest": (manifest) => {
       for (const meta of Object.values(manifest)) meta.prefetch = false;
     },
+    // Vite writes its build manifest into the public root, and it maps the module graph down to local store paths.
+    "nitro:build:public-assets": (nitro) => rm(join(nitro.options.output.publicDir, "manifest.json"), { force: true }),
   },
   modules: ["@nuxtjs/seo", "@nuxt/fonts", "@pinia/nuxt"],
   nitro: { prerender: { crawlLinks: true, ignore: ["/film"], routes: ["/"] } },
@@ -115,6 +123,8 @@ export default defineNuxtConfig({
       knowsLanguage: ["it", "en"],
     },
   },
+  // A static deploy gains nothing from its service worker, and Nuxt already reloads on a missing chunk.
+  skewProtection: { enabled: false },
   site: {
     url: links.site,
     name: "Marco Dong",

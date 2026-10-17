@@ -101,6 +101,6 @@ onMounted(() => {
 }
 
 .play-chip {
-  @apply absolute top-3 right-3 z-20;
+  @apply absolute top-3 right-3 z-20 hit-area;
 }
 </style>
