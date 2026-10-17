@@ -3,6 +3,7 @@ import { Surface } from "@cela/design";
 import { spotlight } from "@cela/design/utils/motion";
 import { type JSAnimation, type ScrollObserver, animate, onScroll, splitText, stagger } from "animejs";
 
+import { BOARD } from "~/utils/site/board";
 import { SCRUB_SMOOTH, motionOn } from "~/utils/site/motion";
 import { seo } from "~/utils/site/seo";
 
@@ -35,9 +36,12 @@ const rules: Rule[] = [
   },
 ];
 
+// The home's board shows this same task ticked; here it is still being built when the loop reaches Board.
+const [building] = BOARD;
+
 const loop: Step[] = [
   { step: "Read", receipt: "what I typed, what I meant, what it forces" },
-  { step: "Board", receipt: "#4 [AI] Crossfade the sequence frames", task: true },
+  { step: "Board", receipt: building && `#${building.id} [${building.category}] ${building.subject}`, task: true },
   { step: "Build", receipt: "fix(scroll): crossfade the two frames around the scroll position" },
   { step: "Prove", receipt: "check.ts: 0 failures" },
   { step: "Review" },
@@ -222,17 +226,18 @@ onBeforeUnmount(() => {
   @apply typo-body-lg max-w-prose text-pretty text-muted;
 }
 
-.coarse {
+.fine {
   @apply hidden;
 }
 
-@media (pointer: coarse) {
+/* Hover only exists on a fine pointer, so every other device reads the tap line. */
+@media (hover: hover) and (pointer: fine) {
   .fine {
-    @apply hidden;
+    @apply inline;
   }
 
   .coarse {
-    @apply inline;
+    @apply hidden;
   }
 }
 
@@ -258,9 +263,9 @@ onBeforeUnmount(() => {
   }
 }
 
-/* Room below the last rule, so the panel is still pinned whole when rule 8 crosses the centre. */
+/* 11rem is rule 8's card (183 px from md up), so the section still reaches the panel's bottom as that card crosses the centre. */
 .rules {
-  @apply m-0 flex list-none flex-col gap-4 p-0 md:col-start-2 md:pb-[calc(50svh-9rem)];
+  @apply m-0 flex list-none flex-col gap-4 p-0 md:col-start-2 md:pb-[calc(50svh-11rem)];
 }
 
 .rule {
@@ -323,7 +328,7 @@ onBeforeUnmount(() => {
 
 /* Drawn rather than typed, because DM Mono has no ◼ and it would fall back to another face. */
 .box {
-  @apply mt-0.5 size-2.5 shrink-0 rounded-[2px] bg-primary;
+  @apply mt-0.5 size-2.5 shrink-0 rounded-xs bg-primary;
 }
 
 /* Under lg the nodes sit on each label's first line, so the track runs from the first node's centre to the last. */
