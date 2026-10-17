@@ -17,6 +17,14 @@ const { slug, name, sub, lead, beats, builtWith, status, limit } = defineProps<{
 
 const film = films[slug];
 const playing = ref(false);
+const video = useTemplateRef<HTMLVideoElement>("video");
+
+// The pressed button unmounts, so focus moves to the player to keep its controls on the keyboard.
+const watch = async (): Promise<void> => {
+  playing.value = true;
+  await nextTick();
+  video.value?.focus();
+};
 </script>
 
 <template>
@@ -27,15 +35,15 @@ const playing = ref(false);
       <p v-enter.now.wide="320" class="lead"><SiteRuns :runs="lead" /></p>
     </header>
 
-    <div v-enter.now="420" class="film wrap">
+    <div v-enter.now.wide="420" class="film wrap">
       <Surface class="frame" variant="raised" shape="island" pad="none">
-        <video v-if="playing && film" class="video" controls autoplay playsinline preload="none" :poster="film.poster">
-          <source :src="film.webm" type="video/webm" />
-          <source :src="film.mp4" type="video/mp4" />
+        <video v-if="playing && film" ref="video" class="video" controls autoplay playsinline preload="none" :poster="film.poster">
+          <source :src="film.webm" type='video/webm; codecs="vp9, opus"' />
+          <source :src="film.mp4" type='video/mp4; codecs="avc1.64002A, mp4a.40.2"' />
         </video>
         <template v-else>
           <img v-if="film" class="poster" :src="film.poster" alt="" width="1920" height="1080" decoding="async" />
-          <button v-press class="watch" type="button" :disabled="!film" @click="playing = true">
+          <button v-press class="watch" type="button" :disabled="!film" @click="watch">
             <svg class="play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" /></svg>
             Watch the film
           </button>
@@ -98,6 +106,10 @@ const playing = ref(false);
 .poster,
 .video {
   @apply absolute inset-0 size-full object-cover;
+}
+
+.video:focus-visible {
+  @apply focus-ring;
 }
 
 .watch {
