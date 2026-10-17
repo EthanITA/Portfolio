@@ -62,10 +62,9 @@ export const useScene = ({ mode, duration, root, box = root, canvas, setup, redu
   const running = (): boolean => !!runtime && inView && pageVisible && (!reduced.value || (!!reducedOnDemand && busy));
 
   const stamp = (): void => {
-    if (film) state.value = runtime ? "live" : "poster";
-    else if (reduced.value) state.value = "reduced";
-    else if (!inView || !pageVisible) state.value = "paused";
-    else state.value = running() ? "live" : "poster";
+    if (reduced.value && !film) state.value = "reduced";
+    else if (!runtime) state.value = "poster";
+    else state.value = film || running() ? "live" : "paused";
   };
 
   const reveal = (): void => {
