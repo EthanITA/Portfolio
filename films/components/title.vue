@@ -42,7 +42,7 @@ onFrame((ms) => {
           :style="{ left: `${offsets[w]?.[n] ?? 0}px` }"
           :data-at="word.at + n * SKY.ripple"
           :data-leave="leave + w * SKY.trail"
-          data-swell
+          data-swell="true"
           >{{ letter }}</span
         >
       </span>
