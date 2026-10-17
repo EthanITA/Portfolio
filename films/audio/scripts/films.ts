@@ -148,7 +148,7 @@ const shellCues = (): CueSpec[] => {
 
 const sidecarCues = (): CueSpec[] => {
   const { moments: m, presses } = SIDECAR_SCRIPT;
-  const click =(id: string, at: number, variant: ClickVariant, marks: string): CueSpec => ({ id, at, sound: "click", variant, marks, sheet: "" });
+  const click = (id: string, at: number, variant: ClickVariant, marks: string): CueSpec => ({ id, at, sound: "click", variant, marks, sheet: "" });
   const tick = (id: string, at: number, variant: TickVariant, marks: string): CueSpec => ({ id, at, sound: "tick", variant, marks, sheet: "" });
   return withSheets("sidecar", [
     ...frame("sidecar"),
