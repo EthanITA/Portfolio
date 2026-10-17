@@ -107,6 +107,7 @@ const side = [
 
 .cols {
   @apply grid gap-8 print:gap-x-6 print:gap-y-4;
+  grid-template-areas: "experience" "side" "skills";
 
   @media (width >= 48rem) {
     grid-template-areas: "experience side" "experience skills";
