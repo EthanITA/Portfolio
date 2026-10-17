@@ -445,7 +445,9 @@ const beats: Beat<SidecarState>[] = [
   at(m.noteLands, Sidecar.landFlight),
   at(m.review, (state) => (state.face = "review")),
   at(m.undo, Sidecar.undo),
+  at(m.undoAgain, Sidecar.undo),
   at(m.redo, Sidecar.redo),
+  at(m.redoAgain, Sidecar.redo),
 ];
 
 const derive = (): Channel[] => {

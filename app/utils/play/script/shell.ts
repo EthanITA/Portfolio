@@ -6,21 +6,21 @@ export const ASK_PUSH = "? force push my branch over main on origin";
 export const PIPE_LINE = "git show HEAD | ai -p 'Write one concise conventional commit subject for this change.'";
 
 const moments = {
-  typeFind: 3200,
-  enterFind: 5900,
-  outputFind: 7700,
-  typeDist: 10_300,
-  enterDist: 11_500,
-  stagedDist: 13_300,
-  killDist: 18_000,
-  typePush: 18_300,
-  enterPush: 20_200,
-  askedPush: 22_000,
-  answerNo: 25_000,
-  clear: 26_400,
-  typePipe: 27_200,
-  enterPipe: 29_700,
-  answerPipe: 30_900,
+  typeFind: 4000,
+  enterFind: 7000,
+  outputFind: 9000,
+  typeDist: 10_500,
+  enterDist: 12_000,
+  stagedDist: 14_000,
+  killDist: 17_000,
+  typePush: 17_500,
+  enterPush: 19_500,
+  askedPush: 21_000,
+  answerNo: 24_000,
+  clear: 24_500,
+  typePipe: 25_000,
+  enterPipe: 27_500,
+  answerPipe: 29_000,
 } as const;
 
 const presses = {
@@ -43,7 +43,7 @@ export const SHELL_SCRIPT = {
   duration: 35_000,
   still: 15_500,
   // The live loop opens two seconds before the first keystroke, so the idle prompt is seen waiting.
-  loop: { from: 1000, to: 33_500 },
+  loop: { from: 2000, to: 32_000 },
   moments,
   presses,
   keys,
