@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import type { Driver } from "~/utils/play/reel";
+import type { ShallowUnwrapRef } from "vue";
+import type { Driver, PlayControl } from "~/utils/play/reel";
 
 import { Chip } from "@cela/design";
 
-const { play } = defineProps<{ play?: { driver: Driver; take: () => void; demo: () => void } }>();
+const { play } = defineProps<{ play?: ShallowUnwrapRef<PlayControl> }>();
 
 // The home's crossfade leaves play undefined between two playgrounds, so the label holds instead of flashing back.
 const last = ref<Driver>();
