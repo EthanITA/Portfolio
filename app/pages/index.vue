@@ -7,6 +7,7 @@ import { links } from "~/utils/site/links";
 import { motionOn } from "~/utils/site/motion";
 import { seo } from "~/utils/site/seo";
 import type { Run } from "~/utils/site/text";
+import { PHONE_REST_BAND } from "~/utils/stage/camera";
 
 type Flagship = { slug: Product; name: string; text: Run[]; to: string; link: string };
 type Count = { to: number; after?: string; decimals?: number };
@@ -130,7 +131,7 @@ onBeforeUnmount(() => {
           <LazyStageHero :progress="heroProgress" />
         </SiteMount>
       </div>
-      <section ref="hero" class="hero">
+      <section ref="hero" class="hero" :style="{ '--island-bottom': PHONE_REST_BAND.bottom }">
         <div ref="intro" class="intro">
           <h1 class="title">
             <span v-enter.now.words.wide class="first">I build AI products end to end.</span>
@@ -216,9 +217,9 @@ onBeforeUnmount(() => {
   @apply sticky top-0;
 }
 
-/* Stage's island rests above 33.2svh on phones, so the text starts 8 px under it and the hero grows rather than overlap. */
+/* On phones the text starts 8 px under stage's island rest band, so the hero grows rather than overlap. */
 .hero {
-  @apply relative flex min-h-160 flex-col justify-end overflow-hidden pb-16 max-md:min-h-svh max-md:pt-[max(13rem,calc(33.2svh_+_0.5rem))] max-md:short:pb-10 md:h-svh md:justify-center md:pt-20 md:pb-0;
+  @apply relative flex min-h-160 flex-col justify-end overflow-hidden pb-16 max-md:min-h-svh max-md:pt-[max(13rem,calc(var(--island-bottom)*100svh_+_0.5rem))] max-md:short:pb-10 md:h-svh md:justify-center md:pt-20 md:pb-0;
 }
 
 .intro {
