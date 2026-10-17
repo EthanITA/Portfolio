@@ -36,7 +36,10 @@ const SIGN: Record<DiffLine["mark"], string> = { add: "+", remove: "−", same: 
     </span>
     <div v-for="line in hunk.lines" :key="`${line.mark}${line.line}`" class="row" :data-mark="line.mark">
       <span class="num">{{ line.line }}</span>
+      <!-- A line break between inline siblings compiles to nothing, so the text twin would read "153</SiteMount>". -->
+      {{ " " }}
       <span class="sign">{{ SIGN[line.mark] }}</span>
+      {{ " " }}
       <span class="code">{{ line.text }}</span>
     </div>
     <slot />
