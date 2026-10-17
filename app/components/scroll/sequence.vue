@@ -1,8 +1,4 @@
 <script setup lang="ts">
-import type { ScrollObserver, Timer } from "animejs";
-
-import { createTimer, onScroll } from "animejs";
-
 import { createFrames, sequencePath, type Drawable, type Frames } from "~/utils/scroll/frames";
 import { MANIFEST } from "~/utils/scroll/manifest.gen";
 import { BEAT_RANGES, beatStyle, cardOpacity, fitFrame, framePosition, SEQUENCE } from "~/utils/scroll/sequence";
@@ -66,6 +62,8 @@ const setup = (): void => {
   let inView = false;
   let near = false;
   let pending = 0;
+  let ticking = 0;
+  let ticked = 0;
   let disposed = false;
   const idle = window.requestIdleCallback ?? ((callback: () => void) => setTimeout(callback, 1));
 
@@ -83,6 +81,7 @@ const setup = (): void => {
   const viewTargets = (): Targets =>
     Object.fromEntries(Object.entries(documentTargets).map(([screen, rect]) => [screen, { ...rect, y: rect.y - scroll }]));
 
+  // Styles derive from p, not timeline tweens, which strand mid-value when the smoothing skips past their start.
   const draw = (): void => {
     const position = framePosition(progress);
     const index = Math.round(position);
@@ -190,31 +189,43 @@ const setup = (): void => {
     schedule();
   };
 
-  // Styles derive from p, not timeline tweens, which strand mid-value when the smoothing skips past their start.
-  const timer: Timer = createTimer({
-    duration: 1000,
-    autoplay: onScroll({
-      target: section,
-      enter: "top top",
-      leave: "bottom bottom",
-      sync: SEQUENCE.smoothing,
-      onUpdate: (observer: ScrollObserver) => {
-        progress = timer.progress;
-        scroll = observer.scroll;
-        draw();
-      },
-    }),
-  });
+  const goal = (): number => {
+    const rect = section.getBoundingClientRect();
+    return Math.min(Math.max(-rect.top / (rect.height - innerHeight), 0), 1);
+  };
+
+  // The lag runs on the page's clock, so the frame after a long one catches up instead of parking short of the scroll.
+  const step = (now: number): void => {
+    ticking = 0;
+    const to = goal();
+    progress = to + (progress - to) * Math.exp(-(ticked ? now - ticked : 1000 / 60) / SEQUENCE.lagMs);
+    // A quarter of a frame, so the landing comes no later than anime's nudged lerp brought it.
+    if (Math.abs(to - progress) < 0.001) progress = to;
+    scroll = scrollY;
+    draw();
+    ticked = progress === to ? 0 : now;
+    if (ticked) ticking = requestAnimationFrame(step);
+  };
+
+  const wake = (): void => {
+    if (!ticking && !disposed) ticking = requestAnimationFrame(step);
+  };
+
+  const scrolled = (): void => {
+    pin();
+    wake();
+  };
 
   // Seeding the playhead at the restored scroll keeps the smoothing from replaying the film on a reload mid-page.
-  const placed = section.getBoundingClientRect();
-  progress = Math.min(Math.max(-placed.top / (placed.height - innerHeight), 0), 1);
-  timer.seek(progress * timer.duration);
+  progress = goal();
   draw();
   pin();
-  addEventListener("scroll", pin, { passive: true });
+  addEventListener("scroll", scrolled, { passive: true });
 
-  const resize = new ResizeObserver(() => measure());
+  const resize = new ResizeObserver(() => {
+    measure();
+    wake();
+  });
   for (const element of [section, document.documentElement, ...cards]) resize.observe(element);
 
   const nearby = new IntersectionObserver(([entry]) => entry?.isIntersecting && void approach(), { rootMargin: "200% 0px" });
@@ -230,8 +241,8 @@ const setup = (): void => {
   teardown = () => {
     disposed = true;
     cancelAnimationFrame(pending);
-    timer.revert();
-    removeEventListener("scroll", pin);
+    cancelAnimationFrame(ticking);
+    removeEventListener("scroll", scrolled);
     delete section.dataset.pinned;
     for (const element of [...lines, ...cards]) write(element, { opacity: "", transform: "" });
     resize.disconnect();

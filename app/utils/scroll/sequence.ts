@@ -9,7 +9,8 @@ export const SEQUENCE = {
   flownBy: 0.92,
   landAt: 0.94,
   spread: 0.08,
-  smoothing: 0.63,
+  // anime's 0.63 sync, 13 percent of the gap a frame at 60 fps, as a time constant the page's clock can keep.
+  lagMs: 120,
 } as const;
 
 export const BEAT_RANGES = [
