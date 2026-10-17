@@ -140,8 +140,9 @@ onBeforeUnmount(() => {
   @apply typo-display m-0 sm:text-4xl;
 }
 
+/* The rail travels its own length, so clip on that axis only: x would cut the phone runner's ring at left-1.5. */
 .stepper {
-  @apply relative mt-6;
+  @apply relative mt-6 overflow-y-clip sm:overflow-x-clip sm:overflow-y-visible;
 }
 
 .steps {
