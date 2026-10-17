@@ -3,16 +3,19 @@ import type { SceneMode } from "#shared/types/seekable";
 import type { Status } from "~/utils/stage/fence";
 import type { SceneSetup } from "~/utils/stage/scene";
 
+import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
 import { STAGE_CAMERA, hydrationSafe, toScreen } from "~/utils/stage/camera";
 import { CYCLE, FENCE, REST_MS, gateX, inFlight, pose, spec } from "~/utils/stage/fence";
 import { useScene } from "~/utils/stage/scene";
 
-const { mode = "live" } = defineProps<{ mode?: SceneMode }>();
+const { mode = "live", light = 0 } = defineProps<{ mode?: SceneMode; light?: number }>();
 const emit = defineEmits<{ gate: [n: number] }>();
 
-const SWEEP = { amplitude: 1.7, period: 16000 } as const;
 const GATE = { height: 0.9, depth: 0.5, width: 0.06, reach: 0.32 } as const;
 const FRONT = GATE.depth / 2;
+const FOLLOW = { ms: MOTION_DURATION.slow, margin: 0.4 } as const;
+// Gate 8 peaks at 400 ms, inside the 420 ms the heading's four words take to land.
+const RIPPLE = { step: 40, rise: 120, fall: MOTION_DURATION.base } as const;
 
 const SPOTS = Array.from({ length: FENCE.gates }, (_, i) => {
   const n = i + 1;
@@ -48,6 +51,11 @@ const overlays = new Map<number, HTMLElement>();
 const rects = new Map<number, [number, number, number, number]>();
 const sizes = new WeakMap<HTMLElement, string>();
 
+let rippleAt = Infinity;
+const ripple = (at: number): void => {
+  if (!film && !reduced.value) rippleAt = at;
+};
+
 const bind = (k: number, el: unknown): void => {
   if (el instanceof HTMLElement) overlays.set(k, el);
   else overlays.delete(k);
@@ -76,7 +84,6 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
 
   const preset = STAGE_CAMERA.fence;
   const stage = await openStage({ canvas: surface, camera: preset, film: filming, mobile });
-  const narrow = matchMedia("(max-width: 767px)");
 
   const line = createLine(stage, { length: 16, thickness: 0.03 });
   stage.scene.add(line.group);
@@ -100,15 +107,50 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
     return [((point.x + 1) / 2) * view.width, ((1 - point.y) / 2) * view.height];
   };
 
-  const frame = (ms: number, dt: number): boolean => {
-    stage.advance(dt);
-    const offset = !filming && narrow.matches ? SWEEP.amplitude * Math.sin((2 * Math.PI * ms) / SWEEP.period) : 0;
-    stage.camera.position.set(preset.position[0] + offset, preset.position[1], preset.position[2]);
-    stage.camera.lookAt(preset.target[0] + offset, preset.target[1], preset.target[2]);
-    stage.camera.updateMatrixWorld();
-    if (gates.value) gates.value.style.transform = `translate3d(${-offset * unit * Math.max(view.height, (view.width * 9) / 16)}px, 0, 0)`;
+  const levels = SPOTS.map(() => 0);
+  let pan = 0;
+  let followed = -1;
+  let follow = { at: -Infinity, pan, levels: [...levels] };
+  let liveAt = 0;
 
-    const lit = SPOTS.map(() => 0);
+  const framePx = (): number => Math.max(view.height, (view.width * 9) / 16);
+  // A box narrower than the gates crops them under cover framing, so the camera eases along the line to whichever gate the page lights.
+  const panTo = (n: number): number => {
+    const visible = view.width / framePx() / unit;
+    const span = gateX(FENCE.gates) - gateX(1) + 2 * (GATE.reach + FOLLOW.margin);
+    const reach = Math.max(0, (span - visible) / 2);
+    return Math.min(reach, Math.max(-reach, gateX(n)));
+  };
+
+  const frame = (ms: number, dt: number): boolean => {
+    const lerping = stage.advance(dt);
+    const calm = reduced.value && !filming;
+    const lighting = !filming && Number.isInteger(light) && light >= 1 && light <= FENCE.gates ? light : 0;
+    // The first frame and reduced motion cut, so a restored scroll opens on its gate.
+    if (lighting !== followed) {
+      follow = { at: followed < 0 || calm ? -Infinity : ms, pan, levels: [...levels] };
+      followed = lighting;
+    }
+    const k = MOTION_EASE.out(Math.min(1, (ms - follow.at) / FOLLOW.ms));
+    // Unlit, the camera holds the poster's framing, so the live canvas fades in over an identical image.
+    const goal = lighting ? panTo(lighting) : 0;
+    pan = follow.pan + (goal - follow.pan) * k;
+    stage.camera.position.set(preset.position[0] + pan, preset.position[1], preset.position[2]);
+    stage.camera.lookAt(preset.target[0] + pan, preset.target[1], preset.target[2]);
+    stage.camera.updateMatrixWorld();
+    if (gates.value) gates.value.style.transform = `translate3d(${-pan * unit * framePx()}px, 0, 0)`;
+
+    const now = performance.now();
+    liveAt ||= now;
+    // The later of the heading landing and the first live frame, so the sweep never plays under the poster or below the fold.
+    const rippled = now - Math.max(rippleAt, liveAt);
+    const lit = SPOTS.map(({ n }, i) => {
+      const from = follow.levels[i] ?? 0;
+      levels[i] = from + ((n === lighting ? 1 : 0) - from) * k;
+      const t = rippled - i * RIPPLE.step;
+      const wave = t < 0 || t >= RIPPLE.rise + RIPPLE.fall ? 0 : t < RIPPLE.rise ? t / RIPPLE.rise : 1 - (t - RIPPLE.rise) / RIPPLE.fall;
+      return Math.max(levels[i] ?? 0, wave);
+    });
     const seen = new Set<number>();
     const next: View[] = [];
     for (const k of inFlight(ms)) {
@@ -166,7 +208,7 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
     }
     place();
     stage.render();
-    return true;
+    return !calm || lerping;
   };
 
   await stage.warm();
@@ -190,30 +232,39 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
   };
 };
 
-const { state, theme, clock, seekable } = useScene({
+const { state, theme, reduced, clock, kick, wake, seekable } = useScene({
   mode,
   duration: CYCLE,
   root: () => root.value ?? undefined,
   canvas: () => canvas.value ?? undefined,
   setup,
+  reducedOnDemand: true,
   start: film ? 0 : REST_MS,
 });
+
+// Reduced motion parks the loop, so the scene boots at mount and each light change wakes it for one still frame.
+const still = (): void => {
+  if (reduced.value) void kick();
+};
+onMounted(still);
+watch(() => light, still);
 
 const stop = (k: number): void => {
   const now = clock();
   if (clicks.has(k) || pose(k, now).status !== "flow") return;
   clicks.set(k, now);
+  wake();
 };
 
 const hover = (n: number): void => {
   if (!film && n !== spotlit) spotlight(n);
 };
 
-defineExpose({ ...seekable, restMs: REST_MS });
+defineExpose({ ...seekable, restMs: REST_MS, ripple });
 </script>
 
 <template>
-  <div ref="root" class="fence" data-scene="fence" :data-state="state" :data-theme-applied="theme">
+  <div ref="root" class="fence" data-scene="fence" :data-state="state" :data-theme-applied="theme" :data-light="light">
     <StagePoster v-if="!film" name="fence" :theme="theme" />
     <canvas ref="canvas" class="canvas" />
     <div v-if="!film" ref="gates" class="gates">
