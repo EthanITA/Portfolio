@@ -5,16 +5,29 @@ type PosterName = "hero" | "lost" | "line" | "fence";
 
 const { name, theme, eager = false } = defineProps<{ name: PosterName; theme: StageTheme; eager?: boolean }>();
 
-// Only scenes whose posters tools/render has written to public/stage are listed, so no poster request can 404.
-const RENDERED: Partial<Record<PosterName, { width: number; height: number; mobile: boolean }>> = {};
+type Size = { width: number; height: number };
+
+// Must match the size and scale each poster is rendered at in public/stage, or the img reserves the wrong box.
+const RENDERED: Record<PosterName, Size & { mobile?: Size }> = {
+  hero: { width: 1920, height: 1080, mobile: { width: 1920, height: 1080 } },
+  lost: { width: 1920, height: 1080 },
+  line: { width: 1920, height: 1080, mobile: { width: 800, height: 1000 } },
+  fence: { width: 1920, height: 1080 },
+};
 
 const size = computed(() => RENDERED[name]);
 </script>
 
 <template>
   <div class="poster" aria-hidden="true">
-    <picture v-if="size" :key="theme" class="picture">
-      <source v-if="size.mobile" media="(max-width: 767px)" :srcset="`/stage/${name}-mobile-${theme}.webp`" />
+    <picture :key="theme" class="picture">
+      <source
+        v-if="size.mobile"
+        media="(max-width: 767px)"
+        :srcset="`/stage/${name}-mobile-${theme}.webp`"
+        :width="size.mobile.width"
+        :height="size.mobile.height"
+      />
       <img
         class="image"
         :src="`/stage/${name}-${theme}.webp`"
