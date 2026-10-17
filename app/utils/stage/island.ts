@@ -28,14 +28,13 @@ import {
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
 import type { CameraPreset } from "./camera";
+import { HALO_HEIGHT, ISLAND } from "./camera";
 import { currentTheme } from "./theme";
 import type { StageTheme } from "./theme";
 
-export { STAGE_CAMERA } from "./camera";
+export { ISLAND, STAGE_CAMERA } from "./camera";
 export type { CameraPreset, Vec3 } from "./camera";
 export type { StageTheme };
-
-export const ISLAND = { width: 2.4, height: 0.56, depth: 0.2, radius: 0.28, core: 0.86, lineGap: 0.12, line: 1.2 } as const;
 
 export type Palette = {
   theme: StageTheme;
@@ -403,7 +402,7 @@ export const createLine = (stage: Stage, o: { length: number; thickness?: number
   const reveal = new Group();
   const bar = new Mesh(new PlaneGeometry(o.length, o.thickness ?? 0.02), stage.material("line"));
   const halo = new Sprite(stage.material("halo"));
-  halo.scale.set(o.length * 1.35, 0.32, 1);
+  halo.scale.set(o.length * 1.35, HALO_HEIGHT, 1);
   halo.position.z = -0.01;
   reveal.add(halo, bar);
   group.add(reveal);

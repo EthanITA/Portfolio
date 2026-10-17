@@ -6,6 +6,7 @@ import type { SceneSetup } from "~/utils/stage/scene";
 
 import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
 import { createAnimatable, spring } from "animejs";
+import { HERO_REST, restAt } from "~/utils/stage/camera";
 import { useScene } from "~/utils/stage/scene";
 
 const { mode = "live", progress = 0, lost = false } = defineProps<{ mode?: SceneMode; progress?: number; lost?: boolean }>();
@@ -25,15 +26,6 @@ const sineInOut = (t: number): number => 0.5 - Math.cos(Math.PI * t) / 2;
 const window01 = (ms: number, at: number, length: number): number => clamp01((ms - at) / length);
 const mix = (a: Vec3, b: Vec3, t: number): [number, number, number] => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
-const restAt = (hero: CameraPreset, { distance, right, up }: { distance: number; right: number; up: number }): CameraPreset => {
-  const height = 2 * distance * Math.tan((hero.fov * Math.PI) / 360);
-  const slope = (hero.position[1] - hero.target[1]) / (hero.position[2] - hero.target[2]);
-  const target: Vec3 = [-right * height, hero.target[1] - up * height, 0];
-  return { fov: hero.fov, position: [target[0], target[1] + distance * slope, distance], target };
-};
-
-// Fixed rather than measured from the layout, so one poster matches the first frame on every phone under cover framing.
-const REST = { wide: { distance: 9, right: 16 / 27, up: 0 }, narrow: { distance: 12, right: 0, up: 0.257 } } as const;
 // On phones the copy scrolls up through the island's rest spot, so the island rides out ahead and re-forms in the hero pose behind it.
 const RIDE = { speed: 1.5, until: 0.3, from: 0.45, to: 0.7 } as const;
 
@@ -45,7 +37,7 @@ const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
   await stage.warm();
 
   const hero = STAGE_CAMERA.hero;
-  const rest = restAt(hero, REST.wide);
+  const rest = restAt(hero, HERO_REST.wide);
   const wide = matchMedia("(min-width: 768px)");
   const fine = matchMedia("(hover: hover) and (pointer: fine)");
 
@@ -104,7 +96,7 @@ const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
     if (lost) return hero;
     const glide = sineInOut(clamp01(progress));
     if (wide.matches) return { position: mix(rest.position, hero.position, glide), target: mix(rest.target, hero.target, glide) };
-    return progress < RIDE.until ? restAt(hero, { ...REST.narrow, up: REST.narrow.up + RIDE.speed * progress }) : hero;
+    return progress < RIDE.until ? restAt(hero, { ...HERO_REST.narrow, up: HERO_REST.narrow.up + RIDE.speed * progress }) : hero;
   };
 
   const frame = (ms: number, dt: number): boolean => {
