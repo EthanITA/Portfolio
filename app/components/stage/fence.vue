@@ -3,7 +3,7 @@ import type { SceneMode } from "#shared/types/seekable";
 import type { Status } from "~/utils/stage/fence";
 import type { SceneSetup } from "~/utils/stage/scene";
 
-import { STAGE_CAMERA, toScreen } from "~/utils/stage/camera";
+import { STAGE_CAMERA, hydrationSafe, toScreen } from "~/utils/stage/camera";
 import { CYCLE, FENCE, REST_MS, gateX, inFlight, pose, spec } from "~/utils/stage/fence";
 import { useScene } from "~/utils/stage/scene";
 
@@ -18,7 +18,15 @@ const SPOTS = Array.from({ length: FENCE.gates }, (_, i) => {
   const n = i + 1;
   const left = toScreen(STAGE_CAMERA.fence, [gateX(n) - GATE.reach, GATE.height, FRONT]);
   const right = toScreen(STAGE_CAMERA.fence, [gateX(n) + GATE.reach, 0, FRONT]);
-  return { n, style: { "--left": left.side, "--top": left.top, "--width": right.side - left.side, "--height": right.top - left.top } };
+  return {
+    n,
+    style: {
+      "--left": hydrationSafe(left.side),
+      "--top": hydrationSafe(left.top),
+      "--width": hydrationSafe(right.side - left.side),
+      "--height": hydrationSafe(right.top - left.top),
+    },
+  };
 });
 
 type View = { k: number; path: string; status: Status };
@@ -31,6 +39,11 @@ const views = shallowRef<View[]>([]);
 
 const clicks = new Map<number, number>();
 const emitted = new Set<number>();
+let spotlit = 0;
+const spotlight = (n: number): void => {
+  spotlit = n;
+  emit("gate", n);
+};
 const overlays = new Map<number, HTMLElement>();
 const rects = new Map<number, [number, number, number, number]>();
 const sizes = new WeakMap<HTMLElement, string>();
@@ -54,7 +67,7 @@ const place = (): void => {
 };
 
 const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => {
-  const [{ createLine, createStage, readPalette, slab }, { createChip }, { Mesh, PlaneGeometry, Vector3 }] = await Promise.all([
+  const [{ createLine, openStage, readPalette, slab }, { createChip }, { Mesh, PlaneGeometry, Vector3 }] = await Promise.all([
     import("~/utils/stage/island"),
     import("~/utils/stage/chip"),
     import("three"),
@@ -62,7 +75,7 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
   await document.fonts.load(`500 32px ${getComputedStyle(document.documentElement).getPropertyValue("--mono")}`);
 
   const preset = STAGE_CAMERA.fence;
-  const stage = createStage({ canvas: surface, camera: preset, film: filming, mobile });
+  const stage = await openStage({ canvas: surface, camera: preset, film: filming, mobile });
   const narrow = matchMedia("(max-width: 767px)");
 
   const line = createLine(stage, { length: 16, thickness: 0.03 });
@@ -81,8 +94,9 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
   const view = { width: 1, height: 1 };
   const unit = toScreen(preset, [1, 0, FRONT]).side - toScreen(preset, [0, 0, FRONT]).side;
 
+  const point = new Vector3();
   const project = (x: number, y: number, z: number): [number, number] => {
-    const point = new Vector3(x, y, z).project(stage.camera);
+    point.set(x, y, z).project(stage.camera);
     return [((point.x + 1) / 2) * view.width, ((1 - point.y) / 2) * view.height];
   };
 
@@ -116,7 +130,7 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
       if (p.gate) lit[p.gate - 1] = Math.max(lit[p.gate - 1] ?? 0, p.lit);
       if (!filming && p.status === "stopped" && p.gate && !emitted.has(k)) {
         emitted.add(k);
-        emit("gate", p.gate);
+        spotlight(p.gate);
       }
       const [left, top] = project(x - chip.width / 2, y + chip.height / 2, 0);
       const [right, bottom] = project(x + chip.width / 2, y - chip.height / 2, 0);
@@ -155,6 +169,7 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
     return true;
   };
 
+  await stage.warm();
   return {
     frame,
     theme: (instant) => stage.setPalette(readPalette(), instant),
@@ -191,7 +206,7 @@ const stop = (k: number): void => {
 };
 
 const hover = (n: number): void => {
-  if (!film) emit("gate", n);
+  if (!film && n !== spotlit) spotlight(n);
 };
 
 defineExpose({ ...seekable, restMs: REST_MS });

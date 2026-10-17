@@ -19,3 +19,6 @@ export const toScreen = (preset: CameraPreset, [x, y, z]: Vec3): { top: number; 
   const reach = 2 * depth * Math.tan((preset.fov * Math.PI) / 360);
   return { top: 0.5 - up / reach, side: (x - cx) / reach };
 };
+
+// Node and the browser disagree in the last bits of tan and atan, which would make prerendered style vars a hydration mismatch.
+export const hydrationSafe = (value: number): number => Math.round(value * 1e6) / 1e6;

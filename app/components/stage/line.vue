@@ -11,7 +11,7 @@ import type { SceneSetup } from "~/utils/stage/scene";
 import { Chip, Kbd, TextInput } from "@cela/design";
 import { pulse } from "@cela/design/utils/motion";
 
-import { STAGE_CAMERA, toScreen } from "~/utils/stage/camera";
+import { STAGE_CAMERA, hydrationSafe, toScreen } from "~/utils/stage/camera";
 import { LINE, TIERS, createLedger, pose, settling } from "~/utils/stage/line";
 import { useScene } from "~/utils/stage/scene";
 
@@ -43,9 +43,9 @@ const text = ref("");
 const views = shallowRef<View[]>([]);
 const announcement = ref("");
 const ZONE_TOP: Record<Tier, { "--top": number }> = {
-  runs: { "--top": toScreen(STAGE_CAMERA.line, [0, 0, ZONE.runs]).top },
-  waits: { "--top": toScreen(STAGE_CAMERA.line, [0, 0, ZONE.waits]).top },
-  stops: { "--top": toScreen(STAGE_CAMERA.line, [0, 0, ZONE.stops]).top },
+  runs: { "--top": hydrationSafe(toScreen(STAGE_CAMERA.line, [0, 0, ZONE.runs]).top) },
+  waits: { "--top": hydrationSafe(toScreen(STAGE_CAMERA.line, [0, 0, ZONE.waits]).top) },
+  stops: { "--top": hydrationSafe(toScreen(STAGE_CAMERA.line, [0, 0, ZONE.stops]).top) },
 };
 
 const overlays = new Map<number, HTMLElement>();
@@ -76,14 +76,14 @@ const place = (): void => {
 };
 
 const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => {
-  const [{ createLine, createStage, readPalette }, { createChip }, { BufferGeometry, Float32BufferAttribute, LineSegments, Vector3 }] = await Promise.all([
+  const [{ createLine, openStage, readPalette }, { createChip }, { BufferGeometry, Float32BufferAttribute, LineSegments, Vector3 }] = await Promise.all([
     import("~/utils/stage/island"),
     import("~/utils/stage/chip"),
     import("three"),
   ]);
   await document.fonts.load(`500 32px ${getComputedStyle(document.documentElement).getPropertyValue("--mono")}`);
 
-  const stage = createStage({ canvas: surface, camera: STAGE_CAMERA.line, film: filming, mobile, fog: [10, 18] });
+  const stage = await openStage({ canvas: surface, camera: STAGE_CAMERA.line, film: filming, mobile, fog: [10, 18] });
   const wide = matchMedia("(min-width: 768px)");
 
   const rows: number[] = [];
@@ -117,13 +117,14 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
     layout.height = height;
   };
 
+  const point = new Vector3();
   const project = (x: number, y: number, z: number): [number, number] => {
-    const point = new Vector3(x, y, z).project(stage.camera);
+    point.set(x, y, z).project(stage.camera);
     return [((point.x + 1) / 2) * layout.width, ((1 - point.y) / 2) * layout.height];
   };
 
   const frame = (ms: number, dt: number): boolean => {
-    stage.advance(dt);
+    const lerping = stage.advance(dt);
     const calm = reduced.value && !filming;
 
     if (!filming && !calm && !quiet) {
@@ -186,11 +187,12 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
     }
     place();
     stage.render();
-    return !calm || ledger.actions.some((action) => settling(action, ms));
+    return !calm || lerping || ledger.actions.some((action) => settling(action, ms));
   };
 
   refresh = () => frame(clock(), 0);
 
+  await stage.warm();
   return {
     frame,
     theme: (instant) => stage.setPalette(readPalette(), instant),
@@ -330,6 +332,11 @@ defineExpose({ ...seekable, restMs: FILM.rest });
 
 .ask {
   @apply flex flex-col gap-3;
+}
+
+/* TextInput's outline-none leaves --tw-outline-style at none, and @cela/design's focus-ring reads it, so the ring never draws. */
+.input:focus-visible {
+  @apply outline-solid;
 }
 
 .examples {
