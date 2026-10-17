@@ -38,13 +38,15 @@ export const beatStyle = (progress: number, [from, to]: readonly [number, number
 
 export const cardOpacity = (progress: number): number => clamp01((progress - SEQUENCE.landAt) / (1 - SEQUENCE.landAt));
 
-export type FitOptions = { width: number; height: number; safe: readonly [number, number] };
+export const FIT = { from: 0.12, to: 0.45 } as const;
 
-// Scaling to the viewport height keeps the live hero's vertical framing, so the handoff crossfade lines up.
-export const fitFrame = ({ width, height, safe: [from, to] }: FitOptions): Rect => {
-  let drawWidth = Math.max(height * SEQUENCE.aspect, width);
-  const safeWidth = (to - from) * drawWidth;
-  if (safeWidth > width * 0.96) drawWidth = (width * 0.96) / (to - from);
+export type FitOptions = { width: number; height: number; safe: readonly [number, number]; progress?: number };
+
+// Frame 0 covers like the live hero's stage; the cap that keeps the trio on screen eases in with the push-in.
+export const fitFrame = ({ width, height, safe: [from, to], progress = 1 }: FitOptions): Rect => {
+  const cover = Math.max(height * SEQUENCE.aspect, width);
+  const capped = Math.min(cover, (width * 0.96) / (to - from));
+  const drawWidth = cover + (capped - cover) * MOTION_EASE.inOut(clamp01((progress - FIT.from) / (FIT.to - FIT.from)));
   const drawHeight = drawWidth / SEQUENCE.aspect;
   return { x: (width - drawWidth) / 2, y: (height - drawHeight) / 2, width: drawWidth, height: drawHeight };
 };
