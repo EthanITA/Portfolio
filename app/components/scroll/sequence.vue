@@ -5,7 +5,7 @@ import { createTimer, onScroll } from "animejs";
 
 import { createFrames, sequencePath, type Frames } from "~/utils/scroll/frames";
 import { MANIFEST } from "~/utils/scroll/manifest.gen";
-import { BEAT_RANGES, beatStyle, cardOpacity, fitFrame, frameAt, SEQUENCE, type Rect, type Theme } from "~/utils/scroll/sequence";
+import { BEAT_RANGES, beatStyle, cardOpacity, fitFrame, frameAt, SEQUENCE, type Theme } from "~/utils/scroll/sequence";
 import { createTiles, SCREENS, type Screen, type TileLayer, type Targets } from "~/utils/scroll/tiles";
 
 const { beats, closing } = defineProps<{ beats: string[]; closing: string }>();
@@ -62,8 +62,8 @@ const setup = (): void => {
   let tiles: TileLayer | undefined;
   let progress = 0;
   let scroll = scrollY;
-  let fit: Rect = { x: 0, y: 0, width: 0, height: 0 };
-  let drawn: ImageBitmap | undefined;
+  let box = { width: 0, height: 0 };
+  let drawn: { bitmap?: ImageBitmap; fit: string } = { fit: "" };
   let breakFrame: ImageBitmap | undefined;
   let stamped = { progress: "", frame: -1 };
   let documentTargets: Targets = {};
@@ -71,6 +71,7 @@ const setup = (): void => {
   let near = false;
   let pending = 0;
   let disposed = false;
+  const idle = window.requestIdleCallback ?? ((callback: () => void) => setTimeout(callback, 1));
 
   const viewTargets = (): Targets =>
     Object.fromEntries(Object.entries(documentTargets).map(([screen, rect]) => [screen, { ...rect, y: rect.y - scroll }]));
@@ -79,16 +80,20 @@ const setup = (): void => {
     const index = frameAt(progress);
     frames.focus(index);
     const drawable = frames.best(index);
-    if (drawable && drawable.bitmap !== drawn) {
+    const fit = fitFrame({ ...box, safe: MANIFEST.safe, progress });
+    const fitted = fit.width.toFixed(1);
+    if (section.dataset.fit !== String(Math.round(fit.width))) section.dataset.fit = String(Math.round(fit.width));
+    if (drawable && (drawable.bitmap !== drawn.bitmap || fitted !== drawn.fit)) {
+      context.clearRect(0, 0, canvas.width, canvas.height);
       context.drawImage(drawable.bitmap, fit.x * pixelRatio, fit.y * pixelRatio, fit.width * pixelRatio, fit.height * pixelRatio);
-      drawn = drawable.bitmap;
+      drawn = { bitmap: drawable.bitmap, fit: fitted };
       appliedTheme.value = frames.set.theme;
       if (state.value === "poster") state.value = inView ? "live" : "paused";
     }
     const last = frames.best(LAST);
     if (tiles && last && last.bitmap !== breakFrame) {
-      tiles.setFrame(last.bitmap);
       breakFrame = last.bitmap;
+      idle(() => !disposed && breakFrame === last.bitmap && tiles?.setFrame(last.bitmap));
     }
     phase.value = progress < SEQUENCE.breakAt ? "frames" : progress < 1 ? "break" : "landed";
     if (phase.value === "break" && tiles && tilesReady.value) tiles.render(progress, viewTargets());
@@ -117,13 +122,13 @@ const setup = (): void => {
   };
 
   const measure = (): void => {
-    const box = sticky.getBoundingClientRect();
-    if (!box.width || !box.height) return;
-    fit = fitFrame({ width: box.width, height: box.height, safe: MANIFEST.safe });
-    canvas.width = Math.round(box.width * pixelRatio);
-    canvas.height = Math.round(box.height * pixelRatio);
-    drawn = undefined;
-    tiles?.resize({ width: innerWidth, height: innerHeight, fit });
+    const { width: boxWidth, height: boxHeight } = sticky.getBoundingClientRect();
+    if (!boxWidth || !boxHeight) return;
+    box = { width: boxWidth, height: boxHeight };
+    canvas.width = Math.round(boxWidth * pixelRatio);
+    canvas.height = Math.round(boxHeight * pixelRatio);
+    drawn = { fit: "" };
+    tiles?.resize({ width: innerWidth, height: innerHeight, fit: fitFrame({ ...box, safe: MANIFEST.safe }) });
     scroll = scrollY;
     documentTargets = Object.fromEntries(
       SCREENS.flatMap((screen) => {
@@ -184,8 +189,8 @@ const setup = (): void => {
   });
 
   // Seeding the playhead at the restored scroll keeps the smoothing from replaying the film on a reload mid-page.
-  const box = section.getBoundingClientRect();
-  progress = Math.min(Math.max(-box.top / (box.height - innerHeight), 0), 1);
+  const placed = section.getBoundingClientRect();
+  progress = Math.min(Math.max(-placed.top / (placed.height - innerHeight), 0), 1);
   timer.seek(progress * timer.duration);
   draw();
 
@@ -200,7 +205,6 @@ const setup = (): void => {
   });
   visible.observe(section);
 
-  const idle = window.requestIdleCallback ?? ((callback: () => void) => setTimeout(callback, 1));
   idle(() => void (!disposed && frames.loadFloor()));
 
   const themes = new MutationObserver(() => {
@@ -209,7 +213,7 @@ const setup = (): void => {
     const previous = frames;
     frames = createFrames({ set: { theme: theme.value, width }, onChange: () => schedule() });
     previous.dispose();
-    drawn = undefined;
+    drawn = { fit: "" };
     breakFrame = undefined;
     void frames.loadFloor();
     if (!near) return;
@@ -300,7 +304,7 @@ onMounted(() => {
 }
 
 .poster img {
-  @apply size-full object-cover max-md:object-contain;
+  @apply size-full object-cover;
 }
 
 .lines {

@@ -141,7 +141,8 @@ export const synthBed = (name: FilmName, durationMs: number): Stereo => {
     const level = (b % 4 === 0 ? 1 : 0.55) * pulse;
     for (let j = 0; j < Math.min(beat, total - at); j++) {
       const t = j / SAMPLE_RATE;
-      const s = (Math.sin(2 * Math.PI * root * t) + 0.45 * Math.sin(4 * Math.PI * root * t)) * Math.min(1, t / 0.018) * Math.exp(-t / 0.22) * level;
+      const w = 2 * Math.PI * root * t;
+      const s = (Math.sin(w) + 0.9 * Math.sin(2 * w) + 0.45 * Math.sin(3 * w)) * Math.min(1, t / 0.018) * Math.exp(-t / 0.22) * level;
       dry.l[at + j]! += s;
       dry.r[at + j]! += s;
     }

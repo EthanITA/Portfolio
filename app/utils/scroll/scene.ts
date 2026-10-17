@@ -37,7 +37,7 @@ const PLACES: Record<Screen, { x: number; z: number; turn: number; lag: number }
   sage: { x: 0, z: 0, turn: 0, lag: 80 },
   shell: { x: 1.05, z: 0.22, turn: -1, lag: 160 },
 };
-const LINE = { length: 5, y: -ISLAND.height / 2 - ISLAND.lineGap, lead: 160 } as const;
+const LINE = { length: 5, y: -ISLAND.height / 2 - ISLAND.lineGap, lead: at(0.05) } as const;
 const CAMERA = { fov: STAGE_CAMERA.hero.fov, end: { y: 0.8, z: 4.2, target: 0.21 }, drift: 0.3 } as const;
 
 const held = breath(SHOT.open[0]);
