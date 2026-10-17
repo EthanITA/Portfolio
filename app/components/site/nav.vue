@@ -5,7 +5,6 @@ import { type AnimatableObject, createAnimatable, spring, utils } from "animejs"
 import { nav } from "~/utils/site/links";
 import { SPRING, motionOn } from "~/utils/site/motion";
 
-const IDLE = "Building Sidecar, Sage and AI Shell";
 const FOLD_AT = 0.8;
 
 const route = useRoute();
@@ -112,7 +111,6 @@ onBeforeUnmount(() => {
     <!-- Island's responsive box renders a fragment on the server that hydration can't match, so it mounts in the browser. -->
     <ClientOnly>
       <Island
-        v-slot="{ expanded }"
         class="pill"
         shape="pill"
         glass="liquid"
@@ -125,10 +123,6 @@ onBeforeUnmount(() => {
         <nav aria-label="Main" @focusin="focused = folded" @focusout="onFocusOut" @keydown="onKeydown">
           <div class="row">
             <NuxtLink class="mark" to="/">Marco Dong</NuxtLink>
-            <span v-if="folded && !expanded && !menu" class="status">
-              <span class="dot" aria-hidden="true" />
-              <span class="idle">{{ IDLE }}</span>
-            </span>
             <div class="wide">
               <div data-island-reveal>
                 <div class="links">
@@ -199,18 +193,6 @@ onBeforeUnmount(() => {
   &:focus-visible {
     @apply focus-ring rounded-field;
   }
-}
-
-.status {
-  @apply flex items-center gap-2 pe-3;
-}
-
-.dot {
-  @apply breathe size-2 rounded-full bg-primary;
-}
-
-.idle {
-  @apply typo-caption whitespace-nowrap text-muted max-md:hidden;
 }
 
 .wide {

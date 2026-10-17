@@ -12,11 +12,10 @@ const TILT = 2;
 const THEMES: Theme[] = ["light", "dark"];
 const SIZES = "(min-width: 768px) 320px, 100vw";
 
-const { slug, name, text, status, to, link } = defineProps<{
+const { slug, name, text, to, link } = defineProps<{
   slug: Product;
   name: string;
   text: Run[];
-  status: string;
   to: string;
   link: string;
 }>();
@@ -62,7 +61,6 @@ onBeforeUnmount(() => tilt?.revert());
     </div>
     <h2 class="name">{{ name }}</h2>
     <p class="text"><SiteRuns :runs="text" /></p>
-    <span class="status"><span class="status-dot" aria-hidden="true" />{{ status }}</span>
     <NuxtLink class="more" :to="to">{{ link }}</NuxtLink>
   </Surface>
 </template>
@@ -91,10 +89,6 @@ onBeforeUnmount(() => tilt?.revert());
 
 .text {
   @apply typo-body-md text-muted;
-}
-
-.status {
-  @apply chip-look;
 }
 
 .more {

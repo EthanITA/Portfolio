@@ -4,14 +4,13 @@ import { Surface } from "@cela/design";
 import { type Product, films } from "~/utils/site/films";
 import type { Beat, Run } from "~/utils/site/text";
 
-const { slug, name, sub, lead, beats, builtWith, status, limit } = defineProps<{
+const { slug, name, sub, lead, beats, builtWith, limit } = defineProps<{
   slug: Product;
   name: string;
   sub: string;
   lead: Run[];
   beats: Beat[];
   builtWith: string;
-  status: string;
   limit?: string;
 }>();
 
@@ -73,7 +72,6 @@ const startFilm = async (): Promise<void> => {
         <h2 class="name">Built with</h2>
         <p class="text">{{ builtWith }}</p>
       </Surface>
-      <p v-enter class="status"><span class="status-dot" aria-hidden="true" />{{ status }}</p>
     </div>
   </article>
 </template>
@@ -158,9 +156,5 @@ const startFilm = async (): Promise<void> => {
 
 .limit {
   @apply typo-caption text-muted;
-}
-
-.status {
-  @apply chip-look w-fit text-fg;
 }
 </style>

@@ -49,7 +49,6 @@ const beats: Beat[] = [
     ]"
     :beats="beats"
     built-with="Nuxt and a small local server, wired into Claude Code through hooks. Before Claude's first edit to a file, a hook keeps what the file held, so every change can be reviewed and undone."
-    status="In progress, not released yet."
   >
     <LazyPlaySidecar />
   </SiteProduct>

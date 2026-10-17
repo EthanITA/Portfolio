@@ -8,7 +8,7 @@ import { motionOn } from "~/utils/site/motion";
 import { seo } from "~/utils/site/seo";
 import type { Run } from "~/utils/site/text";
 
-type Flagship = { slug: Product; name: string; text: Run[]; status: string; to: string; link: string };
+type Flagship = { slug: Product; name: string; text: Run[]; to: string; link: string };
 type Count = { to: number; after?: string; decimals?: number };
 type Work = { name: string; text: string; count?: Count; label: string };
 
@@ -30,7 +30,6 @@ const flagships: Flagship[] = [
     slug: "sidecar",
     name: "Sidecar",
     text: ["Sidecar sits next to Claude Code. You review what it changed, line by line, and when you comment on a page it built, the comment lands back in the conversation."],
-    status: "In progress",
     to: "/sidecar",
     link: "See Sidecar",
   },
@@ -38,7 +37,6 @@ const flagships: Flagship[] = [
     slug: "sage",
     name: "Sage",
     text: ["A Mac assistant in the notch. Hold a key, say what you want in English, Italian or Chinese, and it does the steps, asking before anything it can't undo."],
-    status: "Built, not shipped yet",
     to: "/sage",
     link: "See Sage",
   },
@@ -50,7 +48,6 @@ const flagships: Flagship[] = [
       { code: "?" },
       " and say what you want. It writes the shell command, runs it when it only looks, and stops with a note before anything that deletes, overwrites or sends data off the machine.",
     ],
-    status: "In daily use",
     to: "/shell",
     link: "See AI Shell",
   },
