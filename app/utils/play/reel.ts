@@ -3,8 +3,8 @@ import type { EasingParam, Timeline, Timer } from "animejs";
 import type { Ref, ShallowRef } from "vue";
 
 import { MOTION_EASE, prefersReducedMotion } from "@cela/design/utils/motion";
-import { animate, createTimeline, createTimer } from "animejs";
-import { onBeforeUnmount, onMounted, reactive, ref, shallowReactive, toRaw, watch } from "vue";
+import { animate, createTimeline, createTimer, svg } from "animejs";
+import { onBeforeUnmount, onMounted, reactive, ref, shallowReactive, toRaw, watch, watchEffect } from "vue";
 
 export type Driver = "demo" | "visitor";
 
@@ -24,6 +24,15 @@ export type Channel = {
   ease?: EasingParam;
 };
 
+export type Drawn = {
+  selector: string;
+  at: number;
+  from: string;
+  to: string;
+  duration: number;
+  ease?: EasingParam;
+};
+
 export type Reel<S> = {
   duration: number;
   loop: { from: number; to: number };
@@ -31,6 +40,7 @@ export type Reel<S> = {
   initial: () => S;
   beats: Beat<S>[];
   channels: Channel[];
+  drawn?: Drawn[];
 };
 
 export type Visitor<S> = {
@@ -55,9 +65,26 @@ export type ReelHandle<S> = {
   ensureVisitor: () => S;
   playDemo: () => void;
   tween: (name: string, value: number | [number, number], options?: { duration?: number; ease?: EasingParam }) => void;
+  draw: (selector: string, to: string, options?: { duration?: number; ease?: EasingParam }) => void;
 };
 
 export const HANDOVER_MS = 280;
+
+export const CARET_MS = 530;
+
+export const useCaret = ({ visible, reduced }: { visible: Readonly<Ref<boolean>>; reduced: Readonly<Ref<boolean>> }): Ref<number> => {
+  const blink = ref(0);
+  const timer = createTimer({ duration: CARET_MS, loop: true, autoplay: false, onLoop: () => (blink.value = blink.value ? 0 : 1) });
+  watchEffect(() => {
+    if (visible.value && !reduced.value) timer.play();
+    else {
+      timer.pause();
+      blink.value = 0;
+    }
+  });
+  onBeforeUnmount(() => timer.cancel());
+  return blink;
+};
 
 const progressOf = <S>(beat: Beat<S>, ms: number): number => {
   if (!beat.every) return 0;
@@ -89,7 +116,7 @@ export const Reels = {
   // The end of whatever is moving at ms, so a takeover lands on a settled frame instead of a half tween.
   settleAt<S>(reel: Reel<S>, ms: number): number {
     let end = ms;
-    for (const channel of reel.channels) {
+    for (const channel of [...reel.channels, ...(reel.drawn ?? [])]) {
       if (channel.at <= ms && ms < channel.at + channel.duration) end = Math.max(end, channel.at + channel.duration);
     }
     for (const beat of reel.beats) {
@@ -98,6 +125,19 @@ export const Reels = {
       if (ms < last) end = Math.max(end, last);
     }
     return end;
+  },
+
+  // A seek back across a tween renders its start, so a jump between two tweens of one value gets a 1 ms bridge.
+  bridged<T extends { at: number; duration: number; from: V; to: V }, V>(tweens: T[], key: (tween: T) => string): T[] {
+    const out: T[] = [];
+    const last = new Map<string, T>();
+    for (const tween of [...tweens].sort((a, b) => a.at - b.at)) {
+      const previous = last.get(key(tween));
+      if (previous && previous.to !== tween.from) out.push({ ...tween, at: tween.at - 1, duration: 1, from: previous.to, to: tween.from });
+      out.push(tween);
+      last.set(key(tween), tween);
+    }
+    return out;
   },
 
   rest(channels: Channel[]): Record<string, number> {
@@ -111,7 +151,12 @@ export const Reels = {
 
 export const useReel = <S extends object>({ reel, mode, root, visible, visitor }: ReelOptions<S>): ReelHandle<S> => {
   const beats = [...reel.beats].sort((a, b) => a.at - b.at);
-  const sorted: Reel<S> = { ...reel, beats };
+  const sorted: Reel<S> = {
+    ...reel,
+    beats,
+    channels: Reels.bridged(reel.channels, (channel) => channel.name),
+    drawn: Reels.bridged(reel.drawn ?? [], (tween) => tween.selector),
+  };
   const view: { current: S } = shallowReactive({ current: Reels.replay(sorted, mode === "film" ? 0 : reel.loop.from) });
   const driver = ref<Driver>("demo");
   const reduced = ref(false);
@@ -149,8 +194,18 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor }
     for (const channel of sorted.channels) {
       built.add(
         el,
-        { [`--${channel.name}`]: [channel.from, channel.to], duration: channel.duration, ease: channel.ease ?? MOTION_EASE.out },
+        // "replace" leaves a stale value when seeking back across two tweens of one property.
+        { [`--${channel.name}`]: [channel.from, channel.to], duration: channel.duration, ease: channel.ease ?? MOTION_EASE.out, composition: "none" },
         channel.at,
+      );
+    }
+    for (const tween of sorted.drawn ?? []) {
+      const path = el.querySelector(tween.selector);
+      if (!path) continue;
+      built.add(
+        svg.createDrawable(path),
+        { draw: [tween.from, tween.to], duration: tween.duration, ease: tween.ease ?? MOTION_EASE.out, composition: "none" },
+        tween.at,
       );
     }
     // A delayed tween stays unstyled until the playhead first crosses it, so sweep once.
@@ -262,6 +317,12 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor }
     animate(el, { [`--${name}`]: value, duration, ease, composition: "none" });
   };
 
+  const draw: ReelHandle<S>["draw"] = (selector, to, { duration = 180, ease = MOTION_EASE.out } = {}) => {
+    const path = root.value?.querySelector(selector);
+    if (!path) return;
+    animate(svg.createDrawable(path), { draw: to, duration: reduced.value ? 0 : duration, ease, composition: "none" });
+  };
+
   onMounted(() => {
     const el = root.value;
     if (!el) return;
@@ -296,5 +357,6 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor }
     ensureVisitor,
     playDemo,
     tween,
+    draw,
   };
 };

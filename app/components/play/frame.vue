@@ -7,7 +7,7 @@ import { Chip, Surface } from "@cela/design";
 
 const { mode, label, driver } = defineProps<{ mode: SceneMode; label: string; driver: Driver }>();
 
-const emit = defineEmits<{ take: []; demo: []; key: [event: KeyboardEvent] }>();
+const emit = defineEmits<{ take: []; demo: []; key: [event: KeyboardEvent]; keyup: [event: KeyboardEvent]; leave: [] }>();
 
 const visible = defineModel<boolean>("visible", { default: false });
 
@@ -28,6 +28,11 @@ const onKeyDown = (event: KeyboardEvent): void => {
   if (driver === "demo" && !PASSIVE_KEYS.has(event.key) && !event.metaKey) emit("take");
   emit("key", event);
   if (event.key === "Escape" && !event.defaultPrevented) frameEl()?.blur();
+};
+
+const onFocusOut = (event: FocusEvent): void => {
+  if (event.relatedTarget instanceof Node && frameEl()?.contains(event.relatedTarget)) return;
+  emit("leave");
 };
 
 const onChip = (): void => {
@@ -74,7 +79,9 @@ onMounted(() => {
     shape="island"
     tabindex="0"
     variant="sunken"
+    @focusout="onFocusOut"
     @keydown="onKeyDown"
+    @keyup="emit('keyup', $event)"
     @pointerdown.capture="onPointerDown"
   >
     <slot />
