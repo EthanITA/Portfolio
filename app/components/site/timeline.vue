@@ -119,7 +119,6 @@ onMounted(async () => {
   const timeline = root.value;
   const drawn = animate(line, { draw: ["0 0", "0 1"], ease: "linear", autoplay: false });
   draw = drawn;
-  // From 0, so a restored scroll draws the head in instead of landing every node at once.
   scrub = useScrub({
     goal: () => {
       const rect = timeline.getBoundingClientRect();
@@ -129,7 +128,6 @@ onMounted(async () => {
       drawn.seek(progress * drawn.duration);
       reach(progress);
     },
-    from: 0,
   });
   resize = new ResizeObserver(async () => {
     trace();
