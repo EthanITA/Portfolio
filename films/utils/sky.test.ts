@@ -81,8 +81,11 @@ describe("Sky.plan", () => {
 
   it("refuses a word that can't be in before the film ends, and takes one in on the last ms", () => {
     const late = planned({ lines: [said("Done.", 1000), said("Too late.", 44_800)] });
-    assert.deepEqual(late.problems, ['"late." in "Too late." is in at 45250 ms, after the film ends at 45000']);
-    assert.deepEqual(planned({ lines: [said("Done.", 1000), said("Just in.", 44_550)] }).problems, []);
+    assert.deepEqual(late.problems, [
+      '"Too" in "Too late." is in at 45000 ms, not before the film ends at 45000',
+      '"late." in "Too late." is in at 45250 ms, not before the film ends at 45000',
+    ]);
+    assert.deepEqual(planned({ lines: [said("Done.", 1000), said("Just in.", 44_549)] }).problems, []);
   });
 
   it("refuses a line that leaves before its words are in, or overlaps the next", () => {
