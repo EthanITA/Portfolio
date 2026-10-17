@@ -2,7 +2,7 @@
 import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
 import { splitText, stagger } from "animejs";
 
-const { at, until } = defineProps<{ at: number; until: number }>();
+const { at, until, tone = "default" } = defineProps<{ at: number; until: number; tone?: "default" | "inverse" }>();
 
 const title = useTemplateRef<HTMLElement>("title");
 const { timeline } = useFilmContext();
@@ -17,12 +17,15 @@ onMounted(() => {
 </script>
 
 <template>
-  <h1 ref="title" class="film-title"><slot /></h1>
+  <h1 ref="title" class="film-title" :data-tone="tone"><slot /></h1>
 </template>
 
 <style scoped>
 .film-title {
-  @apply absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-8xl font-bold tracking-tight;
+  @apply absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-8xl leading-none font-bold tracking-tight;
+}
+.film-title[data-tone="inverse"] {
+  @apply text-base-100;
 }
 .film-title :deep([data-word]) {
   @apply inline-block opacity-0;
