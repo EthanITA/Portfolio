@@ -46,7 +46,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <Surface v-press :as="tag" variant="flat" pad="md" class="card" v-bind="attrs" @click="copy">
+  <Surface v-press :as="tag" pad="md" class="channel" v-bind="attrs" @click="copy">
     <span class="name" :aria-live="email ? 'polite' : undefined">{{ copied ? "Copied" : name }}</span>
     <!-- A line break between inline siblings compiles to nothing, so the text twin would read "LinkedInlinkedin.com". -->
     {{ " " }}
@@ -60,7 +60,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.card {
+.channel {
   @apply relative flex w-full flex-col gap-1 pr-12 text-left no-underline;
 
   &:focus-visible {
@@ -87,11 +87,11 @@ onBeforeUnmount(() => {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .card:hover {
+  .channel:hover {
     @apply border-border-strong;
   }
 
-  .card:hover .glyph {
+  .channel:hover .glyph {
     @apply text-primary;
   }
 }
