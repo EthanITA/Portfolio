@@ -4,7 +4,7 @@ import { type JSAnimation, type ScrollObserver, animate, onScroll } from "animej
 
 import type { Product } from "~/utils/site/films";
 import { links } from "~/utils/site/links";
-import { SCRUB_SMOOTH, motionOn } from "~/utils/site/motion";
+import { motionOn } from "~/utils/site/motion";
 import { seo } from "~/utils/site/seo";
 import type { Run } from "~/utils/site/text";
 
@@ -91,17 +91,28 @@ const work: Work[] = [
 
 const hero = useTemplateRef<HTMLElement>("hero");
 const intro = useTemplateRef<HTMLElement>("intro");
+const holder = useTemplateRef<HTMLElement>("holder");
 const heroProgress = ref(0);
 let drift: JSAnimation | undefined;
 let scroller: ScrollObserver | undefined;
+let away: IntersectionObserver | undefined;
+
+// A global smooth scroll-behavior would also animate the router's back and forward restores across the whole page.
+const toWork = (event: MouseEvent): void => {
+  const target = document.getElementById("sequence");
+  if (!target) return;
+  event.preventDefault();
+  target.scrollIntoView({ behavior: motionOn() ? "smooth" : "instant" });
+};
 
 onMounted(() => {
-  if (!hero.value || !intro.value || !motionOn()) return;
+  if (!hero.value || !intro.value || !holder.value || !motionOn()) return;
   scroller = onScroll({
     target: hero.value,
     enter: "top top",
     leave: "top bottom",
-    sync: SCRUB_SMOOTH,
+    // Unsmoothed, so progress 1 lands exactly where the sequence pins on the same image.
+    sync: true,
     onUpdate: (self) => (heroProgress.value = self.progress),
   });
   drift = animate(intro.value, {
@@ -110,9 +121,14 @@ onMounted(() => {
     translateY: [0, -hero.value.offsetHeight * DRIFT],
     autoplay: scroller,
   });
+  const stage = holder.value;
+  // Half a viewport past the pin the sequence covers it, and hidden it can never show through the tile break.
+  away = new IntersectionObserver(([entry]) => (stage.style.visibility = entry?.isIntersecting ? "" : "hidden"), { rootMargin: "50% 0px 0px 0px" });
+  away.observe(hero.value);
 });
 
 onBeforeUnmount(() => {
+  away?.disconnect();
   drift?.revert();
   scroller?.revert();
 });
@@ -120,24 +136,28 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="home">
-    <section ref="hero" class="hero">
-      <SiteMount name="hero">
-        <LazyStageHero :progress="heroProgress" />
-      </SiteMount>
-      <div ref="intro" class="intro">
-        <h1 class="title">
-          <span v-enter.now.words.title class="first">I build AI products end to end.</span>
-          <span v-enter.now.title="200" class="second">The agents write a lot of the code, and the standard is mine.</span>
-        </h1>
-        <p v-enter.now="320" class="roles">Software engineer at Klarna, AI product engineer at Moneyfarm, and founder of Cela, where I'm building Sidecar, Sage and AI Shell.</p>
-        <div class="actions">
-          <a v-enter.now="420" v-press class="btn btn-primary action" href="#sequence">See the work</a>
-          <NuxtLink v-enter.now="480" v-press class="btn btn-outline action" to="/cv">Read the CV</NuxtLink>
-        </div>
+    <div class="opening">
+      <div ref="holder" v-enter.now.wide.scale="150" class="holder">
+        <SiteMount name="hero">
+          <LazyStageHero :progress="heroProgress" />
+        </SiteMount>
       </div>
-    </section>
+      <section ref="hero" class="hero">
+        <div ref="intro" class="intro">
+          <h1 class="title">
+            <span v-enter.now.words.wide class="first">I build AI products end to end.</span>
+            <span v-enter.now.wide="200" class="second">The agents write a lot of the code, and the standard is mine.</span>
+          </h1>
+          <p v-enter.now="320" class="roles">Software engineer at Klarna, AI product engineer at Moneyfarm, and founder of Cela, where I'm building Sidecar, Sage and AI Shell.</p>
+          <div class="actions">
+            <a v-enter.now="420" v-press class="btn btn-primary action" href="#sequence" @click="toWork">See the work</a>
+            <NuxtLink v-enter.now="480" v-press class="btn btn-outline action" to="/cv">Read the CV</NuxtLink>
+          </div>
+        </div>
+      </section>
 
-    <ScrollSequence id="sequence" :beats="beats" closing="Three products, one rule." />
+      <ScrollSequence id="sequence" :beats="beats" closing="Three products, one rule." />
+    </div>
 
     <section class="flagships wrap" aria-label="Sidecar, Sage and AI Shell">
       <SiteFlagship v-for="item in flagships" :key="item.slug" v-bind="item" />
@@ -196,12 +216,24 @@ onBeforeUnmount(() => {
   @apply flex flex-col gap-28;
 }
 
+.opening {
+  @apply relative -mt-20;
+}
+
+.holder {
+  @apply relative h-svh -mb-[100svh];
+}
+
+:root[data-motion="on"] .holder {
+  @apply sticky top-0;
+}
+
 .hero {
-  @apply relative -mt-20 flex h-svh min-h-160 flex-col justify-end overflow-hidden pt-20 pb-16 md:justify-center md:pb-0;
+  @apply relative flex h-svh min-h-160 flex-col justify-end overflow-hidden pt-20 pb-16 md:justify-center md:pb-0;
 }
 
 .intro {
-  @apply pointer-events-none relative mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 sm:px-8;
+  @apply relative mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 sm:px-8;
 }
 
 .title {
@@ -221,7 +253,7 @@ onBeforeUnmount(() => {
 }
 
 .action {
-  @apply pointer-events-auto min-h-11 justify-center px-5;
+  @apply min-h-11 justify-center px-5;
 }
 
 .flagships {
@@ -313,10 +345,6 @@ onBeforeUnmount(() => {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .entry:hover {
-    @apply -translate-y-1;
-  }
-
   .more:hover .arrow {
     @apply translate-x-1;
   }
