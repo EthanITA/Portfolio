@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import type { SceneMode } from "#shared/types/seekable";
 import type { Spring } from "animejs";
-import type { CameraPreset, Vec3 } from "~/utils/stage/island";
+import type { CameraPreset, Vec3 } from "~/utils/stage/camera";
 import type { SceneSetup } from "~/utils/stage/scene";
 
-import { MOTION_DURATION, MOTION_EASE, MOTION_SPRING } from "@cela/design/utils/motion";
-import { createAnimatable } from "animejs";
+import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
+import { createAnimatable, spring } from "animejs";
 import { useScene } from "~/utils/stage/scene";
 
 const { mode = "live", progress = 0, lost = false } = defineProps<{ mode?: SceneMode; progress?: number; lost?: boolean }>();
@@ -15,6 +15,7 @@ const REST_MS = ENTER.drawAt + ENTER.drawFor;
 const TILT = (6 * Math.PI) / 180;
 const PARALLAX = (2 * Math.PI) / 180;
 const DRIFT = { angle: (1.5 * Math.PI) / 180, period: 8000 } as const;
+const SETTLE_FROM = 0.8;
 
 const root = useTemplateRef<HTMLElement>("root");
 const canvas = useTemplateRef<HTMLCanvasElement>("canvas");
@@ -43,49 +44,60 @@ const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
   const wide = matchMedia("(min-width: 768px)");
   const fine = matchMedia("(hover: hover) and (pointer: fine)");
 
+  // MOTION_SPRING goes through animejs's deprecated createSpring, which warns on every call; these are its gentle and snappy values.
+  const gentle = spring({ mass: 1, stiffness: 100, damping: 15 });
+  const snappy = spring({ mass: 1, stiffness: 250, damping: 20 });
   const tilt = { x: 0, y: 0 };
-  const gentle = MOTION_SPRING.gentle();
-  const snappy = MOTION_SPRING.snappy();
   const follow = film ? undefined : createAnimatable(tilt, { x: { ease: gentle }, y: { ease: gentle } });
-  let following = false;
+  const aim = { x: 0, y: 0 };
+  const pointer = { x: 0, y: 0, over: false };
 
-  const steer = (x: number, y: number, spring: Spring): void => {
-    follow?.x?.(x, spring.settlingDuration, spring);
-    follow?.y?.(y, spring.settlingDuration, spring);
+  const steer = (x: number, y: number, ease: Spring): void => {
+    if (Math.abs(x - aim.x) < 0.002 && Math.abs(y - aim.y) < 0.002) return;
+    aim.x = x;
+    aim.y = y;
+    follow?.x?.(x, ease.settlingDuration, ease);
+    follow?.y?.(y, ease.settlingDuration, ease);
   };
 
-  const release = (): void => {
-    if (!following) return;
-    following = false;
-    steer(0, 0, snappy);
+  // The hero copy sits over the canvas, so the section hears the pointer; the box is read once per frame, never per event.
+  const area = root.value?.closest("section") ?? root.value;
+  const onMove = (event: PointerEvent): void => {
+    pointer.over = event.pointerType === "mouse";
+    pointer.x = event.clientX;
+    pointer.y = event.clientY;
   };
+  const onLeave = (): void => {
+    pointer.over = false;
+  };
+  if (follow) {
+    area?.addEventListener("pointermove", onMove, { passive: true });
+    area?.addEventListener("pointerleave", onLeave);
+  }
 
-  const onPointer = (event: PointerEvent): void => {
+  const track = (): void => {
     const box = root.value?.getBoundingClientRect();
-    if (!box || event.pointerType !== "mouse" || !fine.matches) return;
-    const x = ((event.clientX - box.left) / box.width) * 2 - 1;
-    const y = 1 - ((event.clientY - box.top) / box.height) * 2;
-    if (Math.abs(x) > 1 || Math.abs(y) > 1) return release();
-    following = true;
+    if (!pointer.over || !fine.matches || !box) return steer(0, 0, snappy);
+    const x = ((pointer.x - box.left) / box.width) * 2 - 1;
+    const y = 1 - ((pointer.y - box.top) / box.height) * 2;
+    if (Math.abs(x) > 1 || Math.abs(y) > 1) return steer(0, 0, snappy);
     steer(x, y, gentle);
   };
 
-  if (follow) {
-    addEventListener("pointermove", onPointer, { passive: true });
-    document.documentElement.addEventListener("pointerleave", release);
-  }
-
   const frame = (ms: number, dt: number): boolean => {
     stage.advance(dt);
+    if (follow) track();
     const glide = lost || !wide.matches ? 1 : sineInOut(clamp01(progress));
     const from = lost || !wide.matches ? hero : rest;
     const position = mix(from.position, hero.position, glide);
     const target = mix(from.target, hero.target, glide);
+    // Breath and tilt fade out at the end of the glide so the handoff lands on the sequence's still frame 0.
+    const calm = lost ? 1 : 1 - clamp01((progress - SETTLE_FROM) / (1 - SETTLE_FROM));
 
     const drifting = !film && !fine.matches;
     const phase = (2 * Math.PI * ms) / DRIFT.period;
-    const tx = drifting ? (Math.sin(phase) * DRIFT.angle) / TILT : tilt.x;
-    const ty = drifting ? (Math.sin(phase * 0.5) * DRIFT.angle * 0.5) / TILT : tilt.y;
+    const tx = (drifting ? (Math.sin(phase) * DRIFT.angle) / TILT : tilt.x) * calm;
+    const ty = (drifting ? (Math.sin(phase * 0.5) * DRIFT.angle * 0.5) / TILT : tilt.y) * calm;
 
     const yaw = PARALLAX * tx;
     const pitch = PARALLAX * ty;
@@ -110,8 +122,9 @@ const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
         broken: lost,
         scale: 0.95 + 0.05 * fade,
         draw: MOTION_EASE.out(window01(ms, ENTER.drawAt, ENTER.drawFor)),
+        breathe: calm,
       });
-    } else island.pose({ ms, broken: lost });
+    } else island.pose({ ms, broken: lost, breathe: calm });
 
     stage.render();
     return true;
@@ -122,8 +135,8 @@ const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
     theme: (instant) => stage.setPalette(readPalette(), instant),
     resize: stage.resize,
     dispose: () => {
-      removeEventListener("pointermove", onPointer);
-      document.documentElement.removeEventListener("pointerleave", release);
+      area?.removeEventListener("pointermove", onMove);
+      area?.removeEventListener("pointerleave", onLeave);
       follow?.revert();
       stage.dispose();
     },
@@ -143,7 +156,7 @@ defineExpose({ ...seekable, restMs: REST_MS });
 
 <template>
   <div ref="root" class="hero" data-scene="hero" :data-state="state" :data-theme-applied="theme" :data-lost="lost">
-    <StagePoster v-if="mode === 'live'" :name="lost ? 'lost' : 'hero'" eager />
+    <StagePoster v-if="mode === 'live'" :name="lost ? 'lost' : 'hero'" :theme="theme" eager />
     <canvas ref="canvas" class="canvas" />
   </div>
 </template>

@@ -391,7 +391,7 @@ export type Island = {
   body: Group;
   glass: Mesh<ExtrudeGeometry, MeshPhysicalMaterial>;
   core: Mesh<ExtrudeGeometry, MeshStandardMaterial>;
-  pose: (o: { ms: number; broken?: boolean; draw?: number; scale?: number }) => void;
+  pose: (o: { ms: number; broken?: boolean; draw?: number; scale?: number; breathe?: number }) => void;
 };
 
 export const createIsland = (stage: Stage): Island => {
@@ -417,8 +417,8 @@ export const createIsland = (stage: Stage): Island => {
   });
   group.add(body, whole.group, ...dashes.map((d) => d.group));
 
-  const pose = ({ ms, broken, draw = 1, scale = 1 }: { ms: number; broken?: boolean; draw?: number; scale?: number }): void => {
-    const b = breath(ms);
+  const pose = ({ ms, broken, draw = 1, scale = 1, breathe = 1 }: { ms: number; broken?: boolean; draw?: number; scale?: number; breathe?: number }): void => {
+    const b = breath(ms) * breathe;
     body.scale.setScalar(scale * (1 + 0.012 * b));
     const opacity = 1 - 0.3 * b;
     whole.set({ opacity, draw: broken ? 0 : draw });
