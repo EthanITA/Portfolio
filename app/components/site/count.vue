@@ -7,6 +7,7 @@ import { motionOn } from "~/utils/site/motion";
 const COUNT_MS = 800;
 
 const { to, after = "", decimals = 0 } = defineProps<{ to: number; after?: string; decimals?: number }>();
+const emit = defineEmits<{ start: [] }>();
 
 const el = useTemplateRef<HTMLElement>("el");
 const format = (n: number): string => `${n.toFixed(decimals)}${after}`;
@@ -23,6 +24,7 @@ onMounted(() => {
       const target = el.value;
       const proxy = { n: 0 };
       target.textContent = format(0);
+      emit("start");
       animate(proxy, {
         duration: COUNT_MS,
         ease: MOTION_EASE.out,
