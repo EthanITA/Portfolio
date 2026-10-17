@@ -25,6 +25,7 @@ const { positionals, values } = parseArgs({
     cut: { type: "string", default: "16x9" },
     check: { type: "string", default: "24" },
     port: { type: "string" },
+    fit: { type: "boolean" },
   },
 });
 
@@ -39,8 +40,15 @@ const fit = async ({ url, script, width, height }: { url: string; script: FilmSc
     height,
     scale: SCALE,
     times: Array.from({ length: script.duration / 100 }, (_, n) => n * 100),
-    read: (): { placed: Placed[]; landed: string } => ({
+    read: (): { placed: Placed[]; landed: string; broken: string[] } => ({
       landed: document.querySelector<HTMLElement>(".film-rig")?.dataset.landed ?? "",
+      broken: [...document.querySelectorAll(".film-sentence")]
+        .filter((sentence) => {
+          const range = document.createRange();
+          range.selectNodeContents(sentence);
+          return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size > 1;
+        })
+        .map((sentence) => sentence.textContent?.trim() ?? ""),
       placed: [".film-caption", ".film-key-caps", ".film-title [data-word]", ".film-end"].flatMap((selector) =>
         [...document.querySelectorAll(selector)]
           .filter((element) => {
@@ -59,6 +67,8 @@ const fit = async ({ url, script, width, height }: { url: string; script: FilmSc
   });
   const landed = samples.at(-1)?.value.landed.split(" ").map(Number) ?? [];
   const shots: Check[] = script.rig.shots.map((shot, index) => ({ name: `shot at ${shot.at} ms${shot.anchor ? ` on "${shot.anchor}"` : ""} lands`, pass: true, detail: `scale ${landed[index]?.toFixed(3)} of ${shot.scale}` }));
+  const broken = [...new Set(samples.flatMap(({ value }) => value.broken))];
+  const whole: Check = { name: "every caption sentence on one line", pass: !broken.length, detail: broken.length ? `broken: ${broken.join(" | ")}` : "all whole" };
   const closest = new Map<string, { margin: number; ms: number }>();
   for (const { ms, value } of samples) {
     for (const placed of value.placed) {
@@ -67,7 +77,7 @@ const fit = async ({ url, script, width, height }: { url: string; script: FilmSc
       if (!previous || margin < previous.margin) closest.set(placed.name, { margin, ms });
     }
   }
-  return [...shots, ...[...closest].map(([name, { margin, ms }]) => ({ name: `${name} inside the frame`, pass: margin >= SAFE_MARGIN, detail: `${margin.toFixed(1)} px from the edge at ${ms} ms` }))];
+  return [...shots, whole, ...[...closest].map(([name, { margin, ms }]) => ({ name: `${name} inside the frame`, pass: margin >= SAFE_MARGIN, detail: `${margin.toFixed(1)} px from the edge at ${ms} ms` }))];
 };
 
 const verify = async ({ script, files, width, height, audio }: { script: FilmScript; files: string[]; width: number; height: number; audio: boolean }): Promise<Check[]> => {
@@ -105,7 +115,7 @@ const verify = async ({ script, files, width, height, audio }: { script: FilmScr
 const film = async (name: string): Promise<boolean> => {
   const script = SCRIPTS[name];
   const cut = CUTS[values.cut];
-  if (!script || !cut) throw new Error(`usage: tsx films/render.ts <${Object.keys(SCRIPTS).join("|")}...> [--cut ${Object.keys(CUTS).join("|")}]`);
+  if (!script || !cut) throw new Error(`usage: tsx films/render.ts <${Object.keys(SCRIPTS).join("|")}...> [--cut ${Object.keys(CUTS).join("|")}] [--fit]`);
 
   const route = `/film/${name}`;
   const server = await Render.serve({ route, port: values.port ? Number(values.port) : undefined, root });
@@ -114,6 +124,10 @@ const film = async (name: string): Promise<boolean> => {
     const options = { url: `${server.origin}${route}`, width: cut.width, height: cut.height, scale: SCALE, fps: FPS };
     const placement = await fit({ url: options.url, script, width: cut.width, height: cut.height });
     const misplaced = placement.filter((check) => !check.pass);
+    if (values.fit) {
+      console.log(JSON.stringify({ film: `${name}${cut.suffix}`, placement, failed: misplaced.length }, undefined, 2));
+      return !misplaced.length;
+    }
     if (misplaced.length) {
       console.log(JSON.stringify({ film: `${name}${cut.suffix}`, misplaced }, undefined, 2));
       return false;
