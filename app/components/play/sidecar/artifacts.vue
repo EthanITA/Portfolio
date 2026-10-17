@@ -22,7 +22,7 @@ const onKey = (event: KeyboardEvent, block: Block): void => {
     <article class="page" data-page>
       <div v-for="block in ORDER" :key="block" class="slot">
         <div
-          class="block"
+          class="part"
           :data-block="block"
           :data-spot="state.spot === block"
           role="button"
@@ -59,38 +59,38 @@ const onKey = (event: KeyboardEvent, block: Block): void => {
   @apply relative;
 }
 
-.block {
+.part {
   @apply relative hit-area cursor-pointer rounded-lg px-2 py-1 text-fg;
 }
 
-.block::before {
+.part::before {
   @apply pointer-events-none absolute -inset-0.5 rounded-lg ring-2 ring-primary;
   content: "";
   opacity: 0;
 }
 
-.block[data-spot="true"]::before {
+.part[data-spot="true"]::before {
   opacity: var(--spot, 1);
 }
 
-.block:focus-visible {
+.part:focus-visible {
   @apply focus-ring;
 }
 
-.block[data-block="title"] {
+.part[data-block="title"] {
   @apply typo-heading-lg;
 }
 
-.block[data-block="sub"] {
+.part[data-block="sub"] {
   @apply typo-body-lg text-muted;
 }
 
-.block[data-block="lead"] {
+.part[data-block="lead"] {
   @apply max-w-xl typo-body;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .block:hover {
+  .part:hover {
     @apply bg-primary-soft;
   }
 }
