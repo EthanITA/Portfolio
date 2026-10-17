@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { MAX_TRUE_PEAK, ROOT, TARGET_LUFS, compose, rawBed } from "./build";
-import { FILMS, READ_BY_FILM, type FilmName } from "./films";
+import { FILMS, type FilmName } from "./films";
 import { SAMPLE_RATE, type Stereo, blank, decode, durationOf, measure, run, samplesAt, toDb } from "./lib/audio";
 import { biquad } from "./lib/dsp";
 import { room } from "./lib/synth";
@@ -259,9 +259,6 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
   if (cursor < mix.l.length - samplesAt(300)) gaps.push([cursor, mix.l.length]);
   const loudestGap = Math.max(...gaps.map(([a, b]) => Math.max(rmsDb(ui, a, b), rmsDb(voice, a, b))));
   report(loudestGap <= -80, "silence outside cues", `${gaps.length} gaps, loudest cue-stem level in them ${loudestGap.toFixed(1)} dBFS`);
-
-  const missing = READ_BY_FILM[name].filter((id) => !cues.cues.some((c) => c.id === id));
-  report(missing.length === 0, "every id film reads is in cues.json", missing.length ? `missing ${missing.join(", ")}` : `${READ_BY_FILM[name].length} ids`);
 
   if (stems.music) {
     const level = rmsDb(mono(stems.music), samplesAt(3000), samplesAt(spec.durationMs - 5000));

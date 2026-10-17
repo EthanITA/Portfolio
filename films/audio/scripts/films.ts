@@ -1,5 +1,8 @@
 import { SAGE_SCRIPT } from "../../../app/utils/play/script/sage";
 import { SHELL_SCRIPT } from "../../../app/utils/play/script/shell";
+import sageFilm from "../../../films/scripts/sage";
+import type { FilmScript } from "../../../films/scripts/script";
+import shellFilm from "../../../films/scripts/shell";
 import type { ClickVariant, KeyVariant, TickVariant, WhooshDirection } from "./lib/synth";
 
 export type FilmName = "sidecar" | "sage" | "shell";
@@ -14,7 +17,6 @@ export type CueSpec =
   | (Base & { sound: "chime" })
   | (Base & { sound: "thud" })
   | (Base & { sound: "line"; durMs: number; cutMs?: number })
-  | (Base & { sound: "marker" })
   | (Base & { sound: "whoosh"; durMs: number; fromHz: number; toHz: number; direction: WhooshDirection })
   | (Base & { sound: "voice"; voice: VoiceName; text: string })
   | (Base & { sound: "typing"; endMs: number; text: string; seed: number; presses?: number[] });
@@ -52,72 +54,90 @@ const whoosh = (id: string, at: number, durMs: number, direction: WhooshDirectio
 
 const quiet = (cue: CueSpec, gainDb = -6): CueSpec => ({ ...cue, gainDb });
 
-const typing = (id: string, script: { text: string; at: number[] }, seed: number, marks: string, sheet: string): CueSpec => ({
-  id, at: script.at[0] ?? 0, sound: "typing", endMs: script.at.at(-1) ?? 0, presses: script.at, text: script.text, seed, marks, sheet,
+const typing = (id: string, script: { text: string; at: number[] }, seed: number, marks: string): CueSpec => ({
+  id, at: script.at[0] ?? 0, sound: "typing", endMs: script.at.at(-1) ?? 0, presses: script.at, text: script.text, seed, marks, sheet: "",
 });
 
-const marker = (id: string, at: number, marks: string, sheet: string): CueSpec => ({ id, at, sound: "marker", marks, sheet });
+const MAX_WHOOSH_MS = 1200;
+
+const RANGES = {
+  sage: [[0, 3], [3, 9], [9, 12], [12, 22], [22, 30], [30, 36], [36, 40]],
+  shell: [[0, 3], [3, 10], [10, 18], [18, 27], [27, 32], [32, 35]],
+} as const;
+
+const withSheets = (film: keyof typeof RANGES, cues: CueSpec[]): CueSpec[] =>
+  cues.map((cue) => {
+    const [from, to] = RANGES[film].find(([start, end]) => cue.at >= start * 1000 && cue.at < end * 1000) ?? RANGES[film].at(-1)!;
+    return { ...cue, sheet: `${from}-${to}` };
+  });
+
+const camera = (film: FilmScript): CueSpec[] => {
+  const seen = new Map<string, number>();
+  const last = film.rig.shots.length - 1;
+  return film.rig.shots.flatMap((shot, index): CueSpec[] => {
+    const durMs = Math.min(shot.duration, MAX_WHOOSH_MS);
+    if (shot.anchor) {
+      const name = `push-${shot.anchor}`;
+      const count = (seen.get(name) ?? 0) + 1;
+      seen.set(name, count);
+      return [quiet(whoosh(count > 1 ? `${name}-${count}` : name, shot.at, durMs, "still", `the camera pushes in on the ${shot.anchor}`, "", 300, 1800))];
+    }
+    return index === last && shot.scale < 1 ? [quiet(whoosh("pull-back", shot.at, durMs, "still", "the camera pulls back to the end card", "", 1600, 300))] : [];
+  });
+};
+
+const endCard = (film: FilmScript): CueSpec => ({
+  id: "line-end-card", at: film.island.at(-1)?.draw ?? film.end.at, sound: "line", durMs: 600, marks: "the violet line draws on the end card", sheet: "",
+});
 
 const sageCues = (): CueSpec[] => {
-  const { moments: m, words } = SAGE_SCRIPT;
-  return [
-    { id: "option-down", at: m.optionDown, sound: "key", variant: "down", marks: "the right Option key goes down", sheet: "3-9" },
-    quiet(whoosh("push-notch", m.optionDown, 1200, "still", "the camera pushes in as the island grows out of the notch", "3-9", 300, 1800)),
-    { id: "ask-1", at: m.wordsStart, sound: "voice", voice: "person", text: words.ask.text, marks: "the spoken ask, words appear live", sheet: "3-9" },
-    { id: "option-up", at: m.release, sound: "key", variant: "up", marks: "the key is released", sheet: "9-12" },
-    { id: "understood", at: m.understood, sound: "voice", voice: "sage", text: "Understood", marks: "Sage says Understood", sheet: "9-12" },
-    { id: "step-1", at: m.tick1, sound: "tick", variant: "high", marks: "Found Standup · 9:30 · Google Meet is ticked", sheet: "12-22" },
-    { id: "step-2", at: m.tick2, sound: "tick", variant: "high", marks: "Opened the call is ticked", sheet: "12-22" },
-    { id: "step-3", at: m.tick3, sound: "tick", variant: "high", marks: "Mic and camera off is ticked", sheet: "12-22" },
-    quiet(whoosh("card-in", m.cardIn, 1200, "still", "the camera pushes in on the confirm card Join the call?", "22-30", 300, 1800)),
-    { id: "line-fill", at: m.fillStart, sound: "line", durMs: SAGE_SCRIPT.fill, cutMs: m.returnKey - m.fillStart, marks: "the violet line fills and Return cuts it", sheet: "22-30" },
-    { id: "return", at: m.returnKey, sound: "click", variant: "soft", marks: "Return is pressed and the line is cut", sheet: "22-30" },
-    { id: "joined", at: m.joined + 60, sound: "chime", marks: "it joins the call", sheet: "22-30" },
-    { id: "option-down-2", at: m.hold2, sound: "key", variant: "down", marks: "the right Option key goes down again", sheet: "30-36" },
-    quiet(whoosh("push-pay", m.hold2, 1200, "still", "the camera pushes in on the second ask", "30-36", 300, 1800)),
-    { id: "ask-2", at: m.words2Start, sound: "voice", voice: "person", text: words.second.text, marks: "the second spoken ask", sheet: "30-36" },
-    { id: "option-up-2", at: m.release2, sound: "key", variant: "up", marks: "the key is released", sheet: "30-36" },
-    quiet(whoosh("scroll-to-pay", m.scrollToPay, 500, "still", "the page scrolls to Pay", "30-36", 350, 1600), -3),
-    { id: "stopped", at: m.payOutlined, sound: "thud", marks: "Pay is outlined, stopped at the line", sheet: "30-36" },
-    { id: "handback", at: m.handBack + 300, sound: "voice", voice: "sage", text: "Stopped at Pay. It's yours to press.", marks: "Sage hands Pay back", sheet: "30-36" },
-    quiet(whoosh("pull-back", 36_000, 600, "still", "the camera pulls back to the end card", "36-40", 1600, 300)),
-    { id: "line-end-card", at: 36_400, sound: "line", durMs: 600, marks: "the violet line draws on the end card", sheet: "36-40" },
-  ];
+  const { moments: m, words, fill } = SAGE_SCRIPT;
+  return withSheets("sage", [
+    { id: "optionDown", at: m.optionDown, sound: "key", variant: "down", marks: "the right Option key goes down", sheet: "" },
+    { id: "ask-1", at: m.wordsStart, sound: "voice", voice: "person", text: words.ask.text, marks: "the spoken ask, words appear live", sheet: "" },
+    { id: "release", at: m.release, sound: "key", variant: "up", marks: "the key is released", sheet: "" },
+    { id: "understood", at: m.understood, sound: "voice", voice: "sage", text: "Understood", marks: "Sage says Understood", sheet: "" },
+    { id: "tick1", at: m.tick1, sound: "tick", variant: "high", marks: "Found Standup · 9:30 · Google Meet is ticked", sheet: "" },
+    { id: "tick2", at: m.tick2, sound: "tick", variant: "high", marks: "Opened the call is ticked", sheet: "" },
+    { id: "tick3", at: m.tick3, sound: "tick", variant: "high", marks: "Mic and camera off is ticked", sheet: "" },
+    { id: "fillStart", at: m.fillStart, sound: "line", durMs: fill, cutMs: m.returnKey - m.fillStart, marks: "the violet line fills and Return cuts it", sheet: "" },
+    { id: "returnKey", at: m.returnKey, sound: "click", variant: "soft", marks: "Return is pressed and the line is cut", sheet: "" },
+    { id: "joined", at: m.joined + 60, sound: "chime", marks: "it joins the call", sheet: "" },
+    { id: "hold2", at: m.hold2, sound: "key", variant: "down", marks: "the right Option key goes down again", sheet: "" },
+    { id: "ask-2", at: m.words2Start, sound: "voice", voice: "person", text: words.second.text, marks: "the second spoken ask", sheet: "" },
+    { id: "release2", at: m.release2, sound: "key", variant: "up", marks: "the key is released", sheet: "" },
+    quiet(whoosh("scrollToPay", m.scrollToPay, 500, "still", "the page scrolls to Pay", "", 350, 1600), -3),
+    { id: "payOutlined", at: m.payOutlined, sound: "thud", marks: "Pay is outlined, stopped at the line", sheet: "" },
+    { id: "handback", at: m.handBack + 300, sound: "voice", voice: "sage", text: "Stopped at Pay. It's yours to press.", marks: "Sage hands Pay back", sheet: "" },
+    ...camera(sageFilm),
+    endCard(sageFilm),
+  ]);
 };
 
 const shellCues = (): CueSpec[] => {
   const { moments: m, presses } = SHELL_SCRIPT;
-  const click = (id: string, at: number, marks: string, sheet: string): CueSpec => ({ id, at, sound: "click", variant: "soft", marks, sheet });
+  const click = (id: string, at: number, marks: string): CueSpec => ({ id, at, sound: "click", variant: "soft", marks, sheet: "" });
   const output = Array.from({ length: 5 }, (_, i): CueSpec => ({
-    id: `out-${i + 1}`, at: m.outputFind + i * 45, sound: "tick", variant: "high", gainDb: -2 * i, marks: `output line ${i + 1}`, sheet: "3-10",
+    id: i ? `outputFind-${i + 1}` : "outputFind", at: m.outputFind + i * 45, sound: "tick", variant: "high", gainDb: -2 * i, marks: `the find output, line ${i + 1}`, sheet: "",
   }));
-  return [
-    quiet(whoosh("push-ask-1", m.typeFind, 1200, "still", "the camera pushes in on the prompt line", "3-10", 300, 1800)),
-    typing("ask-1-typing", presses.find, 21, "the first ask is typed", "3-10"),
-    click("enter-1", m.enterFind, "Enter, the spinner starts", "3-10"),
+  return withSheets("shell", [
+    typing("typeFind", presses.find, 21, "the first ask is typed"),
+    click("enterFind", m.enterFind, "Enter, the spinner starts"),
     ...output,
-    marker("label-looks", m.outputFind, "label Looks: runs", "3-10"),
-    quiet(whoosh("push-ask-2", m.typeDist + 400, 1200, "still", "the camera pushes in on the prompt line", "10-18", 300, 1800)),
-    typing("ask-2-typing", presses.dist, 22, "the second ask is typed", "10-18"),
-    click("enter-2", m.enterDist, "Enter on the second ask, the spinner starts", "10-18"),
-    { id: "caution-note", at: m.stagedDist, sound: "tick", variant: "low", marks: "caution · deletes files lands with rm -r dist on the line", sheet: "10-18" },
-    marker("label-changes", m.stagedDist, "label Changes: waits for Enter", "10-18"),
-    { ...click("line-cleared", m.killDist, "ctrl U clears the staged rm -r dist from the line", "18-27"), gainDb: -5 },
-    typing("ask-3-typing", presses.push, 23, "the third ask is typed", "18-27"),
-    quiet(whoosh("push-ask-3", m.typePush + 400, 1200, "still", "the camera pushes in on the prompt line", "18-27", 300, 1800)),
-    click("enter-3", m.enterPush, "Enter on the third ask, the spinner starts", "18-27"),
-    { id: "danger", at: m.askedPush, sound: "thud", marks: "danger · changes something remote or published, and the y/N prompt", sheet: "18-27" },
-    marker("label-danger", m.askedPush, "label Can't be undone: asks first", "18-27"),
-    { id: "answer-no", at: m.answerNo, sound: "key", variant: "down", marks: "N answers the prompt and leaves an empty line", sheet: "18-27" },
-    marker("screen-clears", m.clear, "the screen clears for the pipe", "27-32"),
-    typing("ask-4-typing", presses.pipe, 24, "the pipe is typed", "27-32"),
-    quiet(whoosh("push-ask-4", m.typePipe + 500, 1200, "still", "the camera pushes in on the prompt line", "27-32", 300, 1800)),
-    click("enter-4", m.enterPipe, "Enter on the pipe", "27-32"),
-    { id: "subject-returns", at: m.answerPipe, sound: "chime", marks: "one conventional commit subject comes back", sheet: "27-32" },
-    marker("label-pipe", m.answerPipe, "label One answer from a pipe", "27-32"),
-    quiet(whoosh("pull-back", m.answerPipe + 900, 900, "still", "the camera pulls back to the end card", "32-35", 1600, 300)),
-    { id: "line-end-card", at: m.answerPipe + 1500, sound: "line", durMs: 600, marks: "the violet line draws on the end card", sheet: "32-35" },
-  ];
+    typing("typeDist", presses.dist, 22, "the second ask is typed"),
+    click("enterDist", m.enterDist, "Enter on the second ask, the spinner starts"),
+    { id: "stagedDist", at: m.stagedDist, sound: "tick", variant: "low", marks: "caution · deletes files lands with rm -r dist on the line", sheet: "" },
+    { ...click("killDist", m.killDist, "ctrl U clears the staged rm -r dist from the line"), gainDb: -5 },
+    typing("typePush", presses.push, 23, "the third ask is typed"),
+    click("enterPush", m.enterPush, "Enter on the third ask, the spinner starts"),
+    { id: "askedPush", at: m.askedPush, sound: "thud", marks: "danger · changes something remote or published, and the y/N prompt", sheet: "" },
+    { id: "answerNo", at: m.answerNo, sound: "key", variant: "down", marks: "N answers the prompt and leaves an empty line", sheet: "" },
+    typing("typePipe", presses.pipe, 24, "the pipe is typed"),
+    click("enterPipe", m.enterPipe, "Enter on the pipe"),
+    { id: "answerPipe", at: m.answerPipe, sound: "chime", marks: "one conventional commit subject comes back", sheet: "" },
+    ...camera(shellFilm),
+    endCard(shellFilm),
+  ]);
 };
 
 export const FILMS: Record<FilmName, FilmSpec> = {
@@ -166,14 +186,4 @@ export const FILMS: Record<FilmName, FilmSpec> = {
     music: { source: "synth", take: 1, gainDb: 0, fadeInMs: 1200, fadeOutMs: 3000, startMs: 0 },
     cues: shellCues(),
   },
-};
-
-// Film fails its build on a missing id, so a silent marker stands in wherever the sound is gone.
-export const READ_BY_FILM: Record<FilmName, string[]> = {
-  sidecar: ["island-open", "undo", "redo", "artifacts-face", "pull-back", "line-end-card"],
-  sage: ["option-down", "option-up", "option-down-2", "option-up-2", "return", "push-notch", "card-in", "push-pay", "pull-back", "line-end-card"],
-  shell: [
-    "push-ask-1", "push-ask-2", "push-ask-3", "push-ask-4", "enter-1", "enter-2", "enter-3", "enter-4",
-    "label-looks", "label-changes", "label-danger", "label-pipe", "line-cleared", "screen-clears", "ask-2-typing-00", "pull-back", "line-end-card",
-  ],
 };
