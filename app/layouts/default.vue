@@ -1,3 +1,7 @@
+<script setup lang="ts">
+const route = useRoute();
+</script>
+
 <template>
   <div class="shell">
     <a class="skip" href="#content">Skip to content</a>
@@ -5,7 +9,7 @@
     <main id="content" class="main" tabindex="-1">
       <slot />
     </main>
-    <SiteFooter />
+    <SiteFooter :ends-on-contact="Boolean(route.meta.endsOnContact)" />
   </div>
 </template>
 
