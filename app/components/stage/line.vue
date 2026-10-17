@@ -45,7 +45,8 @@ const announcement = ref("");
 const ZONE_TOP: Record<Tier, { "--top": number }> = {
   runs: { "--top": hydrationSafe(toScreen(STAGE_CAMERA.line, [0, 0, ZONE.runs]).top) },
   waits: { "--top": hydrationSafe(toScreen(STAGE_CAMERA.line, [0, 0, ZONE.waits]).top) },
-  stops: { "--top": hydrationSafe(toScreen(STAGE_CAMERA.line, [0, 0, ZONE.stops]).top) },
+  // Its zone is the violet line itself, so the label sits halfway up to "Runs", clear of the glow it names at every frame height.
+  stops: { "--top": hydrationSafe((toScreen(STAGE_CAMERA.line, [0, 0, ZONE.stops]).top + toScreen(STAGE_CAMERA.line, [0, 0, ZONE.runs]).top) / 2) },
 };
 
 const overlays = new Map<number, HTMLElement>();
@@ -352,7 +353,7 @@ defineExpose({ ...seekable, restMs: FILM.rest });
 }
 
 .zone {
-  @apply typo-eyebrow pointer-events-none absolute left-4 -translate-y-1/2 text-muted;
+  @apply typo-eyebrow pointer-events-none absolute left-4 -translate-y-1/2 text-fg;
   /* The canvas crops like a 16:9 cover poster, so one frame height is the larger of the box height and its width over 16:9. */
   top: calc(50% + (var(--top) - 0.5) * max(100cqh, 56.25cqw));
 }
