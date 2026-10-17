@@ -1,5 +1,5 @@
 export const MANIFEST = {
-  "version": "d4de8735a4",
+  "version": "dcec598e11",
   "lq": [
     0,
     8,
