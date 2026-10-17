@@ -6,18 +6,19 @@ import { Kbd } from "@cela/design";
 import { useReel } from "~/utils/play/reel";
 import { SAGE_REEL, sageToy, sizeOf } from "~/utils/play/sage";
 
-const { mode = "live" } = defineProps<{ mode?: SceneMode }>();
+const { mode = "live", paused = false } = defineProps<{ mode?: SceneMode; paused?: boolean }>();
 
 const root = useTemplateRef<HTMLElement>("root");
 const input = useTemplateRef<HTMLInputElement>("input");
 const visible = ref(false);
+const playing = computed(() => visible.value && !paused);
 let toy: SageToy | undefined;
 
 const reel = useReel({
   reel: SAGE_REEL,
   mode,
   root,
-  visible,
+  visible: playing,
   visitor: (state) =>
     (toy = sageToy(state, {
       tween: (name, value, options) => reel.tween(name, value, options),
@@ -26,9 +27,11 @@ const reel = useReel({
     })),
 });
 
-defineExpose(reel.seekable);
+defineExpose({ ...reel.seekable, ...reel.control });
 
 const state = computed(() => reel.view.current);
+
+const folded = computed(() => mode === "live" && state.value.slot === "hidden" && !state.value.held);
 
 const live = (): SageToy | undefined => {
   reel.ensureVisitor();
@@ -52,6 +55,19 @@ const onKeyUp = (event: KeyboardEvent): void => {
 
 const coarse = (): boolean => window.matchMedia("(pointer: coarse)").matches;
 
+const toggleHold = (active: SageToy): void => {
+  if (state.value.held) active.lift();
+  else {
+    active.press();
+    setTimeout(() => input.value?.focus(), 200);
+  }
+};
+
+const onHoldTwin = (): void => {
+  const active = live();
+  if (active) toggleHold(active);
+};
+
 const onPress = (event: PointerEvent): void => {
   if (mode === "film") return;
   const active = live();
@@ -61,11 +77,7 @@ const onPress = (event: PointerEvent): void => {
     return;
   }
   if (coarse()) {
-    if (state.value.held) active.lift();
-    else {
-      active.press();
-      setTimeout(() => input.value?.focus(), 200);
-    }
+    toggleHold(active);
     return;
   }
   if (event.currentTarget instanceof Element) event.currentTarget.setPointerCapture(event.pointerId);
@@ -90,10 +102,10 @@ const onSubmit = (): void => {
 <template>
   <PlayFrame
     v-model:visible="visible"
+    class="sage-frame"
     :driver="reel.driver.value"
     label="Sage"
     :mode="mode"
-    @demo="reel.playDemo()"
     @key="onKey"
     @keyup="onKeyUp"
     @leave="onLift"
@@ -179,6 +191,11 @@ const onSubmit = (): void => {
           </div>
         </div>
         <i class="idle" aria-hidden="true" />
+        <Transition name="hint">
+          <div v-if="folded" class="hold-hint" data-hold-hint>
+            <Kbd keys="opt" label="Hold" />
+          </div>
+        </Transition>
         <div v-if="state.page" class="page" data-page aria-hidden="true">
           <div class="page-scroll">
             <i class="bar" data-w="3/4" /><i class="bar" data-w="1/2" /><i class="bar" data-w="5/6" /><i class="bar" data-w="2/3" />
@@ -205,6 +222,9 @@ const onSubmit = (): void => {
           @input="onInput"
           @keydown.enter.prevent="onSubmit"
         >
+        <button class="twin hold" type="button" aria-label="Hold" :aria-pressed="state.held" data-hold-twin @click="onHoldTwin">
+          <Kbd keys="opt" label="Hold" />
+        </button>
         <button class="twin" type="button" aria-label="esc" @click="live()?.escape()">
           <Kbd keys="esc" />
         </button>
@@ -430,6 +450,26 @@ const onSubmit = (): void => {
   opacity: var(--idle, 0.4);
 }
 
+.hold-hint {
+  @apply pointer-events-none absolute top-13 left-0 w-max -translate-x-1/2;
+}
+
+.hint-enter-active,
+.hint-leave-active {
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.hint-enter-from,
+.hint-leave-to {
+  opacity: 0;
+}
+
+@media (pointer: coarse) {
+  .hold-hint {
+    @apply hidden;
+  }
+}
+
 .page {
   @apply absolute top-28 -left-60 h-64 w-120 overflow-hidden rounded-box border border-border bg-raised shadow-lg;
   opacity: var(--page, 0);
@@ -503,12 +543,27 @@ const onSubmit = (): void => {
   @apply grid size-11 flex-none cursor-pointer place-items-center rounded-field border-0 bg-transparent p-0;
 }
 
+.twin.hold {
+  @apply w-auto px-3;
+}
+
+/* The design system's label is --subtle, about 2.5:1 on the frame. */
+.hold-hint :deep(.kbd-label),
+.twin :deep(.kbd-label) {
+  @apply text-muted;
+}
+
 .twin-input:focus-visible,
 .twin:focus-visible {
   @apply focus-ring;
 }
 
 @media (pointer: coarse) {
+  /* Clears the twins: 1rem up, 2.75rem tall, then a 0.5rem gap. */
+  .sage-frame {
+    --invite-inset: --spacing(17);
+  }
+
   .sage[data-mode="live"] .twins {
     @apply flex;
   }

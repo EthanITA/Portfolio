@@ -4,7 +4,7 @@ import type { Ref, ShallowRef } from "vue";
 
 import { MOTION_EASE, prefersReducedMotion } from "@cela/design/utils/motion";
 import { animate, createTimeline, createTimer, svg } from "animejs";
-import { onBeforeUnmount, onMounted, reactive, ref, shallowReactive, toRaw, watch, watchEffect } from "vue";
+import { onBeforeUnmount, onMounted, reactive, readonly, ref, shallowReactive, toRaw, watch, watchEffect } from "vue";
 
 export type Driver = "demo" | "visitor";
 
@@ -56,11 +56,18 @@ export type ReelOptions<S> = {
   visitor: (state: S) => Visitor<S>;
 };
 
+export type PlayControl = {
+  driver: Readonly<Ref<Driver>>;
+  take: () => void;
+  demo: () => void;
+};
+
 export type ReelHandle<S> = {
   view: { current: S };
   driver: Ref<Driver>;
   reduced: Ref<boolean>;
   seekable: Seekable & { ready: () => Promise<void> };
+  control: PlayControl;
   takeOver: () => void;
   ensureVisitor: () => S;
   playDemo: () => void;
@@ -352,6 +359,15 @@ export const useReel = <S extends object>({ reel, mode, root, visible, visitor }
       duration: reel.duration,
       seek,
       ready: () => document.fonts.ready.then(() => undefined),
+    },
+    control: {
+      driver: readonly(driver),
+      take: () => {
+        takeOver();
+        // A take-over from the page's bar moves focus into the frame, because the toys only read keys while it is focused.
+        root.value?.closest<HTMLElement>("[data-driver]")?.focus({ preventScroll: true });
+      },
+      demo: playDemo,
     },
     takeOver,
     ensureVisitor,

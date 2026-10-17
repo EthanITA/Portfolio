@@ -6,21 +6,22 @@ import { Segmented, Surface, Toast } from "@cela/design";
 import { useReel } from "~/utils/play/reel";
 import { SIDECAR_REEL, sidecarToy } from "~/utils/play/sidecar";
 
-const { mode = "live" } = defineProps<{ mode?: SceneMode }>();
+const { mode = "live", paused = false } = defineProps<{ mode?: SceneMode; paused?: boolean }>();
 
 const root = useTemplateRef<HTMLElement>("root");
 const visible = ref(false);
+const playing = computed(() => visible.value && !paused);
 let toy: SidecarToy | undefined;
 
 const reel = useReel({
   reel: SIDECAR_REEL,
   mode,
   root,
-  visible,
+  visible: playing,
   visitor: (state) => (toy = sidecarToy(state, { tween: (name, value, options) => reel.tween(name, value, options) })),
 });
 
-defineExpose(reel.seekable);
+defineExpose({ ...reel.seekable, ...reel.control });
 
 const state = computed(() => reel.view.current);
 const isVisitor = computed(() => reel.driver.value === "visitor");
@@ -61,9 +62,9 @@ watch(
   <PlayFrame
     v-model:visible="visible"
     :driver="reel.driver.value"
+    invite-at="top"
     label="Sidecar"
     :mode="mode"
-    @demo="reel.playDemo()"
     @key="onKey"
     @take="reel.takeOver()"
   >

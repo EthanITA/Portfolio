@@ -6,30 +6,36 @@ import { Kbd, Surface } from "@cela/design";
 import { useCaret, useReel } from "~/utils/play/reel";
 import { SHELL_REEL, SPINNER, shellToy } from "~/utils/play/shell";
 
-const { mode = "live" } = defineProps<{ mode?: SceneMode }>();
+const { mode = "live", paused = false } = defineProps<{ mode?: SceneMode; paused?: boolean }>();
 
 const root = useTemplateRef<HTMLElement>("root");
 const visible = ref(false);
+const playing = computed(() => visible.value && !paused);
 let toy: ShellToy | undefined;
 
 const reel = useReel({
   reel: SHELL_REEL,
   mode,
   root,
-  visible,
+  visible: playing,
   visitor: (state) => (toy = shellToy(state, { tween: (name, value) => reel.tween(name, value) })),
 });
 
-defineExpose(reel.seekable);
+defineExpose({ ...reel.seekable, ...reel.control });
 
 const state = computed(() => reel.view.current);
 
-const caret = useCaret({ visible, reduced: reel.reduced });
+const caret = useCaret({ visible: playing, reduced: reel.reduced });
 const blink = computed(() => (mode === "film" ? state.value.blink : caret.value));
 watch(
   () => state.value.line,
   () => (caret.value = 0),
 );
+
+// The product's own help line (shell/src/cli.ts), so the empty prompt says how to start.
+const HINT = "type ? then what you want";
+
+const waiting = computed(() => mode === "live" && !state.value.line && state.value.phase === "idle" && !state.value.staged);
 
 const TWINS = [
   { key: "Enter", caps: "enter" },
@@ -61,10 +67,11 @@ const onInput = (event: Event): void => {
 <template>
   <PlayFrame
     v-model:visible="visible"
+    class="shell-frame"
     :driver="reel.driver.value"
+    invite-at="top"
     label="AI Shell"
     :mode="mode"
-    @demo="reel.playDemo()"
     @key="onKey"
     @take="reel.takeOver()"
   >
@@ -103,6 +110,7 @@ const onInput = (event: Event): void => {
             :data-staged="state.staged ?? 'none'"
           >
             <span data-film-anchor="command"><span class="prompt"><span class="folder">{{ state.folder }}</span> $ </span><span class="text">{{ state.line }}</span><span class="cursor" :data-blink="blink" /></span>
+            <span v-if="waiting" class="hint" data-hint>{{ HINT }}</span>
           </div>
           <div v-if="state.phase === 'spinning'" class="row spinner" data-spinner aria-hidden="true">
             <svg class="braille" viewBox="0 0 8 16">
@@ -119,6 +127,7 @@ const onInput = (event: Event): void => {
           autocomplete="off"
           class="twin-input"
           enterkeyhint="send"
+          :placeholder="HINT"
           spellcheck="false"
           :value="state.line"
           @input="onInput"
@@ -132,6 +141,11 @@ const onInput = (event: Event): void => {
 </template>
 
 <style scoped>
+/* Clears the title bar: 1rem pad, 2rem bar, 0.5rem gap. */
+.shell-frame {
+  --invite-inset: --spacing(14);
+}
+
 .shell {
   @apply @container flex size-full flex-col gap-3 p-4;
   opacity: var(--loop, 1);
@@ -214,12 +228,16 @@ const onInput = (event: Event): void => {
   @apply opacity-0;
 }
 
+.hint {
+  @apply ml-2 text-muted;
+}
+
 .twins {
   @apply hidden flex-none items-center gap-2;
 }
 
 .twin-input {
-  @apply h-11 min-w-0 flex-1 rounded-field border border-border bg-raised px-3 font-mono typo-body text-fg;
+  @apply h-11 min-w-0 flex-1 rounded-field border border-border bg-raised px-3 font-mono typo-body text-fg placeholder:text-muted;
 }
 
 .twin-input:focus-visible,

@@ -50,7 +50,8 @@ const keys: Key[] = [
 export const SAGE_SCRIPT = {
   duration: 40_000,
   still: 24_800,
-  loop: { from: 3000, to: 37_500 },
+  // The live loop opens two seconds before Option goes down, so the folded island is seen waiting with its hint.
+  loop: { from: 1000, to: 37_500 },
   fill: 5000,
   moments,
   words,

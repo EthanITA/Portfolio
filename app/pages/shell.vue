@@ -53,7 +53,5 @@ const beats: Beat[] = [
     :beats="beats"
     built-with="TypeScript for the model calls and a small zsh widget for the Enter key. A separate model rates every command before you see it, so whether a command is dangerous is never a question put to the model that wrote it. The bundle has no dependencies and starts in about 25 milliseconds."
     limit="It's a seatbelt, not a locked door. Read what lands on your line."
-  >
-    <LazyPlayShell />
-  </SiteProduct>
+  />
 </template>

@@ -28,6 +28,7 @@ const loaded = ref(false);
 const wide = ref(true);
 const portraitMissing = ref(false);
 const video = useTemplateRef<HTMLVideoElement>("video");
+const playground = useTemplateRef("playground");
 
 // The landscape cut follows the portrait one, so a portrait file that 404s falls through to the letterboxed master.
 const cuts = computed<Cut[]>(() => {
@@ -69,6 +70,20 @@ const choose = (next: Mode): void => {
   else video.value?.pause();
 };
 
+// Watch always offers Take over, since Play the demo there would restart a toy the film is hiding.
+const control = computed(() => {
+  const toy = playground.value;
+  if (!toy || mode.value === "try") return toy ?? undefined;
+  return {
+    driver: "demo" as const,
+    demo: toy.demo,
+    take: (): void => {
+      choose("try");
+      void nextTick(toy.take);
+    },
+  };
+});
+
 // The pressed pill unmounts, so focus moves to the player to keep its controls on the keyboard.
 const startFilm = async (): Promise<void> => {
   await play();
@@ -94,12 +109,15 @@ onBeforeUnmount(() => query?.removeEventListener("change", onQuery));
     </header>
 
     <div id="film" v-enter.now.wide="420" class="stage wrap">
-      <div v-if="film" class="bar">
-        <Segmented :model-value="mode" :options="MODES" @update:model-value="choose" />
+      <div class="bar">
+        <Segmented v-if="film" :model-value="mode" :options="MODES" @update:model-value="choose" />
+        <PlayChip class="chip" :play="control" />
       </div>
       <SiteMount name="play">
         <div v-show="mode === 'try'" class="layer">
-          <slot />
+          <LazyPlaySidecar v-if="slug === 'sidecar'" ref="playground" :paused="mode === 'watch'" />
+          <LazyPlaySage v-else-if="slug === 'sage'" ref="playground" :paused="mode === 'watch'" />
+          <LazyPlayShell v-else ref="playground" :paused="mode === 'watch'" />
         </div>
         <Surface v-if="film" v-show="mode === 'watch'" class="film" variant="sunken" shape="island" pad="none">
           <video v-if="loaded" ref="video" class="video" controls playsinline preload="none" :poster="poster" @ended="choose('try')">
@@ -166,6 +184,10 @@ onBeforeUnmount(() => query?.removeEventListener("change", onQuery));
 
 .bar {
   @apply sticky top-20 z-10 flex items-center justify-between gap-3 md:static;
+}
+
+.chip {
+  @apply ml-auto;
 }
 
 .film {

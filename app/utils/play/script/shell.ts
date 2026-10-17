@@ -42,7 +42,8 @@ const keys: Key[] = [
 export const SHELL_SCRIPT = {
   duration: 35_000,
   still: 15_500,
-  loop: { from: 3000, to: 33_500 },
+  // The live loop opens two seconds before the first keystroke, so the idle prompt is seen waiting.
+  loop: { from: 1000, to: 33_500 },
   moments,
   presses,
   keys,
