@@ -11,6 +11,6 @@ document.documentElement.dataset.theme = useRoute().query.theme === "dark" ? "da
 
 <style scoped>
 .film-bare {
-  @apply relative h-screen w-screen overflow-hidden bg-base-200 text-base-content;
+  @apply relative h-screen w-screen overflow-hidden bg-canvas text-fg;
 }
 </style>
