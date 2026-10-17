@@ -70,6 +70,20 @@ const choose = (next: Mode): void => {
   else video.value?.pause();
 };
 
+// Watch always offers Take over, since Play the demo there would restart a toy the film is hiding.
+const control = computed(() => {
+  const toy = playground.value;
+  if (!toy || mode.value === "try") return toy ?? undefined;
+  return {
+    driver: "demo" as const,
+    demo: toy.demo,
+    take: (): void => {
+      choose("try");
+      void nextTick(toy.take);
+    },
+  };
+});
+
 // The pressed pill unmounts, so focus moves to the player to keep its controls on the keyboard.
 const startFilm = async (): Promise<void> => {
   await play();
@@ -97,7 +111,7 @@ onBeforeUnmount(() => query?.removeEventListener("change", onQuery));
     <div id="film" v-enter.now.wide="420" class="stage wrap">
       <div class="bar">
         <Segmented v-if="film" :model-value="mode" :options="MODES" @update:model-value="choose" />
-        <PlayChip v-show="mode === 'try'" class="chip" :play="playground ?? undefined" />
+        <PlayChip class="chip" :play="control" />
       </div>
       <SiteMount name="play">
         <div v-show="mode === 'try'" class="layer">
