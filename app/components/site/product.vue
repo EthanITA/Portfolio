@@ -55,7 +55,7 @@ const next = computed(() => nextFlagship(slug));
 }
 
 .lead {
-  @apply typo-body-lg measure text-pretty text-muted;
+  @apply typo-body-lg max-w-prose text-pretty text-muted;
 }
 
 .built,
@@ -68,7 +68,7 @@ const next = computed(() => nextFlagship(slug));
 }
 
 .text {
-  @apply typo-body-lg measure text-pretty text-muted;
+  @apply typo-body-lg max-w-prose text-pretty text-muted;
 }
 
 .stack {

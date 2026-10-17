@@ -86,7 +86,7 @@ const facts = ["Based in Milan", "Italian native, English at work"];
 }
 
 .intro {
-  @apply typo-body-lg measure text-pretty text-muted;
+  @apply typo-body-lg max-w-prose text-pretty text-muted;
 }
 
 .section {
@@ -102,7 +102,7 @@ const facts = ["Based in Milan", "Italian native, English at work"];
 }
 
 .line {
-  @apply typo-body-lg measure text-pretty text-muted;
+  @apply typo-body-lg max-w-prose text-pretty text-muted;
 }
 
 .chips {

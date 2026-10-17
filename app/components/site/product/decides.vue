@@ -33,6 +33,6 @@ const id = computed(() => `${slug}-decides`);
 }
 
 .line {
-  @apply typo-body-lg measure text-pretty text-muted;
+  @apply typo-body-lg max-w-prose text-pretty text-muted;
 }
 </style>

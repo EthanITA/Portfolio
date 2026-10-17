@@ -39,7 +39,7 @@ const { slug, beats } = defineProps<{ slug: Product; beats: ProductPage["beats"]
 }
 
 .line {
-  @apply typo-body-lg measure text-pretty text-muted;
+  @apply typo-body-lg max-w-prose text-pretty text-muted;
 }
 
 .cards {
@@ -59,6 +59,6 @@ const { slug, beats } = defineProps<{ slug: Product; beats: ProductPage["beats"]
 }
 
 .text {
-  @apply typo-body-md measure text-pretty text-muted;
+  @apply typo-body-md max-w-prose text-pretty text-muted;
 }
 </style>
