@@ -17,6 +17,7 @@ export default {
     "Changing something? It asks. You get five seconds.",
     "Return, and you're in.",
     "Money? It stops.",
+    "Stopped at Pay. It's yours to press.",
     "That click stays yours.",
   ],
   keys: SAGE_SCRIPT.keys,

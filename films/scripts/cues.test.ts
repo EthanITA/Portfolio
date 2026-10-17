@@ -6,27 +6,29 @@ import { GRID, type FilmScript } from "./script.ts";
 import shell from "./shell.ts";
 import sidecar from "./sidecar.ts";
 
-type Line = { stem: string; sound: string; text: string; onsetMs: number; endMs: number; words: { text: string; startMs: number; endMs: number }[]; anchor?: { word: string; beatMs: number } };
+type Line = { stem: string; voice: string; text: string; onsetMs: number; endMs: number; words: { text: string; startMs: number; endMs: number }[]; anchor?: { word: string; beatMs: number } };
 
-type Fixture = { durationMs: number; bed: { grid: Record<string, number>; closeMs: number; accents: { atMs: number; kind: string }[] }; cues: Line[] };
+type Fixture = { durationMs: number; mixSha256?: string; bed: { grid: Record<string, number>; closeMs: number; accents: { atMs: number; kind: string }[] }; cues: Line[] };
 
 const WORD = 250;
+const MIX = "5e1f".repeat(16);
 
 // Each line starts on a beat with its first word as the anchor, so a fresh fixture passes and every test breaks exactly one thing.
 const fixture = (script: FilmScript): Fixture => ({
   durationMs: script.duration,
+  mixSha256: MIX,
   bed: { grid: { ...GRID, beats: script.duration / GRID.beatMs }, closeMs: script.close, accents: [{ atMs: 4000, kind: "clap" }, { atMs: script.close, kind: "close" }] },
   cues: script.lines.map((text, index) => {
     const onsetMs = 1000 + index * 4000;
     const words = text.split(" ").map((word, position) => ({ text: word, startMs: onsetMs + position * WORD, endMs: onsetMs + (position + 1) * WORD }));
-    return { stem: "voice", sound: "voice.narrator", text, onsetMs, endMs: words.at(-1)?.endMs ?? onsetMs, words, anchor: { word: words[0]?.text ?? "", beatMs: onsetMs } };
+    return { stem: "voice", voice: "narrator", text, onsetMs, endMs: words.at(-1)?.endMs ?? onsetMs, words, anchor: { word: words[0]?.text ?? "", beatMs: onsetMs } };
   }),
 });
 
 const problems = (script: FilmScript, change: (sheet: Fixture) => void = () => {}): string[] => {
   const sheet = fixture(script);
   change(sheet);
-  return readSheet({ script, json: sheet }).problems;
+  return readSheet({ script, json: sheet, mixSha256: MIX }).problems;
 };
 
 const line = (sheet: Fixture, index: number): Line => {
@@ -46,7 +48,22 @@ describe("readSheet", () => {
   });
 
   it("refuses every committed cues.json until sound exports the 120 bpm grid", () => {
-    for (const script of [shell, sage, sidecar]) assert.match(readSheet({ script, json: SHEETS[script.name] }).problems.join("\n"), /bed\.grid\.bpm/);
+    for (const script of [shell, sage, sidecar]) assert.match(readSheet({ script, json: SHEETS[script.name], mixSha256: MIX }).problems.join("\n"), /bed\.grid\.bpm/);
+  });
+
+  it("refuses a sheet measured on another mix, or on none it names", () => {
+    one(
+      problems(shell, (sheet) => {
+        sheet.mixSha256 = "0".repeat(64);
+      }),
+      /mixSha256 is 0{64}, while the mix\.wav beside it hashes to (5e1f){16}/,
+    );
+    one(
+      problems(shell, (sheet) => {
+        delete sheet.mixSha256;
+      }),
+      /mixSha256 is undefined/,
+    );
   });
 
   it("refuses a sheet on another grid", () => {
@@ -97,13 +114,13 @@ describe("readSheet", () => {
       problems(sidecar, (sheet) => {
         sheet.cues.splice(2, 1);
       }),
-      /"Approve a hunk\. Reject two lines\." has 0 narrator cues/,
+      /"Approve a hunk\. Reject two lines\." has 0 voice cues/,
     );
     assert.match(
       problems(sidecar, (sheet) => {
         sheet.cues.push({ ...line(sheet, 8), onsetMs: 44_000, endMs: 44_900, words: [], anchor: undefined });
       }).join("\n"),
-      /"That click stays yours\." has 2 narrator cues/,
+      /"That click stays yours\." has 2 voice cues/,
     );
     assert.match(
       problems(sage, (sheet) => {
@@ -241,12 +258,24 @@ describe("readSheet", () => {
     );
   });
 
-  it("leaves Sage's own voices out of the narration", () => {
-    assert.deepEqual(
-      problems(sage, (sheet) => {
-        sheet.cues.push({ stem: "voice", sound: "voice.person", text: "I want to join the standup", onsetMs: 5800, endMs: 7700, words: [] });
+  it("leaves a voice that speaks no line out, and reads Sage's hand-back as a line in its own voice", () => {
+    const handBack = "Stopped at Pay. It's yours to press.";
+    const sheet = fixture(sage);
+    sheet.cues.push({ stem: "voice", voice: "person", text: "I want to join the standup", onsetMs: 5800, endMs: 7700, words: [] });
+    const cue = sheet.cues.find((item) => item.text === handBack);
+    if (cue) cue.voice = "sage";
+    const { sheet: read, problems: found } = readSheet({ script: sage, json: sheet, mixSha256: MIX });
+    assert.deepEqual(found, []);
+    assert.equal(read.lines.find((item) => item.text === handBack)?.voice, "sage");
+    assert.equal(read.lines.length, sage.lines.length);
+  });
+
+  it("refuses a narrator cue that speaks no line", () => {
+    one(
+      problems(shell, (sheet) => {
+        sheet.cues.push({ stem: "voice", voice: "narrator", text: "Meet AI Shell.", onsetMs: 33_000, endMs: 33_500, words: [] });
       }),
-      [],
+      /narrator cue "Meet AI Shell\." is none of the film's lines/,
     );
   });
 });

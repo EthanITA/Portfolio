@@ -1,30 +1,22 @@
 import sage from "../audio/sage/cues.json" with { type: "json" };
 import shell from "../audio/shell/cues.json" with { type: "json" };
 import sidecar from "../audio/sidecar/cues.json" with { type: "json" };
-import { GRID, onBeat, type Cue, type FilmScript } from "./script.ts";
+import { GRID, onBeat, type FilmScript } from "./script.ts";
 
 export type Word = { text: string; startMs: number; endMs: number };
 
-export type Spoken = { text: string; onsetMs: number; endMs: number; words: Word[]; anchor?: { word: string; beatMs: number } };
+export type Spoken = { text: string; voice: string; onsetMs: number; endMs: number; words: Word[]; anchor?: { word: string; beatMs: number } };
 
 export type Accent = { atMs: number; kind: string };
 
-export type Sheet = { closeMs: number; accents: Accent[]; narration: Spoken[] };
-
-type SoundCue = { stem: string; sound: string; atMs: number; durMs: number; text?: string; words?: Word[] };
+export type Sheet = { closeMs: number; accents: Accent[]; lines: Spoken[] };
 
 export const SHEETS = { sage, shell, sidecar };
 
-const NARRATOR = "voice.narrator";
+const NARRATOR = "narrator";
 const FRAME = 1000 / 60;
 const LEAD = 30;
 const CLOSE = 20;
-
-// Only sound knows how long a spoken line runs, so the voices' pills take their windows from its sheet.
-export const voiceOf = (film: keyof typeof SHEETS): (Cue & { words?: Word[] })[] =>
-  (SHEETS[film].cues as SoundCue[])
-    .filter((cue) => cue.stem === "voice" && cue.sound !== NARRATOR && cue.text)
-    .map((cue) => ({ text: cue.text ?? "", at: cue.atMs, until: cue.atMs + cue.durMs + 400, words: cue.words }));
 
 type Data = Record<string, unknown>;
 
@@ -55,6 +47,7 @@ const bare = (value: string): string => value.replace(/\p{P}/gu, "").toLowerCase
 
 const spoken = ({ cue, script, problems }: { cue: Data | undefined; script: FilmScript; problems: string[] }): Spoken | undefined => {
   const line = text(cue, "text") ?? "";
+  const voice = text(cue, "voice") ?? "";
   const onsetMs = number(cue, "onsetMs");
   const endMs = number(cue, "endMs");
   const words = list(cue?.words).map(word);
@@ -81,21 +74,23 @@ const spoken = ({ cue, script, problems }: { cue: Data | undefined; script: Film
   const anchorData = record(cue?.anchor);
   const anchorWord = text(anchorData, "word");
   const beatMs = number(anchorData, "beatMs");
-  if (!anchorData) return { text: line, onsetMs, endMs, words: timed };
+  if (!anchorData) return { text: line, voice, onsetMs, endMs, words: timed };
   if (typeof anchorWord !== "string" || typeof beatMs !== "number") {
     problems.push(`${where} has an anchor without word and beatMs`);
-    return { text: line, onsetMs, endMs, words: timed };
+    return { text: line, voice, onsetMs, endMs, words: timed };
   }
   const landing = timed.find((item) => bare(item.text) === bare(anchorWord));
   if (!onBeat(beatMs)) problems.push(`${where} anchors "${anchorWord}" at ${beatMs} ms, off the ${GRID.beatMs} ms beat`);
   if (!landing) problems.push(`${where} anchors "${anchorWord}", which is not one of its words`);
   else if (landing.startMs > beatMs || landing.startMs < beatMs - LEAD) problems.push(`${where} starts "${anchorWord}" at ${landing.startMs} ms, not within ${LEAD} ms before its beat at ${beatMs}`);
-  return { text: line, onsetMs, endMs, words: timed, anchor: { word: anchorWord, beatMs } };
+  return { text: line, voice, onsetMs, endMs, words: timed, anchor: { word: anchorWord, beatMs } };
 };
 
-export const readSheet = ({ script, json }: { script: FilmScript; json: unknown }): { sheet: Sheet; problems: string[] } => {
+export const readSheet = ({ script, json, mixSha256 }: { script: FilmScript; json: unknown; mixSha256: string }): { sheet: Sheet; problems: string[] } => {
   const problems: string[] = [];
   const root = record(json);
+  const measured = text(root, "mixSha256");
+  if (measured !== mixSha256) problems.push(`mixSha256 is ${String(measured)}, while the mix.wav beside it hashes to ${mixSha256}`);
   const bed = record(root?.bed);
   const grid = record(bed?.grid);
   for (const key of ["bpm", "beatMs", "barMs", "originMs"] as const) {
@@ -120,25 +115,25 @@ export const readSheet = ({ script, json }: { script: FilmScript; json: unknown 
   const close = accents.find((accent) => accent.kind === "close");
   if (!close || Math.abs(close.atMs - closeMs) > CLOSE) problems.push(`bed.accents has no "close" accent at bed.closeMs ${closeMs}`);
 
-  const narrated = list(root?.cues)
+  const voices = list(root?.cues)
     .map(record)
-    .filter((cue) => cue?.stem === "voice" && cue.sound === NARRATOR);
-  for (const cue of narrated) {
-    if (!script.lines.includes(text(cue, "text") ?? "")) problems.push(`narrator cue "${String(cue?.text)}" is none of the film's lines`);
+    .filter((cue) => cue?.stem === "voice");
+  for (const cue of voices) {
+    if (text(cue, "voice") === NARRATOR && !script.lines.includes(text(cue, "text") ?? "")) problems.push(`narrator cue "${String(cue?.text)}" is none of the film's lines`);
   }
-  const narration = script.lines.flatMap((line): Spoken[] => {
-    const matches = narrated.filter((cue) => text(cue, "text") === line);
+  const lines = script.lines.flatMap((line): Spoken[] => {
+    const matches = voices.filter((cue) => text(cue, "text") === line);
     if (matches.length !== 1) {
-      problems.push(`line "${line}" has ${matches.length} narrator cues, it needs exactly one`);
+      problems.push(`line "${line}" has ${matches.length} voice cues, it needs exactly one`);
       return [];
     }
     const read = spoken({ cue: matches[0], script, problems });
     return read ? [read] : [];
   });
-  narration.forEach((line, index) => {
-    const next = narration[index + 1];
+  lines.forEach((line, index) => {
+    const next = lines[index + 1];
     if (next && next.onsetMs < line.endMs) problems.push(`line "${next.text}" starts at ${next.onsetMs} ms, before "${line.text}" ends at ${line.endMs}`);
   });
 
-  return { sheet: { closeMs, accents, narration }, problems };
+  return { sheet: { closeMs, accents, lines }, problems };
 };
