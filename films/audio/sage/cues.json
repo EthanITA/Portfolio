@@ -13,7 +13,7 @@
   },
   "cues": [
     {
-      "id": "option-down",
+      "id": "optionDown",
       "sound": "key.down",
       "stem": "ui",
       "atMs": 3000,
@@ -23,18 +23,6 @@
       "onsetTolMs": 1,
       "sheet": "3-9",
       "marks": "the right Option key goes down"
-    },
-    {
-      "id": "push-notch",
-      "sound": "whoosh.still",
-      "stem": "ui",
-      "atMs": 3000,
-      "atSample": 144000,
-      "durMs": 1200,
-      "audible": true,
-      "onsetTolMs": 40,
-      "sheet": "3-9",
-      "marks": "the camera pushes in as the island grows out of the notch"
     },
     {
       "id": "ask-1",
@@ -50,7 +38,7 @@
       "text": "I want to join the standup"
     },
     {
-      "id": "option-up",
+      "id": "release",
       "sound": "key.up",
       "stem": "ui",
       "atMs": 8600,
@@ -58,7 +46,7 @@
       "durMs": 120,
       "audible": true,
       "onsetTolMs": 1,
-      "sheet": "9-12",
+      "sheet": "3-9",
       "marks": "the key is released"
     },
     {
@@ -75,7 +63,7 @@
       "text": "Understood"
     },
     {
-      "id": "step-1",
+      "id": "tick1",
       "sound": "tick.high",
       "stem": "ui",
       "atMs": 14500,
@@ -87,7 +75,7 @@
       "marks": "Found Standup · 9:30 · Google Meet is ticked"
     },
     {
-      "id": "step-2",
+      "id": "tick2",
       "sound": "tick.high",
       "stem": "ui",
       "atMs": 17000,
@@ -99,7 +87,7 @@
       "marks": "Opened the call is ticked"
     },
     {
-      "id": "step-3",
+      "id": "tick3",
       "sound": "tick.high",
       "stem": "ui",
       "atMs": 19500,
@@ -111,19 +99,7 @@
       "marks": "Mic and camera off is ticked"
     },
     {
-      "id": "card-in",
-      "sound": "whoosh.still",
-      "stem": "ui",
-      "atMs": 22000,
-      "atSample": 1056000,
-      "durMs": 1200,
-      "audible": true,
-      "onsetTolMs": 40,
-      "sheet": "22-30",
-      "marks": "the camera pushes in on the confirm card Join the call?"
-    },
-    {
-      "id": "line-fill",
+      "id": "fillStart",
       "sound": "line.5000",
       "stem": "ui",
       "atMs": 22300,
@@ -135,7 +111,7 @@
       "marks": "the violet line fills and Return cuts it"
     },
     {
-      "id": "return",
+      "id": "returnKey",
       "sound": "click.soft",
       "stem": "ui",
       "atMs": 26500,
@@ -159,7 +135,7 @@
       "marks": "it joins the call"
     },
     {
-      "id": "option-down-2",
+      "id": "hold2",
       "sound": "key.down",
       "stem": "ui",
       "atMs": 30000,
@@ -169,18 +145,6 @@
       "onsetTolMs": 1,
       "sheet": "30-36",
       "marks": "the right Option key goes down again"
-    },
-    {
-      "id": "push-pay",
-      "sound": "whoosh.still",
-      "stem": "ui",
-      "atMs": 30000,
-      "atSample": 1440000,
-      "durMs": 1200,
-      "audible": true,
-      "onsetTolMs": 40,
-      "sheet": "30-36",
-      "marks": "the camera pushes in on the second ask"
     },
     {
       "id": "ask-2",
@@ -196,7 +160,7 @@
       "text": "pay the invoice"
     },
     {
-      "id": "option-up-2",
+      "id": "release2",
       "sound": "key.up",
       "stem": "ui",
       "atMs": 31600,
@@ -208,7 +172,7 @@
       "marks": "the key is released"
     },
     {
-      "id": "scroll-to-pay",
+      "id": "scrollToPay",
       "sound": "whoosh.still",
       "stem": "ui",
       "atMs": 32700,
@@ -220,7 +184,7 @@
       "marks": "the page scrolls to Pay"
     },
     {
-      "id": "stopped",
+      "id": "payOutlined",
       "sound": "thud",
       "stem": "ui",
       "atMs": 33200,
@@ -245,23 +209,59 @@
       "text": "Stopped at Pay. It's yours to press."
     },
     {
+      "id": "push-notch",
+      "sound": "whoosh.still",
+      "stem": "ui",
+      "atMs": 3000,
+      "atSample": 144000,
+      "durMs": 1200,
+      "audible": true,
+      "onsetTolMs": 40,
+      "sheet": "3-9",
+      "marks": "the camera pushes in on the notch"
+    },
+    {
+      "id": "push-card",
+      "sound": "whoosh.still",
+      "stem": "ui",
+      "atMs": 22000,
+      "atSample": 1056000,
+      "durMs": 1200,
+      "audible": true,
+      "onsetTolMs": 40,
+      "sheet": "22-30",
+      "marks": "the camera pushes in on the card"
+    },
+    {
+      "id": "push-pay",
+      "sound": "whoosh.still",
+      "stem": "ui",
+      "atMs": 30000,
+      "atSample": 1440000,
+      "durMs": 1200,
+      "audible": true,
+      "onsetTolMs": 40,
+      "sheet": "30-36",
+      "marks": "the camera pushes in on the pay"
+    },
+    {
       "id": "pull-back",
       "sound": "whoosh.still",
       "stem": "ui",
-      "atMs": 36000,
-      "atSample": 1728000,
+      "atMs": 35400,
+      "atSample": 1699200,
       "durMs": 600,
       "audible": true,
       "onsetTolMs": 40,
-      "sheet": "36-40",
+      "sheet": "30-36",
       "marks": "the camera pulls back to the end card"
     },
     {
       "id": "line-end-card",
       "sound": "line.600",
       "stem": "ui",
-      "atMs": 36400,
-      "atSample": 1747200,
+      "atMs": 36600,
+      "atSample": 1756800,
       "durMs": 900,
       "audible": true,
       "onsetTolMs": 12,
@@ -280,7 +280,7 @@
       "releaseMs": 600
     },
     {
-      "reason": "stopped",
+      "reason": "payOutlined",
       "fromMs": 33200,
       "toMs": 33500,
       "depthDb": -2,

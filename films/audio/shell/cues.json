@@ -9,23 +9,11 @@
     "targetLufs": -16,
     "bedGainDb": 3.2,
     "integratedLufs": -16,
-    "truePeakDbtp": -3.4
+    "truePeakDbtp": -3.6
   },
   "cues": [
     {
-      "id": "push-ask-1",
-      "sound": "whoosh.still",
-      "stem": "ui",
-      "atMs": 3200,
-      "atSample": 153600,
-      "durMs": 1200,
-      "audible": true,
-      "onsetTolMs": 40,
-      "sheet": "3-10",
-      "marks": "the camera pushes in on the prompt line"
-    },
-    {
-      "id": "ask-1-typing-00",
+      "id": "typeFind-00",
       "sound": "key",
       "stem": "ui",
       "atMs": 3200,
@@ -36,10 +24,10 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "?",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-01",
+      "id": "typeFind-01",
       "sound": "key",
       "stem": "ui",
       "atMs": 3244,
@@ -50,52 +38,52 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": " ",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-02",
+      "id": "typeFind-02",
       "sound": "key",
       "stem": "ui",
       "atMs": 3272,
       "atSample": 157056,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "f",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-03",
+      "id": "typeFind-03",
       "sound": "key",
       "stem": "ui",
       "atMs": 3323,
       "atSample": 159504,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "i",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-04",
+      "id": "typeFind-04",
       "sound": "key",
       "stem": "ui",
       "atMs": 3345,
       "atSample": 160560,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "n",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-05",
+      "id": "typeFind-05",
       "sound": "key",
       "stem": "ui",
       "atMs": 3393,
@@ -106,38 +94,38 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "d",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-06",
+      "id": "typeFind-06",
       "sound": "key",
       "stem": "ui",
       "atMs": 3426,
       "atSample": 164448,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": " ",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-07",
+      "id": "typeFind-07",
       "sound": "key",
       "stem": "ui",
       "atMs": 3474,
       "atSample": 166752,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "t",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-08",
+      "id": "typeFind-08",
       "sound": "key",
       "stem": "ui",
       "atMs": 3498,
@@ -148,10 +136,10 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "h",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-09",
+      "id": "typeFind-09",
       "sound": "key",
       "stem": "ui",
       "atMs": 3547,
@@ -162,10 +150,10 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "e",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-10",
+      "id": "typeFind-10",
       "sound": "key",
       "stem": "ui",
       "atMs": 3571,
@@ -176,10 +164,10 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": " ",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-11",
+      "id": "typeFind-11",
       "sound": "key",
       "stem": "ui",
       "atMs": 3620,
@@ -190,10 +178,10 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "f",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-12",
+      "id": "typeFind-12",
       "sound": "key",
       "stem": "ui",
       "atMs": 3663,
@@ -204,10 +192,10 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "i",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-13",
+      "id": "typeFind-13",
       "sound": "key",
       "stem": "ui",
       "atMs": 3691,
@@ -218,80 +206,80 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "v",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-14",
+      "id": "typeFind-14",
       "sound": "key",
       "stem": "ui",
       "atMs": 3736,
       "atSample": 179328,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "e",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-15",
+      "id": "typeFind-15",
       "sound": "key",
       "stem": "ui",
       "atMs": 3762,
       "atSample": 180576,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": " ",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-16",
+      "id": "typeFind-16",
       "sound": "key",
       "stem": "ui",
       "atMs": 3809,
       "atSample": 182832,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "b",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-17",
+      "id": "typeFind-17",
       "sound": "key",
       "stem": "ui",
       "atMs": 3846,
       "atSample": 184608,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "i",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-18",
+      "id": "typeFind-18",
       "sound": "key",
       "stem": "ui",
       "atMs": 3890,
       "atSample": 186720,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "g",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-19",
+      "id": "typeFind-19",
       "sound": "key",
       "stem": "ui",
       "atMs": 3918,
@@ -302,10 +290,10 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "g",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-20",
+      "id": "typeFind-20",
       "sound": "key",
       "stem": "ui",
       "atMs": 3969,
@@ -316,10 +304,10 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "e",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-21",
+      "id": "typeFind-21",
       "sound": "key",
       "stem": "ui",
       "atMs": 3991,
@@ -330,38 +318,38 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "s",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-22",
+      "id": "typeFind-22",
       "sound": "key",
       "stem": "ui",
       "atMs": 4039,
       "atSample": 193872,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "t",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-23",
+      "id": "typeFind-23",
       "sound": "key",
       "stem": "ui",
       "atMs": 4072,
       "atSample": 195456,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": " ",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-24",
+      "id": "typeFind-24",
       "sound": "key",
       "stem": "ui",
       "atMs": 4120,
@@ -372,80 +360,80 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "f",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-25",
+      "id": "typeFind-25",
       "sound": "key",
       "stem": "ui",
       "atMs": 4144,
       "atSample": 198912,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "i",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-26",
+      "id": "typeFind-26",
       "sound": "key",
       "stem": "ui",
       "atMs": 4193,
       "atSample": 201264,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "l",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-27",
+      "id": "typeFind-27",
       "sound": "key",
       "stem": "ui",
       "atMs": 4217,
       "atSample": 202416,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "e",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-28",
+      "id": "typeFind-28",
       "sound": "key",
       "stem": "ui",
       "atMs": 4266,
       "atSample": 204768,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "s",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-29",
+      "id": "typeFind-29",
       "sound": "key",
       "stem": "ui",
       "atMs": 4309,
       "atSample": 206832,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": " ",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-30",
+      "id": "typeFind-30",
       "sound": "key",
       "stem": "ui",
       "atMs": 4337,
@@ -456,94 +444,94 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "i",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-31",
+      "id": "typeFind-31",
       "sound": "key",
       "stem": "ui",
       "atMs": 4382,
       "atSample": 210336,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "n",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-32",
+      "id": "typeFind-32",
       "sound": "key",
       "stem": "ui",
       "atMs": 4408,
       "atSample": 211584,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": " ",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-33",
+      "id": "typeFind-33",
       "sound": "key",
       "stem": "ui",
       "atMs": 4455,
       "atSample": 213840,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "h",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-34",
+      "id": "typeFind-34",
       "sound": "key",
       "stem": "ui",
       "atMs": 4492,
       "atSample": 215616,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "e",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-35",
+      "id": "typeFind-35",
       "sound": "key",
       "stem": "ui",
       "atMs": 4536,
       "atSample": 217728,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "r",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-36",
+      "id": "typeFind-36",
       "sound": "key",
       "stem": "ui",
       "atMs": 4564,
       "atSample": 219072,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "e",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-37",
+      "id": "typeFind-37",
       "sound": "key",
       "stem": "ui",
       "atMs": 4615,
@@ -554,52 +542,52 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": ",",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-38",
+      "id": "typeFind-38",
       "sound": "key",
       "stem": "ui",
       "atMs": 4637,
       "atSample": 222576,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": " ",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-39",
+      "id": "typeFind-39",
       "sound": "key",
       "stem": "ui",
       "atMs": 4685,
       "atSample": 224880,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "s",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-40",
+      "id": "typeFind-40",
       "sound": "key",
       "stem": "ui",
       "atMs": 4718,
       "atSample": 226464,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "k",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-41",
+      "id": "typeFind-41",
       "sound": "key",
       "stem": "ui",
       "atMs": 4766,
@@ -610,38 +598,38 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "i",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-42",
+      "id": "typeFind-42",
       "sound": "key",
       "stem": "ui",
       "atMs": 4790,
       "atSample": 229920,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "p",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-43",
+      "id": "typeFind-43",
       "sound": "key",
       "stem": "ui",
       "atMs": 4839,
       "atSample": 232272,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": " ",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-44",
+      "id": "typeFind-44",
       "sound": "key",
       "stem": "ui",
       "atMs": 4863,
@@ -652,10 +640,10 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "n",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-45",
+      "id": "typeFind-45",
       "sound": "key",
       "stem": "ui",
       "atMs": 4912,
@@ -666,10 +654,10 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "o",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-46",
+      "id": "typeFind-46",
       "sound": "key",
       "stem": "ui",
       "atMs": 4955,
@@ -680,38 +668,38 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "d",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-47",
+      "id": "typeFind-47",
       "sound": "key",
       "stem": "ui",
       "atMs": 4983,
       "atSample": 239184,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "e",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-48",
+      "id": "typeFind-48",
       "sound": "key",
       "stem": "ui",
       "atMs": 5028,
       "atSample": 241344,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "_",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-49",
+      "id": "typeFind-49",
       "sound": "key",
       "stem": "ui",
       "atMs": 5054,
@@ -722,66 +710,66 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "m",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-50",
+      "id": "typeFind-50",
       "sound": "key",
       "stem": "ui",
       "atMs": 5101,
       "atSample": 244848,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "o",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-51",
+      "id": "typeFind-51",
       "sound": "key",
       "stem": "ui",
       "atMs": 5138,
       "atSample": 246624,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "d",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-52",
+      "id": "typeFind-52",
       "sound": "key",
       "stem": "ui",
       "atMs": 5182,
       "atSample": 248736,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "u",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-53",
+      "id": "typeFind-53",
       "sound": "key",
       "stem": "ui",
       "atMs": 5210,
       "atSample": 250080,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "l",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-54",
+      "id": "typeFind-54",
       "sound": "key",
       "stem": "ui",
       "atMs": 5261,
@@ -792,66 +780,66 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "e",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-55",
+      "id": "typeFind-55",
       "sound": "key",
       "stem": "ui",
       "atMs": 5283,
       "atSample": 253584,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "s",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-56",
+      "id": "typeFind-56",
       "sound": "key",
       "stem": "ui",
       "atMs": 5331,
       "atSample": 255888,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": " ",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-57",
+      "id": "typeFind-57",
       "sound": "key",
       "stem": "ui",
       "atMs": 5364,
       "atSample": 257472,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "a",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-58",
+      "id": "typeFind-58",
       "sound": "key",
       "stem": "ui",
       "atMs": 5412,
       "atSample": 259776,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "n",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-59",
+      "id": "typeFind-59",
       "sound": "key",
       "stem": "ui",
       "atMs": 5436,
@@ -862,10 +850,10 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "d",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-60",
+      "id": "typeFind-60",
       "sound": "key",
       "stem": "ui",
       "atMs": 5485,
@@ -876,10 +864,10 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": " ",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-61",
+      "id": "typeFind-61",
       "sound": "key",
       "stem": "ui",
       "atMs": 5509,
@@ -890,10 +878,10 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": ".",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-62",
+      "id": "typeFind-62",
       "sound": "key",
       "stem": "ui",
       "atMs": 5558,
@@ -904,10 +892,10 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "g",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-63",
+      "id": "typeFind-63",
       "sound": "key",
       "stem": "ui",
       "atMs": 5601,
@@ -918,10 +906,10 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "i",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "ask-1-typing-64",
+      "id": "typeFind-64",
       "sound": "key",
       "stem": "ui",
       "atMs": 5629,
@@ -932,10 +920,10 @@
       "sheet": "3-10",
       "marks": "the first ask is typed",
       "text": "t",
-      "group": "ask-1-typing"
+      "group": "typeFind"
     },
     {
-      "id": "enter-1",
+      "id": "enterFind",
       "sound": "click.soft",
       "stem": "ui",
       "atMs": 5900,
@@ -947,7 +935,7 @@
       "marks": "Enter, the spinner starts"
     },
     {
-      "id": "out-1",
+      "id": "outputFind",
       "sound": "tick.high",
       "stem": "ui",
       "atMs": 7700,
@@ -956,10 +944,10 @@
       "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
-      "marks": "output line 1"
+      "marks": "the find output, line 1"
     },
     {
-      "id": "out-2",
+      "id": "outputFind-2",
       "sound": "tick.high",
       "stem": "ui",
       "atMs": 7745,
@@ -968,10 +956,10 @@
       "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
-      "marks": "output line 2"
+      "marks": "the find output, line 2"
     },
     {
-      "id": "out-3",
+      "id": "outputFind-3",
       "sound": "tick.high",
       "stem": "ui",
       "atMs": 7790,
@@ -980,10 +968,10 @@
       "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
-      "marks": "output line 3"
+      "marks": "the find output, line 3"
     },
     {
-      "id": "out-4",
+      "id": "outputFind-4",
       "sound": "tick.high",
       "stem": "ui",
       "atMs": 7835,
@@ -992,10 +980,10 @@
       "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
-      "marks": "output line 4"
+      "marks": "the find output, line 4"
     },
     {
-      "id": "out-5",
+      "id": "outputFind-5",
       "sound": "tick.high",
       "stem": "ui",
       "atMs": 7880,
@@ -1004,34 +992,10 @@
       "audible": true,
       "onsetTolMs": 1,
       "sheet": "3-10",
-      "marks": "output line 5"
+      "marks": "the find output, line 5"
     },
     {
-      "id": "label-looks",
-      "sound": "marker",
-      "stem": "ui",
-      "atMs": 7700,
-      "atSample": 369600,
-      "durMs": 0,
-      "audible": false,
-      "onsetTolMs": 0,
-      "sheet": "3-10",
-      "marks": "label Looks: runs"
-    },
-    {
-      "id": "push-ask-2",
-      "sound": "whoosh.still",
-      "stem": "ui",
-      "atMs": 10700,
-      "atSample": 513600,
-      "durMs": 1200,
-      "audible": true,
-      "onsetTolMs": 40,
-      "sheet": "10-18",
-      "marks": "the camera pushes in on the prompt line"
-    },
-    {
-      "id": "ask-2-typing-00",
+      "id": "typeDist-00",
       "sound": "key",
       "stem": "ui",
       "atMs": 10300,
@@ -1042,10 +1006,10 @@
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "?",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-01",
+      "id": "typeDist-01",
       "sound": "key",
       "stem": "ui",
       "atMs": 10346,
@@ -1056,10 +1020,10 @@
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": " ",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-02",
+      "id": "typeDist-02",
       "sound": "key",
       "stem": "ui",
       "atMs": 10376,
@@ -1070,10 +1034,10 @@
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "d",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-03",
+      "id": "typeDist-03",
       "sound": "key",
       "stem": "ui",
       "atMs": 10429,
@@ -1084,38 +1048,38 @@
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "e",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-04",
+      "id": "typeDist-04",
       "sound": "key",
       "stem": "ui",
       "atMs": 10453,
       "atSample": 501744,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "l",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-05",
+      "id": "typeDist-05",
       "sound": "key",
       "stem": "ui",
       "atMs": 10503,
       "atSample": 504144,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "e",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-06",
+      "id": "typeDist-06",
       "sound": "key",
       "stem": "ui",
       "atMs": 10538,
@@ -1126,10 +1090,10 @@
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "t",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-07",
+      "id": "typeDist-07",
       "sound": "key",
       "stem": "ui",
       "atMs": 10588,
@@ -1140,10 +1104,10 @@
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "e",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-08",
+      "id": "typeDist-08",
       "sound": "key",
       "stem": "ui",
       "atMs": 10614,
@@ -1154,10 +1118,10 @@
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": " ",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-09",
+      "id": "typeDist-09",
       "sound": "key",
       "stem": "ui",
       "atMs": 10665,
@@ -1168,10 +1132,10 @@
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "t",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-10",
+      "id": "typeDist-10",
       "sound": "key",
       "stem": "ui",
       "atMs": 10691,
@@ -1182,66 +1146,66 @@
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "h",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-11",
+      "id": "typeDist-11",
       "sound": "key",
       "stem": "ui",
       "atMs": 10742,
       "atSample": 515616,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "e",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-12",
+      "id": "typeDist-12",
       "sound": "key",
       "stem": "ui",
       "atMs": 10787,
       "atSample": 517776,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": " ",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-13",
+      "id": "typeDist-13",
       "sound": "key",
       "stem": "ui",
       "atMs": 10817,
       "atSample": 519216,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "d",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-14",
+      "id": "typeDist-14",
       "sound": "key",
       "stem": "ui",
       "atMs": 10864,
       "atSample": 521472,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "i",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-15",
+      "id": "typeDist-15",
       "sound": "key",
       "stem": "ui",
       "atMs": 10892,
@@ -1252,10 +1216,10 @@
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "s",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-16",
+      "id": "typeDist-16",
       "sound": "key",
       "stem": "ui",
       "atMs": 10941,
@@ -1266,10 +1230,10 @@
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "t",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-17",
+      "id": "typeDist-17",
       "sound": "key",
       "stem": "ui",
       "atMs": 10980,
@@ -1280,10 +1244,10 @@
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": " ",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-18",
+      "id": "typeDist-18",
       "sound": "key",
       "stem": "ui",
       "atMs": 11026,
@@ -1294,10 +1258,10 @@
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "f",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-19",
+      "id": "typeDist-19",
       "sound": "key",
       "stem": "ui",
       "atMs": 11056,
@@ -1308,66 +1272,66 @@
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "o",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-20",
+      "id": "typeDist-20",
       "sound": "key",
       "stem": "ui",
       "atMs": 11109,
       "atSample": 533232,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "l",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-21",
+      "id": "typeDist-21",
       "sound": "key",
       "stem": "ui",
       "atMs": 11133,
       "atSample": 534384,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "d",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-22",
+      "id": "typeDist-22",
       "sound": "key",
       "stem": "ui",
       "atMs": 11183,
       "atSample": 536784,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "e",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "ask-2-typing-23",
+      "id": "typeDist-23",
       "sound": "key",
       "stem": "ui",
       "atMs": 11218,
       "atSample": 538464,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "10-18",
       "marks": "the second ask is typed",
       "text": "r",
-      "group": "ask-2-typing"
+      "group": "typeDist"
     },
     {
-      "id": "enter-2",
+      "id": "enterDist",
       "sound": "click.soft",
       "stem": "ui",
       "atMs": 11500,
@@ -1379,7 +1343,7 @@
       "marks": "Enter on the second ask, the spinner starts"
     },
     {
-      "id": "caution-note",
+      "id": "stagedDist",
       "sound": "tick.low",
       "stem": "ui",
       "atMs": 13300,
@@ -1391,19 +1355,7 @@
       "marks": "caution · deletes files lands with rm -r dist on the line"
     },
     {
-      "id": "label-changes",
-      "sound": "marker",
-      "stem": "ui",
-      "atMs": 13300,
-      "atSample": 638400,
-      "durMs": 0,
-      "audible": false,
-      "onsetTolMs": 0,
-      "sheet": "10-18",
-      "marks": "label Changes: waits for Enter"
-    },
-    {
-      "id": "line-cleared",
+      "id": "killDist",
       "sound": "click.soft",
       "stem": "ui",
       "atMs": 18000,
@@ -1415,7 +1367,7 @@
       "marks": "ctrl U clears the staged rm -r dist from the line"
     },
     {
-      "id": "ask-3-typing-00",
+      "id": "typePush-00",
       "sound": "key",
       "stem": "ui",
       "atMs": 18300,
@@ -1426,10 +1378,10 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "?",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-01",
+      "id": "typePush-01",
       "sound": "key",
       "stem": "ui",
       "atMs": 18344,
@@ -1440,94 +1392,94 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": " ",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-02",
+      "id": "typePush-02",
       "sound": "key",
       "stem": "ui",
       "atMs": 18372,
       "atSample": 881856,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "f",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-03",
+      "id": "typePush-03",
       "sound": "key",
       "stem": "ui",
       "atMs": 18423,
       "atSample": 884304,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "o",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-04",
+      "id": "typePush-04",
       "sound": "key",
       "stem": "ui",
       "atMs": 18445,
       "atSample": 885360,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "r",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-05",
+      "id": "typePush-05",
       "sound": "key",
       "stem": "ui",
       "atMs": 18493,
       "atSample": 887664,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "c",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-06",
+      "id": "typePush-06",
       "sound": "key",
       "stem": "ui",
       "atMs": 18526,
       "atSample": 889248,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "e",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-07",
+      "id": "typePush-07",
       "sound": "key",
       "stem": "ui",
       "atMs": 18574,
       "atSample": 891552,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": " ",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-08",
+      "id": "typePush-08",
       "sound": "key",
       "stem": "ui",
       "atMs": 18598,
@@ -1538,10 +1490,10 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "p",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-09",
+      "id": "typePush-09",
       "sound": "key",
       "stem": "ui",
       "atMs": 18647,
@@ -1552,10 +1504,10 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "u",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-10",
+      "id": "typePush-10",
       "sound": "key",
       "stem": "ui",
       "atMs": 18671,
@@ -1566,38 +1518,38 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "s",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-11",
+      "id": "typePush-11",
       "sound": "key",
       "stem": "ui",
       "atMs": 18720,
       "atSample": 898560,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "h",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-12",
+      "id": "typePush-12",
       "sound": "key",
       "stem": "ui",
       "atMs": 18763,
       "atSample": 900624,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": " ",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-13",
+      "id": "typePush-13",
       "sound": "key",
       "stem": "ui",
       "atMs": 18791,
@@ -1608,10 +1560,10 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "m",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-14",
+      "id": "typePush-14",
       "sound": "key",
       "stem": "ui",
       "atMs": 18836,
@@ -1622,10 +1574,10 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "y",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-15",
+      "id": "typePush-15",
       "sound": "key",
       "stem": "ui",
       "atMs": 18862,
@@ -1636,10 +1588,10 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": " ",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-16",
+      "id": "typePush-16",
       "sound": "key",
       "stem": "ui",
       "atMs": 18909,
@@ -1650,10 +1602,10 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "b",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-17",
+      "id": "typePush-17",
       "sound": "key",
       "stem": "ui",
       "atMs": 18946,
@@ -1664,52 +1616,52 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "r",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-18",
+      "id": "typePush-18",
       "sound": "key",
       "stem": "ui",
       "atMs": 18990,
       "atSample": 911520,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "a",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-19",
+      "id": "typePush-19",
       "sound": "key",
       "stem": "ui",
       "atMs": 19018,
       "atSample": 912864,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "n",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-20",
+      "id": "typePush-20",
       "sound": "key",
       "stem": "ui",
       "atMs": 19069,
       "atSample": 915312,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "c",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-21",
+      "id": "typePush-21",
       "sound": "key",
       "stem": "ui",
       "atMs": 19091,
@@ -1720,10 +1672,10 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "h",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-22",
+      "id": "typePush-22",
       "sound": "key",
       "stem": "ui",
       "atMs": 19139,
@@ -1734,10 +1686,10 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": " ",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-23",
+      "id": "typePush-23",
       "sound": "key",
       "stem": "ui",
       "atMs": 19172,
@@ -1748,94 +1700,94 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "o",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-24",
+      "id": "typePush-24",
       "sound": "key",
       "stem": "ui",
       "atMs": 19220,
       "atSample": 922560,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "v",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-25",
+      "id": "typePush-25",
       "sound": "key",
       "stem": "ui",
       "atMs": 19244,
       "atSample": 923712,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "e",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-26",
+      "id": "typePush-26",
       "sound": "key",
       "stem": "ui",
       "atMs": 19293,
       "atSample": 926064,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "r",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-27",
+      "id": "typePush-27",
       "sound": "key",
       "stem": "ui",
       "atMs": 19317,
       "atSample": 927216,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": " ",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-28",
+      "id": "typePush-28",
       "sound": "key",
       "stem": "ui",
       "atMs": 19366,
       "atSample": 929568,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "m",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-29",
+      "id": "typePush-29",
       "sound": "key",
       "stem": "ui",
       "atMs": 19409,
       "atSample": 931632,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "a",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-30",
+      "id": "typePush-30",
       "sound": "key",
       "stem": "ui",
       "atMs": 19437,
@@ -1846,38 +1798,38 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "i",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-31",
+      "id": "typePush-31",
       "sound": "key",
       "stem": "ui",
       "atMs": 19482,
       "atSample": 935136,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "n",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-32",
+      "id": "typePush-32",
       "sound": "key",
       "stem": "ui",
       "atMs": 19508,
       "atSample": 936384,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": " ",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-33",
+      "id": "typePush-33",
       "sound": "key",
       "stem": "ui",
       "atMs": 19555,
@@ -1888,10 +1840,10 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "o",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-34",
+      "id": "typePush-34",
       "sound": "key",
       "stem": "ui",
       "atMs": 19592,
@@ -1902,10 +1854,10 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "n",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-35",
+      "id": "typePush-35",
       "sound": "key",
       "stem": "ui",
       "atMs": 19636,
@@ -1916,38 +1868,38 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": " ",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-36",
+      "id": "typePush-36",
       "sound": "key",
       "stem": "ui",
       "atMs": 19664,
       "atSample": 943872,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "o",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-37",
+      "id": "typePush-37",
       "sound": "key",
       "stem": "ui",
       "atMs": 19715,
       "atSample": 946320,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "r",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-38",
+      "id": "typePush-38",
       "sound": "key",
       "stem": "ui",
       "atMs": 19737,
@@ -1958,64 +1910,52 @@
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "i",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-39",
+      "id": "typePush-39",
       "sound": "key",
       "stem": "ui",
       "atMs": 19785,
       "atSample": 949680,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "g",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-40",
+      "id": "typePush-40",
       "sound": "key",
       "stem": "ui",
       "atMs": 19818,
       "atSample": 951264,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "i",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "ask-3-typing-41",
+      "id": "typePush-41",
       "sound": "key",
       "stem": "ui",
       "atMs": 19866,
       "atSample": 953568,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "18-27",
       "marks": "the third ask is typed",
       "text": "n",
-      "group": "ask-3-typing"
+      "group": "typePush"
     },
     {
-      "id": "push-ask-3",
-      "sound": "whoosh.still",
-      "stem": "ui",
-      "atMs": 18700,
-      "atSample": 897600,
-      "durMs": 1200,
-      "audible": true,
-      "onsetTolMs": 40,
-      "sheet": "18-27",
-      "marks": "the camera pushes in on the prompt line"
-    },
-    {
-      "id": "enter-3",
+      "id": "enterPush",
       "sound": "click.soft",
       "stem": "ui",
       "atMs": 20200,
@@ -2027,7 +1967,7 @@
       "marks": "Enter on the third ask, the spinner starts"
     },
     {
-      "id": "danger",
+      "id": "askedPush",
       "sound": "thud",
       "stem": "ui",
       "atMs": 22000,
@@ -2039,19 +1979,7 @@
       "marks": "danger · changes something remote or published, and the y/N prompt"
     },
     {
-      "id": "label-danger",
-      "sound": "marker",
-      "stem": "ui",
-      "atMs": 22000,
-      "atSample": 1056000,
-      "durMs": 0,
-      "audible": false,
-      "onsetTolMs": 0,
-      "sheet": "18-27",
-      "marks": "label Can't be undone: asks first"
-    },
-    {
-      "id": "answer-no",
+      "id": "answerNo",
       "sound": "key.down",
       "stem": "ui",
       "atMs": 25000,
@@ -2063,19 +1991,7 @@
       "marks": "N answers the prompt and leaves an empty line"
     },
     {
-      "id": "screen-clears",
-      "sound": "marker",
-      "stem": "ui",
-      "atMs": 26400,
-      "atSample": 1267200,
-      "durMs": 0,
-      "audible": false,
-      "onsetTolMs": 0,
-      "sheet": "27-32",
-      "marks": "the screen clears for the pipe"
-    },
-    {
-      "id": "ask-4-typing-00",
+      "id": "typePipe-00",
       "sound": "key",
       "stem": "ui",
       "atMs": 27200,
@@ -2086,10 +2002,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "g",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-01",
+      "id": "typePipe-01",
       "sound": "key",
       "stem": "ui",
       "atMs": 27232,
@@ -2100,10 +2016,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "i",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-02",
+      "id": "typePipe-02",
       "sound": "key",
       "stem": "ui",
       "atMs": 27248,
@@ -2114,10 +2030,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "t",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-03",
+      "id": "typePipe-03",
       "sound": "key",
       "stem": "ui",
       "atMs": 27287,
@@ -2128,10 +2044,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": " ",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-04",
+      "id": "typePipe-04",
       "sound": "key",
       "stem": "ui",
       "atMs": 27297,
@@ -2142,10 +2058,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "s",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-05",
+      "id": "typePipe-05",
       "sound": "key",
       "stem": "ui",
       "atMs": 27333,
@@ -2156,10 +2072,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "h",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-06",
+      "id": "typePipe-06",
       "sound": "key",
       "stem": "ui",
       "atMs": 27354,
@@ -2170,10 +2086,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "o",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-07",
+      "id": "typePipe-07",
       "sound": "key",
       "stem": "ui",
       "atMs": 27390,
@@ -2184,10 +2100,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "w",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-08",
+      "id": "typePipe-08",
       "sound": "key",
       "stem": "ui",
       "atMs": 27402,
@@ -2198,10 +2114,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": " ",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-09",
+      "id": "typePipe-09",
       "sound": "key",
       "stem": "ui",
       "atMs": 27439,
@@ -2212,52 +2128,52 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "H",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-10",
+      "id": "typePipe-10",
       "sound": "key",
       "stem": "ui",
       "atMs": 27451,
       "atSample": 1317648,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "E",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-11",
+      "id": "typePipe-11",
       "sound": "key",
       "stem": "ui",
       "atMs": 27488,
       "atSample": 1319424,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "A",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-12",
+      "id": "typePipe-12",
       "sound": "key",
       "stem": "ui",
       "atMs": 27519,
       "atSample": 1320912,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "D",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-13",
+      "id": "typePipe-13",
       "sound": "key",
       "stem": "ui",
       "atMs": 27535,
@@ -2268,38 +2184,38 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": " ",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-14",
+      "id": "typePipe-14",
       "sound": "key",
       "stem": "ui",
       "atMs": 27568,
       "atSample": 1323264,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "|",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-15",
+      "id": "typePipe-15",
       "sound": "key",
       "stem": "ui",
       "atMs": 27582,
       "atSample": 1323936,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": " ",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-16",
+      "id": "typePipe-16",
       "sound": "key",
       "stem": "ui",
       "atMs": 27617,
@@ -2310,38 +2226,38 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "a",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-17",
+      "id": "typePipe-17",
       "sound": "key",
       "stem": "ui",
       "atMs": 27642,
       "atSample": 1326816,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "i",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-18",
+      "id": "typePipe-18",
       "sound": "key",
       "stem": "ui",
       "atMs": 27674,
       "atSample": 1328352,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": " ",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-19",
+      "id": "typePipe-19",
       "sound": "key",
       "stem": "ui",
       "atMs": 27690,
@@ -2352,10 +2268,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "-",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-20",
+      "id": "typePipe-20",
       "sound": "key",
       "stem": "ui",
       "atMs": 27729,
@@ -2366,10 +2282,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "p",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-21",
+      "id": "typePipe-21",
       "sound": "key",
       "stem": "ui",
       "atMs": 27739,
@@ -2380,10 +2296,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": " ",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-22",
+      "id": "typePipe-22",
       "sound": "key",
       "stem": "ui",
       "atMs": 27775,
@@ -2394,10 +2310,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "'",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-23",
+      "id": "typePipe-23",
       "sound": "key",
       "stem": "ui",
       "atMs": 27796,
@@ -2408,10 +2324,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "W",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-24",
+      "id": "typePipe-24",
       "sound": "key",
       "stem": "ui",
       "atMs": 27832,
@@ -2422,10 +2338,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "r",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-25",
+      "id": "typePipe-25",
       "sound": "key",
       "stem": "ui",
       "atMs": 27844,
@@ -2436,10 +2352,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "i",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-26",
+      "id": "typePipe-26",
       "sound": "key",
       "stem": "ui",
       "atMs": 27881,
@@ -2450,10 +2366,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "t",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-27",
+      "id": "typePipe-27",
       "sound": "key",
       "stem": "ui",
       "atMs": 27893,
@@ -2464,10 +2380,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "e",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-28",
+      "id": "typePipe-28",
       "sound": "key",
       "stem": "ui",
       "atMs": 27930,
@@ -2478,10 +2394,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": " ",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-29",
+      "id": "typePipe-29",
       "sound": "key",
       "stem": "ui",
       "atMs": 27961,
@@ -2492,10 +2408,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "o",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-30",
+      "id": "typePipe-30",
       "sound": "key",
       "stem": "ui",
       "atMs": 27977,
@@ -2506,10 +2422,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "n",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-31",
+      "id": "typePipe-31",
       "sound": "key",
       "stem": "ui",
       "atMs": 28010,
@@ -2520,10 +2436,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "e",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-32",
+      "id": "typePipe-32",
       "sound": "key",
       "stem": "ui",
       "atMs": 28024,
@@ -2534,10 +2450,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": " ",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-33",
+      "id": "typePipe-33",
       "sound": "key",
       "stem": "ui",
       "atMs": 28059,
@@ -2548,10 +2464,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "c",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-34",
+      "id": "typePipe-34",
       "sound": "key",
       "stem": "ui",
       "atMs": 28084,
@@ -2562,10 +2478,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "o",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-35",
+      "id": "typePipe-35",
       "sound": "key",
       "stem": "ui",
       "atMs": 28116,
@@ -2576,38 +2492,38 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "n",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-36",
+      "id": "typePipe-36",
       "sound": "key",
       "stem": "ui",
       "atMs": 28132,
       "atSample": 1350336,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "c",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-37",
+      "id": "typePipe-37",
       "sound": "key",
       "stem": "ui",
       "atMs": 28171,
       "atSample": 1352208,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "i",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-38",
+      "id": "typePipe-38",
       "sound": "key",
       "stem": "ui",
       "atMs": 28181,
@@ -2618,24 +2534,24 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "s",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-39",
+      "id": "typePipe-39",
       "sound": "key",
       "stem": "ui",
       "atMs": 28217,
       "atSample": 1354416,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "e",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-40",
+      "id": "typePipe-40",
       "sound": "key",
       "stem": "ui",
       "atMs": 28238,
@@ -2646,24 +2562,24 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": " ",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-41",
+      "id": "typePipe-41",
       "sound": "key",
       "stem": "ui",
       "atMs": 28274,
       "atSample": 1357152,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "c",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-42",
+      "id": "typePipe-42",
       "sound": "key",
       "stem": "ui",
       "atMs": 28286,
@@ -2674,24 +2590,24 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "o",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-43",
+      "id": "typePipe-43",
       "sound": "key",
       "stem": "ui",
       "atMs": 28323,
       "atSample": 1359504,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "n",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-44",
+      "id": "typePipe-44",
       "sound": "key",
       "stem": "ui",
       "atMs": 28335,
@@ -2702,38 +2618,38 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "v",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-45",
+      "id": "typePipe-45",
       "sound": "key",
       "stem": "ui",
       "atMs": 28372,
       "atSample": 1361856,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "e",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-46",
+      "id": "typePipe-46",
       "sound": "key",
       "stem": "ui",
       "atMs": 28403,
       "atSample": 1363344,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "n",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-47",
+      "id": "typePipe-47",
       "sound": "key",
       "stem": "ui",
       "atMs": 28419,
@@ -2744,10 +2660,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "t",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-48",
+      "id": "typePipe-48",
       "sound": "key",
       "stem": "ui",
       "atMs": 28452,
@@ -2758,38 +2674,38 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "i",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-49",
+      "id": "typePipe-49",
       "sound": "key",
       "stem": "ui",
       "atMs": 28466,
       "atSample": 1366368,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "o",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-50",
+      "id": "typePipe-50",
       "sound": "key",
       "stem": "ui",
       "atMs": 28501,
       "atSample": 1368048,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "n",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-51",
+      "id": "typePipe-51",
       "sound": "key",
       "stem": "ui",
       "atMs": 28526,
@@ -2800,38 +2716,38 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "a",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-52",
+      "id": "typePipe-52",
       "sound": "key",
       "stem": "ui",
       "atMs": 28558,
       "atSample": 1370784,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "l",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-53",
+      "id": "typePipe-53",
       "sound": "key",
       "stem": "ui",
       "atMs": 28574,
       "atSample": 1371552,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": " ",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-54",
+      "id": "typePipe-54",
       "sound": "key",
       "stem": "ui",
       "atMs": 28613,
@@ -2842,38 +2758,38 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "c",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-55",
+      "id": "typePipe-55",
       "sound": "key",
       "stem": "ui",
       "atMs": 28623,
       "atSample": 1373904,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "o",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-56",
+      "id": "typePipe-56",
       "sound": "key",
       "stem": "ui",
       "atMs": 28659,
       "atSample": 1375632,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "m",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-57",
+      "id": "typePipe-57",
       "sound": "key",
       "stem": "ui",
       "atMs": 28680,
@@ -2884,38 +2800,38 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "m",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-58",
+      "id": "typePipe-58",
       "sound": "key",
       "stem": "ui",
       "atMs": 28716,
       "atSample": 1378368,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "i",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-59",
+      "id": "typePipe-59",
       "sound": "key",
       "stem": "ui",
       "atMs": 28728,
       "atSample": 1378944,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "t",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-60",
+      "id": "typePipe-60",
       "sound": "key",
       "stem": "ui",
       "atMs": 28765,
@@ -2926,38 +2842,38 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": " ",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-61",
+      "id": "typePipe-61",
       "sound": "key",
       "stem": "ui",
       "atMs": 28777,
       "atSample": 1381296,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "s",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-62",
+      "id": "typePipe-62",
       "sound": "key",
       "stem": "ui",
       "atMs": 28814,
       "atSample": 1383072,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "u",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-63",
+      "id": "typePipe-63",
       "sound": "key",
       "stem": "ui",
       "atMs": 28845,
@@ -2968,38 +2884,38 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "b",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-64",
+      "id": "typePipe-64",
       "sound": "key",
       "stem": "ui",
       "atMs": 28861,
       "atSample": 1385328,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "j",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-65",
+      "id": "typePipe-65",
       "sound": "key",
       "stem": "ui",
       "atMs": 28894,
       "atSample": 1386912,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "e",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-66",
+      "id": "typePipe-66",
       "sound": "key",
       "stem": "ui",
       "atMs": 28908,
@@ -3010,10 +2926,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "c",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-67",
+      "id": "typePipe-67",
       "sound": "key",
       "stem": "ui",
       "atMs": 28943,
@@ -3024,38 +2940,38 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "t",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-68",
+      "id": "typePipe-68",
       "sound": "key",
       "stem": "ui",
       "atMs": 28968,
       "atSample": 1390464,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": " ",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-69",
+      "id": "typePipe-69",
       "sound": "key",
       "stem": "ui",
       "atMs": 29000,
       "atSample": 1392000,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "f",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-70",
+      "id": "typePipe-70",
       "sound": "key",
       "stem": "ui",
       "atMs": 29016,
@@ -3066,10 +2982,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "o",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-71",
+      "id": "typePipe-71",
       "sound": "key",
       "stem": "ui",
       "atMs": 29055,
@@ -3080,10 +2996,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "r",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-72",
+      "id": "typePipe-72",
       "sound": "key",
       "stem": "ui",
       "atMs": 29065,
@@ -3094,10 +3010,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": " ",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-73",
+      "id": "typePipe-73",
       "sound": "key",
       "stem": "ui",
       "atMs": 29101,
@@ -3108,38 +3024,38 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "t",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-74",
+      "id": "typePipe-74",
       "sound": "key",
       "stem": "ui",
       "atMs": 29122,
       "atSample": 1397856,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "h",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-75",
+      "id": "typePipe-75",
       "sound": "key",
       "stem": "ui",
       "atMs": 29158,
       "atSample": 1399584,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "i",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-76",
+      "id": "typePipe-76",
       "sound": "key",
       "stem": "ui",
       "atMs": 29170,
@@ -3150,38 +3066,38 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "s",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-77",
+      "id": "typePipe-77",
       "sound": "key",
       "stem": "ui",
       "atMs": 29207,
       "atSample": 1401936,
       "durMs": 120,
-      "audible": false,
+      "audible": true,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": " ",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-78",
+      "id": "typePipe-78",
       "sound": "key",
       "stem": "ui",
       "atMs": 29219,
       "atSample": 1402512,
       "durMs": 120,
-      "audible": true,
+      "audible": false,
       "onsetTolMs": 1,
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "c",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-79",
+      "id": "typePipe-79",
       "sound": "key",
       "stem": "ui",
       "atMs": 29256,
@@ -3192,10 +3108,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "h",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-80",
+      "id": "typePipe-80",
       "sound": "key",
       "stem": "ui",
       "atMs": 29287,
@@ -3206,10 +3122,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "a",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-81",
+      "id": "typePipe-81",
       "sound": "key",
       "stem": "ui",
       "atMs": 29303,
@@ -3220,10 +3136,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "n",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-82",
+      "id": "typePipe-82",
       "sound": "key",
       "stem": "ui",
       "atMs": 29336,
@@ -3234,10 +3150,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "g",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-83",
+      "id": "typePipe-83",
       "sound": "key",
       "stem": "ui",
       "atMs": 29350,
@@ -3248,10 +3164,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "e",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-84",
+      "id": "typePipe-84",
       "sound": "key",
       "stem": "ui",
       "atMs": 29385,
@@ -3262,10 +3178,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": ".",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "ask-4-typing-85",
+      "id": "typePipe-85",
       "sound": "key",
       "stem": "ui",
       "atMs": 29410,
@@ -3276,22 +3192,10 @@
       "sheet": "27-32",
       "marks": "the pipe is typed",
       "text": "'",
-      "group": "ask-4-typing"
+      "group": "typePipe"
     },
     {
-      "id": "push-ask-4",
-      "sound": "whoosh.still",
-      "stem": "ui",
-      "atMs": 27700,
-      "atSample": 1329600,
-      "durMs": 1200,
-      "audible": true,
-      "onsetTolMs": 40,
-      "sheet": "27-32",
-      "marks": "the camera pushes in on the prompt line"
-    },
-    {
-      "id": "enter-4",
+      "id": "enterPipe",
       "sound": "click.soft",
       "stem": "ui",
       "atMs": 29700,
@@ -3303,7 +3207,7 @@
       "marks": "Enter on the pipe"
     },
     {
-      "id": "subject-returns",
+      "id": "answerPipe",
       "sound": "chime",
       "stem": "ui",
       "atMs": 30900,
@@ -3315,35 +3219,71 @@
       "marks": "one conventional commit subject comes back"
     },
     {
-      "id": "label-pipe",
-      "sound": "marker",
+      "id": "push-line",
+      "sound": "whoosh.still",
       "stem": "ui",
-      "atMs": 30900,
-      "atSample": 1483200,
-      "durMs": 0,
-      "audible": false,
-      "onsetTolMs": 0,
+      "atMs": 3200,
+      "atSample": 153600,
+      "durMs": 1200,
+      "audible": true,
+      "onsetTolMs": 40,
+      "sheet": "3-10",
+      "marks": "the camera pushes in on the line"
+    },
+    {
+      "id": "push-line-2",
+      "sound": "whoosh.still",
+      "stem": "ui",
+      "atMs": 10700,
+      "atSample": 513600,
+      "durMs": 1200,
+      "audible": true,
+      "onsetTolMs": 40,
+      "sheet": "10-18",
+      "marks": "the camera pushes in on the line"
+    },
+    {
+      "id": "push-line-3",
+      "sound": "whoosh.still",
+      "stem": "ui",
+      "atMs": 18700,
+      "atSample": 897600,
+      "durMs": 1200,
+      "audible": true,
+      "onsetTolMs": 40,
+      "sheet": "18-27",
+      "marks": "the camera pushes in on the line"
+    },
+    {
+      "id": "push-line-4",
+      "sound": "whoosh.still",
+      "stem": "ui",
+      "atMs": 27400,
+      "atSample": 1315200,
+      "durMs": 1200,
+      "audible": true,
+      "onsetTolMs": 40,
       "sheet": "27-32",
-      "marks": "label One answer from a pipe"
+      "marks": "the camera pushes in on the line"
     },
     {
       "id": "pull-back",
       "sound": "whoosh.still",
       "stem": "ui",
-      "atMs": 31800,
-      "atSample": 1526400,
-      "durMs": 900,
+      "atMs": 31000,
+      "atSample": 1488000,
+      "durMs": 600,
       "audible": true,
       "onsetTolMs": 40,
-      "sheet": "32-35",
+      "sheet": "27-32",
       "marks": "the camera pulls back to the end card"
     },
     {
       "id": "line-end-card",
       "sound": "line.600",
       "stem": "ui",
-      "atMs": 32400,
-      "atSample": 1555200,
+      "atMs": 32600,
+      "atSample": 1564800,
       "durMs": 900,
       "audible": true,
       "onsetTolMs": 12,
@@ -3353,7 +3293,7 @@
   ],
   "typing": [
     {
-      "id": "ask-1-typing",
+      "id": "typeFind",
       "text": "? find the five biggest files in here, skip node_modules and .git",
       "startMs": 3200,
       "endMs": 5629,
@@ -3426,7 +3366,7 @@
       ]
     },
     {
-      "id": "ask-2-typing",
+      "id": "typeDist",
       "text": "? delete the dist folder",
       "startMs": 10300,
       "endMs": 11218,
@@ -3458,7 +3398,7 @@
       ]
     },
     {
-      "id": "ask-3-typing",
+      "id": "typePush",
       "text": "? force push my branch over main on origin",
       "startMs": 18300,
       "endMs": 19866,
@@ -3508,7 +3448,7 @@
       ]
     },
     {
-      "id": "ask-4-typing",
+      "id": "typePipe",
       "text": "git show HEAD | ai -p 'Write one concise conventional commit subject for this change.'",
       "startMs": 27200,
       "endMs": 29410,
@@ -3604,7 +3544,7 @@
   ],
   "ducks": [
     {
-      "reason": "danger",
+      "reason": "askedPush",
       "fromMs": 22000,
       "toMs": 22300,
       "depthDb": -2,
@@ -3612,7 +3552,7 @@
       "releaseMs": 500
     },
     {
-      "reason": "subject-returns",
+      "reason": "answerPipe",
       "fromMs": 30900,
       "toMs": 31400,
       "depthDb": -2.5,
