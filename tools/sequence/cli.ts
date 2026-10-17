@@ -44,7 +44,7 @@ const scale = (width: number): string[] => ["-vf", `scale=${width}:-2:out_color_
 
 const codec = (format: Format, quality: number): string[] =>
   format === "avif"
-    ? ["-pix_fmt", "yuv420p", "-c:v", "libaom-av1", "-still-picture", "1", "-crf", String(quality), "-cpu-used", "6", "-row-mt", "1", "-threads", "2", "-f", "avif"]
+    ? ["-pix_fmt", "yuv444p", "-c:v", "libaom-av1", "-still-picture", "1", "-crf", String(quality), "-cpu-used", "6", "-row-mt", "1", "-threads", "2", "-f", "avif"]
     : ["-pix_fmt", "yuv420p", "-c:v", "libwebp", "-quality", String(quality), "-compression_level", "6"];
 
 // Dark re-renders flip a few pixels by up to 9 levels between runs; past 80 dB that vanishes in the AVIF encode.
@@ -82,7 +82,7 @@ const stills = async (): Promise<void> => {
       const source = values.stills ? join(resolve(values.stills), theme, `${screen}.png`) : join(sourceDir, `${screen}.png`);
       if (!values.stills) await ffmpeg(["-f", "lavfi", "-i", `color=c=${PLACEHOLDER[theme]}:s=1600x1000`, "-frames:v", "1", source]);
       for (const width of [1600, 800]) {
-        await encodeStill(source, join(dir, `${screen}-${width}.avif`), width, "avif", 24);
+        await encodeStill(source, join(dir, `${screen}-${width}.avif`), width, "avif", 20);
         await encodeStill(source, join(dir, `${screen}-${width}.webp`), width, "webp", 85);
       }
     }
@@ -138,9 +138,9 @@ const encode = async (quads: Quads): Promise<void> => {
   for (const theme of themes) {
     const frames = join(work, "frames", theme);
     const sets: Set[] = [
-      { name: `${theme}/1920`, dir: join(publicDir, theme, "1920"), width: 1920, format: "avif", quality: 30, budget: 6_000_000 },
+      { name: `${theme}/1920`, dir: join(publicDir, theme, "1920"), width: 1920, format: "avif", quality: 18, budget: 6_000_000 },
       { name: `${theme}/1920`, dir: join(publicDir, theme, "1920"), width: 1920, format: "webp", quality: 72, budget: 6_000_000 },
-      { name: `${theme}/960`, dir: join(publicDir, theme, "960"), width: 960, format: "avif", quality: 32, budget: 2_500_000 },
+      { name: `${theme}/960`, dir: join(publicDir, theme, "960"), width: 960, format: "avif", quality: 22, budget: 2_500_000 },
       { name: `${theme}/960`, dir: join(publicDir, theme, "960"), width: 960, format: "webp", quality: 68, budget: 2_500_000 },
       { name: `${theme}/lq`, dir: join(publicDir, theme, "lq"), width: 960, format: "avif", quality: 50, only: LQ },
       { name: `${theme}/lq`, dir: join(publicDir, theme, "lq"), width: 960, format: "webp", quality: 30, only: LQ },

@@ -108,6 +108,13 @@ const run = async ({ width, height, reduced }: { width: number; height: number; 
     await settle(page);
     const top = await probe(page);
     expect(top.frame === 0, `${label}: frame ${top.frame} at the section top`);
+    const cover = await page.evaluate(() => {
+      const section = document.querySelector<HTMLElement>("[data-scene=sequence]")!;
+      const stage = (section.firstElementChild as HTMLElement).getBoundingClientRect();
+      return { drawn: Number(section.dataset.fit), cover: Math.round(Math.max((stage.height * 16) / 9, stage.width)) };
+    });
+    report.cover = cover;
+    expect(Math.abs(cover.drawn - cover.cover) <= 1, `${label}: frame 0 drawn ${cover.drawn} px wide, cover is ${cover.cover}`);
 
     const progress: number[] = [];
     const deltas: number[] = [];
