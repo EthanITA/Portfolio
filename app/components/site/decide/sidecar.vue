@@ -9,7 +9,8 @@ import { motionOn } from "~/utils/site/motion";
 type Row = { mark: DiffLine["mark"] | "blank"; line?: number; text: string };
 type Pair = { before: Row; after: Row };
 
-const SIGN: Record<Row["mark"], string> = { add: "+", remove: "−", same: " ", blank: " " };
+// ASCII minus, since DM Mono falls back on U+2212 and the glyph then differs between machines.
+const SIGN: Record<Row["mark"], string> = { add: "+", remove: "-", same: " ", blank: " " };
 const BLANK: Row = { mark: "blank", text: "" };
 const REST = 50;
 const WIPE_MS = 1200;
@@ -166,7 +167,7 @@ onBeforeUnmount(() => {
 }
 
 .path {
-  @apply typo-mono-meta m-0 border-b border-border px-5 py-3 text-muted;
+  @apply typo-mono-meta m-0 block border-b border-border px-5 py-3 text-muted;
 }
 
 .compare {
@@ -232,6 +233,10 @@ onBeforeUnmount(() => {
 
   &:focus-visible {
     @apply focus-ring;
+  }
+
+  @media (pointer: coarse) {
+    @apply size-11;
   }
 }
 
