@@ -150,11 +150,11 @@ const capture = async ({ worker, ms, timeout }: { worker: Worker; ms: number; ti
     worker.page.evaluate(async (at) => {
       await window.__seek(at);
       await window.__ready();
-      // Chrome skips raster invalidation for sub-pixel transform and near-1 opacity steps, so nudging the page forces every tile to repaint.
-      const previous = document.body.style.transform;
-      document.body.style.transform = "translateX(1px)";
+      // Chrome skips raster invalidation for sub-pixel steps, and moving the page only repositions composited layers, so hiding it repaints them all.
+      const previous = document.body.style.visibility;
+      document.body.style.visibility = "hidden";
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      document.body.style.transform = previous;
+      document.body.style.visibility = previous;
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     }, ms),
     timeout,
