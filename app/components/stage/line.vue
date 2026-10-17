@@ -10,9 +10,8 @@ import type { SceneSetup } from "~/utils/stage/scene";
 
 import { Chip, Kbd, TextInput } from "@cela/design";
 import { pulse } from "@cela/design/utils/motion";
-import type { CameraPreset } from "~/utils/stage/camera";
 
-import { STAGE_CAMERA, floorFraction } from "~/utils/stage/camera";
+import { STAGE_CAMERA, toScreen } from "~/utils/stage/camera";
 import { LINE, TIERS, createLedger, pose, settling } from "~/utils/stage/line";
 import { useScene } from "~/utils/stage/scene";
 
@@ -43,12 +42,11 @@ const canvas = useTemplateRef<HTMLCanvasElement>("canvas");
 const text = ref("");
 const views = shallowRef<View[]>([]);
 const announcement = ref("");
-const tops = (camera: CameraPreset): Record<Tier, number> => ({
-  runs: floorFraction(camera, ZONE.runs) * 100,
-  waits: floorFraction(camera, ZONE.waits) * 100,
-  stops: floorFraction(camera, ZONE.stops) * 100,
-});
-const labelTop = ref(tops(STAGE_CAMERA.line));
+const ZONE_TOP: Record<Tier, { "--top": number }> = {
+  runs: { "--top": toScreen(STAGE_CAMERA.line, [0, 0, ZONE.runs]).top },
+  waits: { "--top": toScreen(STAGE_CAMERA.line, [0, 0, ZONE.waits]).top },
+  stops: { "--top": toScreen(STAGE_CAMERA.line, [0, 0, ZONE.stops]).top },
+};
 
 const overlays = new Map<number, HTMLElement>();
 const rects = new Map<number, [number, number, number, number]>();
@@ -115,7 +113,6 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
     layout.size = (wide.matches || filming ? 17 : 14) / perUnit;
     layout.width = width;
     layout.height = height;
-    labelTop.value = tops({ ...STAGE_CAMERA.line, fov: stage.camera.fov });
   };
 
   const project = (x: number, y: number, z: number): [number, number] => {
@@ -283,7 +280,7 @@ defineExpose({ ...seekable, restMs: FILM.rest });
 </script>
 
 <template>
-  <div ref="root" class="line" data-scene="line" :data-state="state" :data-theme-applied="theme" @pointerdown.capture="interact" @keydown.capture="interact">
+  <div ref="root" class="line" data-scene="line" :data-mode="mode" :data-state="state" :data-theme-applied="theme" @pointerdown.capture="interact" @keydown.capture="interact">
     <form class="ask" @submit.prevent="submit">
       <TextInput v-model="text" class="input" :placeholder="PLACEHOLDER" :aria-label="PLACEHOLDER" maxlength="60" enterkeyhint="send" />
       <div class="examples">
@@ -293,7 +290,7 @@ defineExpose({ ...seekable, restMs: FILM.rest });
     <div ref="box" class="stage">
       <StagePoster v-if="!film" name="line" :theme="theme" />
       <canvas ref="canvas" class="canvas" />
-      <span v-for="tier in TIERS" :key="tier" class="zone" :data-zone="tier" :style="{ top: `${labelTop[tier]}%` }">{{ TIER_NAME[tier] }}</span>
+      <span v-for="tier in TIERS" :key="tier" class="zone" :data-zone="tier" :style="ZONE_TOP[tier]">{{ TIER_NAME[tier] }}</span>
       <div v-for="view in views" :key="view.id" :ref="(el: unknown) => bind(view.id, el)" class="action" :data-action="view.id" :data-tier="view.tier" :data-status="view.status">
         <template v-if="view.status === 'waiting'">
           <button type="button" class="release" :aria-label="`${view.text} · ${TIER_NAME.waits}`" @click="release(view.id)" />
@@ -320,7 +317,7 @@ defineExpose({ ...seekable, restMs: FILM.rest });
 }
 
 .stage {
-  @apply relative min-h-0 flex-1 overflow-hidden rounded-box bg-canvas;
+  @apply @container-size relative min-h-0 flex-1 overflow-hidden rounded-box bg-canvas;
 }
 
 .canvas {
@@ -329,10 +326,17 @@ defineExpose({ ...seekable, restMs: FILM.rest });
 
 .zone {
   @apply typo-eyebrow pointer-events-none absolute left-4 -translate-y-1/2 text-muted;
+  /* The canvas crops like a 16:9 cover poster, so one frame height is the larger of the box height and its width over 16:9. */
+  top: calc(50% + (var(--top) - 0.5) * max(100cqh, 56.25cqw));
 }
 
 .zone[data-zone="stops"] {
   @apply text-primary;
+}
+
+/* Posters are rendered in film mode; the live labels sit over them, so the film keeps their space but not their ink. */
+.line[data-mode="film"] .zone {
+  @apply invisible;
 }
 
 .action {
