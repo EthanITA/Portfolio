@@ -63,7 +63,8 @@ const render = async (route: string): Promise<void> => {
   if (!width || !height) fail(`--size ${values.size}: use <width>x<height>`);
   if (Math.round(width * scale) % 2 || Math.round(height * scale) % 2) fail(`${width * scale}x${height * scale} is odd; yuv420p needs even output dimensions`);
 
-  const name = basename(route);
+  const { pathname, search } = new URL(route, "http://film");
+  const name = [basename(pathname), ...search.slice(1).split(/[^\w]+/).filter(Boolean)].join("-");
   const out = resolve(values.out ?? join(root, "films/out", name));
   const server = await Render.serve({ route, port: Number(values.port), root });
   const started = performance.now();
