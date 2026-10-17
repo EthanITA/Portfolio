@@ -18,7 +18,7 @@ const PILL_END = 2000;
 
 const strip = useTemplateRef<HTMLElement>("strip");
 const chosen = ref(0);
-const t = ref(RUN_MS);
+const elapsed = ref(RUN_MS);
 
 let observer: IntersectionObserver | undefined;
 let run: JSAnimation | undefined;
@@ -26,7 +26,7 @@ let run: JSAnimation | undefined;
 const rated = computed(() => RATED_ASKS[chosen.value] ?? RATED_ASKS[0]!);
 const rating = computed(() => (rated.value.reason ? `${rated.value.tier} · ${rated.value.reason}` : rated.value.tier));
 
-const phase = (from: number, to: number): number => Math.min(1, Math.max(0, (t.value - from) / (to - from)));
+const phase = (from: number, to: number): number => Math.min(1, Math.max(0, (elapsed.value - from) / (to - from)));
 const typed = (text: string, from: number, to: number): [string, string] => {
   const at = Math.round(phase(from, to) * text.length);
   return [text.slice(0, at), text.slice(at)];
@@ -39,9 +39,15 @@ const lit = computed(() => MOTION_EASE.out(phase(PILL_END, RUN_MS)));
 
 const play = (): void => {
   run?.cancel();
-  const clock = { t: 0 };
-  t.value = 0;
-  run = animate(clock, { t: RUN_MS, duration: RUN_MS, ease: "linear", onUpdate: () => (t.value = clock.t), onComplete: () => (t.value = RUN_MS) });
+  const clock = { elapsed: 0 };
+  elapsed.value = 0;
+  run = animate(clock, {
+    elapsed: RUN_MS,
+    duration: RUN_MS,
+    ease: "linear",
+    onUpdate: () => (elapsed.value = clock.elapsed),
+    onComplete: () => (elapsed.value = RUN_MS),
+  });
 };
 
 const choose = (at: number): void => {
@@ -51,7 +57,7 @@ const choose = (at: number): void => {
 
 onMounted(() => {
   if (!strip.value || !motionOn()) return;
-  t.value = 0;
+  elapsed.value = 0;
   observer = new IntersectionObserver(
     ([entry]) => {
       if (!entry?.isIntersecting) return;
