@@ -1,12 +1,5 @@
-import type { FilmScript, Key } from "./script.ts";
-
-// Sidecar's undo and redo until play's SIDECAR_SCRIPT exists; becomes its keys import then.
-const PLAY = {
-  keys: [
-    { key: "cmd Z", at: 28_800 },
-    { key: "cmd shift Z", at: 30_400 },
-  ] satisfies Key[],
-};
+import { SIDECAR_SCRIPT } from "../../app/utils/play/script/sidecar.ts";
+import type { FilmScript } from "./script.ts";
 
 const LINE = 41_400;
 
@@ -19,7 +12,7 @@ export default {
     { text: "A companion window for Claude Code.", at: 1800, until: 3000 },
     { text: "Claude does the work. You decide what lands.", at: 34_600, until: LINE - 800 },
   ],
-  keys: PLAY.keys,
+  keys: SIDECAR_SCRIPT.keys,
   island: [
     { at: 0, until: 3000, shape: "island", open: 1000 },
     { at: LINE - 600, shape: "island", draw: LINE, y: 0.25 },
