@@ -5,6 +5,7 @@ import { type TextSplitter, splitText } from "animejs";
 
 import { BOARD } from "~/utils/site/board";
 import { motionOn } from "~/utils/site/motion";
+import { type Scrub, useScrub } from "~/utils/site/scrub";
 import { seo } from "~/utils/site/seo";
 
 type Rule = { rule: string; why: string };
@@ -48,9 +49,6 @@ const loop: Step[] = [
   { step: "Ship", receipt: "merged into main" },
 ];
 
-// The lag of the site's SCRUB_SMOOTH scrubs, kept on the clock so a long frame or a background tab can't strand the runner.
-const RUNNER_MS = 125;
-
 type Receipt = { el: HTMLElement; node: number; next: number; chars: HTMLElement[]; shown: number };
 
 const cards = useTemplateRef<HTMLElement>("cards");
@@ -66,10 +64,7 @@ let landed = 0;
 let pending = 0;
 let receipts: Receipt[] = [];
 let splits: TextSplitter[] = [];
-let runner = 0;
-let last = 0;
-let frame = 0;
-let scrubbing = false;
+let scrub: Scrub | undefined;
 let sizes: ResizeObserver | undefined;
 
 const highlight = (gate: number): void => {
@@ -98,7 +93,7 @@ const goal = (el: HTMLElement): number => {
 };
 
 // A receipt types across the runner's travel from its node to the next, so a slow scroll is the typewriter and a fling types in the smoothing's tail.
-const type = (receipt: Receipt): void => {
+const type = (receipt: Receipt, runner: number): void => {
   const length = receipt.chars.length;
   const through = runner >= receipt.next ? 1 : (runner - receipt.node) / (receipt.next - receipt.node);
   const count = Math.min(length, Math.max(0, Math.ceil(length * through)));
@@ -110,28 +105,15 @@ const type = (receipt: Receipt): void => {
 };
 
 // Everything is read off the runner, so no queued work or dropped event can leave a receipt it has passed short.
-const step = (now: number): void => {
-  frame = 0;
-  if (!stepper.value || !rail.value) return;
-  const to = goal(stepper.value);
-  runner = to + (runner - to) * Math.exp(-(last ? now - last : 1000 / 60) / RUNNER_MS);
-  if (Math.abs(to - runner) < 0.0005) runner = to;
-  rail.value.style.translate = `${runner * 100}% ${runner * 100}%`;
-  receipts.forEach(type);
-  const settled = runner === to;
-  last = settled ? 0 : now;
-  if (!settled) frame = requestAnimationFrame(step);
-};
-
-const wake = (): void => {
-  if (scrubbing && !frame) frame = requestAnimationFrame(step);
+const draw = (runner: number): void => {
+  if (rail.value) rail.value.style.translate = `${runner * 100}% ${runner * 100}%`;
+  for (const receipt of receipts) type(receipt, runner);
 };
 
 // Counted from the rects on every scrolled frame: an observer on the line misses a jump that lands its gap between two cards.
 const onScrolled = (): void => {
   cancelAnimationFrame(pending);
   pending = requestAnimationFrame(read);
-  wake();
 };
 
 const land = (): void => {
@@ -170,21 +152,19 @@ onMounted(() => {
     );
     landing.observe(heading.value);
   }
-  if (!stepper.value) return;
-  receipts = prepare(stepper.value);
-  runner = goal(stepper.value);
-  scrubbing = true;
-  sizes = new ResizeObserver(wake);
+  const el = stepper.value;
+  if (!el) return;
+  receipts = prepare(el);
+  scrub = useScrub({ goal: () => goal(el), update: draw });
+  sizes = new ResizeObserver(scrub.wake);
   sizes.observe(document.body);
-  // Drawn before the first paint, so a scroll restored at the bottom shows five whole receipts with nothing replayed.
-  step(performance.now());
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("scroll", onScrolled);
   window.removeEventListener("resize", onScrolled);
   cancelAnimationFrame(pending);
-  cancelAnimationFrame(frame);
+  scrub?.stop();
   landing?.disconnect();
   sizes?.disconnect();
   splits.forEach((split) => split.revert());
