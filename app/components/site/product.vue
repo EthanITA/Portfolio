@@ -42,7 +42,7 @@ const startFilm = async (): Promise<void> => {
           <source :src="film.mp4" type='video/mp4; codecs="avc1.64002A, mp4a.40.2"' />
         </video>
         <template v-else>
-          <img v-if="film" class="poster" :src="film.poster" alt="" width="1920" height="1080" decoding="async" />
+          <img v-if="film" class="poster" :src="film.poster" alt="" width="1920" height="1080" fetchpriority="high" decoding="async" />
           <button v-press class="watch" type="button" :disabled="!film" @click="startFilm">
             <svg class="play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" /></svg>
             Watch the film
