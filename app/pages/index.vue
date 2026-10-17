@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Surface } from "@cela/design";
-import { type JSAnimation, type ScrollObserver, animate, onScroll } from "animejs";
+import { type JSAnimation, animate } from "animejs";
 
 import { links } from "~/utils/site/links";
 import { motionOn } from "~/utils/site/motion";
@@ -60,7 +60,9 @@ const hero = useTemplateRef<HTMLElement>("hero");
 const intro = useTemplateRef<HTMLElement>("intro");
 const heroProgress = ref(0);
 let drift: JSAnimation | undefined;
-let scroller: ScrollObserver | undefined;
+let resize: ResizeObserver | undefined;
+let heroTop = 0;
+let heroHeight = 0;
 
 // A global smooth scroll-behavior would also animate the router's back and forward restores across the whole page.
 const toWork = (event: MouseEvent): void => {
@@ -70,26 +72,40 @@ const toWork = (event: MouseEvent): void => {
   target.scrollIntoView({ behavior: motionOn() ? "smooth" : "instant" });
 };
 
+// Unsmoothed, so progress 1 lands exactly where the sequence pins on the same image.
+const follow = (): void => {
+  if (!heroHeight) return;
+  const progress = Math.min(1, Math.max(0, (scrollY - heroTop) / heroHeight));
+  heroProgress.value = progress;
+  drift?.seek(progress * drift.duration);
+};
+
+const measure = (): void => {
+  if (!hero.value) return;
+  const box = hero.value.getBoundingClientRect();
+  heroTop = box.top + scrollY;
+  heroHeight = box.height;
+  follow();
+};
+
 onMounted(() => {
   if (!hero.value || !intro.value || !motionOn()) return;
-  scroller = onScroll({
-    target: hero.value,
-    enter: "top top",
-    leave: "top bottom",
-    // Unsmoothed, so progress 1 lands exactly where the sequence pins on the same image.
-    sync: true,
-    onUpdate: (self) => (heroProgress.value = self.progress),
-  });
   drift = animate(intro.value, {
     ease: "linear",
     translateY: [0, -hero.value.offsetHeight * DRIFT],
-    autoplay: scroller,
+    autoplay: false,
   });
+  measure();
+  resize = new ResizeObserver(measure);
+  resize.observe(hero.value);
+  resize.observe(document.documentElement);
+  addEventListener("scroll", follow, { passive: true });
 });
 
 onBeforeUnmount(() => {
+  removeEventListener("scroll", follow);
+  resize?.disconnect();
   drift?.revert();
-  scroller?.revert();
 });
 </script>
 
