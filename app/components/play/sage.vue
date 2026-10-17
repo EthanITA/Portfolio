@@ -4,7 +4,7 @@ import type { SageToy } from "~/utils/play/sage";
 
 import { Kbd } from "@cela/design";
 import { useReel } from "~/utils/play/reel";
-import { SAGE_REEL, sageToy } from "~/utils/play/sage";
+import { SAGE_REEL, sageToy, sizeOf } from "~/utils/play/sage";
 
 const { mode = "live" } = defineProps<{ mode?: SceneMode }>();
 
@@ -130,6 +130,7 @@ const onSubmit = (): void => {
             :key="state.slot"
             class="content"
             :data-slot="state.slot"
+            :style="{ '--content-w': sizeOf(state).w }"
           >
             <template v-if="state.slot === 'heard'">
               <div class="row header">
@@ -291,26 +292,9 @@ const onSubmit = (): void => {
 
 .content {
   @apply flex flex-none flex-col gap-2.5 px-5 pt-10 pb-4 text-white;
+  width: calc(var(--content-w) * 1px);
   opacity: var(--ic, 1);
   translate: 0 calc((1 - var(--ic, 1)) * -4px);
-}
-
-.content[data-slot="heard"] {
-  @apply w-105;
-}
-
-.content[data-slot="working"],
-.content[data-slot="confirming"],
-.content[data-slot="asking"] {
-  @apply w-115;
-}
-
-.content[data-slot="needsYou"] {
-  @apply w-135;
-}
-
-.content[data-slot="stopped"] {
-  @apply w-65;
 }
 
 .card {

@@ -305,13 +305,11 @@ const derive = (): { channels: Channel[]; drawn: Drawn[] } => {
     }
   }
 
-  const listening = [
-    [m.optionDown, m.release],
-    [m.hold2, m.release2],
-  ] as const;
-  for (const [from, to] of listening) {
-    tween("trace", from, 0, 1, to - from, "linear");
-    for (let ms = from + 1; ms + 360 <= to; ms += 360) {
+  tween("trace", m.optionDown, 0, 1, m.release - m.optionDown, "linear");
+  tween("trace", m.hold2, 0, 1, m.release2 - m.hold2, "linear");
+  // The wave is the talking indicator, so it rests through the silent part of a hold.
+  for (const { at: from, until } of SAGE_SCRIPT.voice) {
+    for (let ms = from + 1; ms + 360 <= until; ms += 360) {
       tween("voice", ms, 0.35, 1, 180, MOTION_EASE.inOut);
       tween("voice", ms + 180, 1, 0.35, 180, MOTION_EASE.inOut);
     }
