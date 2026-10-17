@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { readSheet, SHEETS } from "~~/films/scripts/cues";
-import { cutOf, WINDOW, type Cut, type FilmScript } from "~~/films/scripts/script";
+import { WINDOW, type FilmScript } from "~~/films/scripts/script";
 import { Sky, STEPS, type Line, type Pose, type Size, type Widths } from "~~/films/utils/sky";
 
 const { script } = defineProps<{ script: FilmScript }>();
@@ -8,17 +8,16 @@ const { script } = defineProps<{ script: FilmScript }>();
 type Mover = { element: HTMLElement; at: number; leave: number; swell: boolean };
 
 const spoken = readSheet({ script, json: SHEETS[script.name] }).sheet.lines;
-const { onFrame, defer } = useFilmContext();
+const { onFrame, defer, cut } = useFilmContext();
 
 const ruler = useTemplateRef<HTMLElement>("ruler");
 const sky = useTemplateRef<HTMLElement>("sky");
-const cut = shallowRef<Cut>();
 const lines = shallowRef<Line[]>([]);
 const problems = shallowRef<string[]>([]);
 const offsets = new Map<string, number[]>();
 let movers: Mover[] = [];
 
-const box = computed(() => (cut.value ? { left: `${WINDOW[cut.value].x}px`, width: `${WINDOW[cut.value].width}px`, bottom: `calc(100% - ${WINDOW[cut.value].y}px)` } : {}));
+const box = { left: `${WINDOW[cut].x}px`, width: `${WINDOW[cut].width}px`, bottom: `calc(100% - ${WINDOW[cut].y}px)` };
 
 const glyphs = (word: HTMLElement): number[] => {
   const node = word.firstChild;
@@ -45,7 +44,7 @@ const fonts = (ruler: HTMLElement): Promise<unknown> => {
   return Promise.all([...texts].map(([font, text]) => document.fonts.load(font, text)));
 };
 
-const read = ({ ruler, cut }: { ruler: HTMLElement; cut: Cut }): Partial<Record<Size, Widths>>[] =>
+const read = (ruler: HTMLElement): Partial<Record<Size, Widths>>[] =>
   spoken.map((_, index) =>
     Object.fromEntries(
       STEPS[cut].flatMap((step) => {
@@ -59,11 +58,9 @@ const read = ({ ruler, cut }: { ruler: HTMLElement; cut: Cut }): Partial<Record<
   );
 
 const build = async (): Promise<void> => {
-  cut.value = cutOf({ width: innerWidth, height: innerHeight });
-  await nextTick();
   if (!ruler.value) return;
   await fonts(ruler.value);
-  const planned = Sky.plan({ lines: spoken, measured: read({ ruler: ruler.value, cut: cut.value }), cut: cut.value, fold: script.rig.until, violet: script.violet });
+  const planned = Sky.plan({ lines: spoken, measured: read(ruler.value), cut, fold: script.rig.until, violet: script.violet });
   lines.value = planned.lines;
   problems.value = planned.problems;
   await nextTick();
@@ -94,7 +91,7 @@ onFrame((ms) => {
 </script>
 
 <template>
-  <div v-if="cut && !lines.length" ref="ruler" class="film-sky-ruler" aria-hidden="true">
+  <div v-if="!lines.length" ref="ruler" class="film-sky-ruler" aria-hidden="true">
     <div v-for="step in STEPS[cut]" :key="step.size" :data-size="step.size">
       <div v-for="(line, index) in spoken" :key="index" :data-line="index">
         <span class="film-sky-probe" data-space> </span>
@@ -105,7 +102,7 @@ onFrame((ms) => {
       </div>
     </div>
   </div>
-  <div v-if="cut" ref="sky" class="film-sky" :style="box" :data-problems="problems.join('\n')">
+  <div ref="sky" class="film-sky" :style="box" :data-problems="problems.join('\n')">
     <div v-for="(line, l) in lines" :key="l" class="film-sky-line" :data-size="line.size">
       <div v-for="(row, r) in line.rows" :key="r" class="film-sky-row">
         <template v-for="word in row.words" :key="word.index">
@@ -178,6 +175,7 @@ onFrame((ms) => {
 }
 .film-sky-chip {
   @apply kbd-cap h-[1.4em] min-w-[1.4em] rounded-[0.35em] px-[0.3em] align-top text-[0.7em];
+  color: inherit;
 }
 .film-sky-word[data-tone="ink"] {
   @apply text-fg;

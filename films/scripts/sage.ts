@@ -2,6 +2,7 @@ import { SAGE_SCRIPT } from "../../app/utils/play/script/sage.ts";
 import { GRID, type FilmScript } from "./script.ts";
 
 const LINE = 36_000;
+const FOLD = 34_500;
 
 export default {
   name: "sage",
@@ -24,9 +25,10 @@ export default {
   keys: SAGE_SCRIPT.keys,
   island: [{ at: LINE - 600, shape: "island", draw: LINE, y: 0.25 }],
   rules: [],
+  stops: [{ at: SAGE_SCRIPT.moments.payOutlined, until: FOLD }],
   rig: {
     at: 2000,
-    until: 34_500,
+    until: FOLD,
     shots: [
       { at: 4500, duration: 1000, scale: 1.5, anchor: "notch" },
       { at: 20_500, duration: 1000, scale: 1.4, anchor: "card" },

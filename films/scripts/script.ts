@@ -23,6 +23,8 @@ export type IslandShot = { at: number; until?: number; shape: "island" | "line";
 
 export type Rule = { anchor: string; at: number };
 
+export type Stop = { at: number; until: number };
+
 export type FilmScript = {
   name: "sidecar" | "sage" | "shell";
   duration: number;
@@ -34,6 +36,7 @@ export type FilmScript = {
   keys: readonly Key[];
   island: IslandShot[];
   rules: Rule[];
+  stops: Stop[];
   rig: { at?: number; until: number; shots: Shot[] };
   end: { text: string; at: number };
 };

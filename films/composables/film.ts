@@ -1,6 +1,7 @@
 import { createTimeline, type Timeline } from "animejs";
 import type { InjectionKey } from "vue";
 import type { Seekable } from "#shared/types/seekable";
+import { cutOf, type Cut } from "~~/films/scripts/script";
 import type {} from "~~/tools/render/contract";
 
 export type FilmSeekable = Seekable & { ready?: () => Promise<void> };
@@ -10,6 +11,7 @@ export type FilmContext = {
   onFrame: (render: (ms: number) => Promise<void> | void) => void;
   measure: <T>(points: number[], read: (index: number) => T) => Promise<T[]>;
   defer: (setup: Promise<unknown>) => void;
+  cut: Cut;
 };
 
 const FILM: InjectionKey<FilmContext> = Symbol("film");
@@ -35,7 +37,7 @@ export const useFilm = (film: FilmSeekable): FilmContext => {
   // Setup that waits on fonts or layout must finish before the renderer's first seek, or a fresh page shows it unbuilt.
   const setups: Promise<unknown>[] = [];
 
-  const context: FilmContext = { timeline, onFrame: (render) => renders.push(render), measure, defer: (setup) => setups.push(setup) };
+  const context: FilmContext = { timeline, onFrame: (render) => renders.push(render), measure, defer: (setup) => setups.push(setup), cut: cutOf({ width: innerWidth, height: innerHeight }) };
   provide(FILM, context);
 
   onMounted(() => {

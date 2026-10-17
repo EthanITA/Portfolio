@@ -25,6 +25,10 @@ export default {
     { at: LINE - 600, shape: "island", draw: LINE, y: 0.25 },
   ],
   rules: [],
+  stops: [
+    { at: SHELL_SCRIPT.moments.stagedDist, until: SHELL_SCRIPT.moments.killDist },
+    { at: SHELL_SCRIPT.moments.askedPush, until: SHELL_SCRIPT.moments.answerNo },
+  ],
   rig: {
     at: 2000,
     until: 30_500,
