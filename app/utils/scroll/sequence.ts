@@ -21,8 +21,6 @@ export const BEAT_RANGES = [
 
 export const BEAT_FADE = { in: 0.04, out: 0.03, rise: 16 } as const;
 
-export type Theme = "light" | "dark";
-
 export type Rect = { x: number; y: number; width: number; height: number };
 
 export const frameAt = (progress: number): number =>

@@ -2,9 +2,7 @@
 import type { Seekable } from "#shared/types/seekable";
 
 import { createSequenceScene, type Quads, type SequenceScene } from "~/utils/scroll/scene";
-import { SEQUENCE, type Theme } from "~/utils/scroll/sequence";
-
-const { theme = "light" } = defineProps<{ theme?: Theme }>();
+import { SEQUENCE } from "~/utils/scroll/sequence";
 
 const canvas = useTemplateRef<HTMLCanvasElement>("canvas");
 
@@ -14,8 +12,7 @@ const created = new Promise<void>((resolve) => (mounted = resolve));
 
 onMounted(() => {
   if (!canvas.value) return;
-  document.documentElement.dataset.theme = theme;
-  scene = createSequenceScene({ canvas: canvas.value, theme });
+  scene = createSequenceScene({ canvas: canvas.value });
   scene.seek(0);
   mounted();
 });
