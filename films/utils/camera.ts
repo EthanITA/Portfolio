@@ -5,7 +5,7 @@ export type View = { x: number; y: number; scale: number };
 
 const IDENTITY: View = { x: 0, y: 0, scale: 1 };
 
-const LIMIT = { scale: 1.6, margin: SAFE_MARGIN, push: { min: 1800, max: 2400 }, hold: 1500 } as const;
+const LIMIT = { scale: 1.6, margin: SAFE_MARGIN, push: { over: 1.05, min: 1800, max: 2400 }, hold: 1500 } as const;
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
@@ -25,13 +25,16 @@ const local = ({ rig, element }: { rig: HTMLElement; element: Element }): Box =>
 const frame = ({ shot, rig }: { shot: Shot; rig: HTMLElement }): View => {
   const width = rig.offsetWidth;
   const height = rig.offsetHeight;
-  const anchor = shot.anchor ? rig.querySelector(`[data-film-anchor="${shot.anchor}"]`) : undefined;
   let center = { x: width / 2, y: height / 2 };
   let scale = Math.min(shot.scale, LIMIT.scale);
-  if (anchor) {
-    const target = local({ rig, element: anchor });
+  if (shot.anchor) {
+    const anchor = rig.querySelector(`[data-film-anchor="${shot.anchor}"]`);
+    const target = anchor ? local({ rig, element: anchor }) : undefined;
+    if (!target?.width || !target.height) throw new Error(`shot at ${shot.at} ms frames "${shot.anchor}", which has no box where the move lands`);
     center = { x: target.x + target.width / 2, y: target.y + target.height / 2 };
     scale = Math.min(scale, (width - 2 * LIMIT.margin) / target.width, (height - 2 * LIMIT.margin) / target.height);
+    if (shot.scale > LIMIT.push.over && scale <= LIMIT.push.over)
+      throw new Error(`push at ${shot.at} ms on "${shot.anchor}" can't zoom, its ${Math.round(target.width)}x${Math.round(target.height)} box caps the scale at ${scale.toFixed(2)}`);
   }
   return { x: axis({ center: center.x, scale, size: width }), y: axis({ center: center.y, scale, size: height }), scale };
 };
@@ -62,7 +65,7 @@ const validate = (shots: Shot[]): void => {
     const next = shots[index + 1];
     if (previous && shot.at < previous.at + previous.duration) throw new Error(`shot at ${shot.at} ms starts before the one at ${previous.at} ms ends`);
     if (shot.scale > LIMIT.scale) throw new Error(`shot at ${shot.at} ms pushes to ${shot.scale}, past ${LIMIT.scale}`);
-    const push = shot.scale > 1.05 && shot.scale > (previous?.scale ?? 1);
+    const push = shot.scale > LIMIT.push.over && shot.scale > (previous?.scale ?? 1);
     if (!push) return;
     if (shot.duration < LIMIT.push.min || shot.duration > LIMIT.push.max) throw new Error(`push at ${shot.at} ms takes ${shot.duration} ms, outside ${LIMIT.push.min} to ${LIMIT.push.max}`);
     if (next && next.at < shot.at + shot.duration + LIMIT.hold) throw new Error(`push at ${shot.at} ms holds under ${LIMIT.hold} ms before the next move`);
