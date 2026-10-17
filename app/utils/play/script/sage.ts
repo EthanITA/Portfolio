@@ -1,4 +1,4 @@
-import type { Key } from "./typed";
+import type { Key } from "./typed.ts";
 
 export const ASK = "I want to join the standup";
 export const SECOND_ASK = "pay the invoice";
