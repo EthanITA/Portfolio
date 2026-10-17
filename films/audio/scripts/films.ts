@@ -2,7 +2,7 @@ import { SAGE_SCRIPT } from "../../../app/utils/play/script/sage";
 import { SHELL_SCRIPT } from "../../../app/utils/play/script/shell";
 import { SIDECAR_SCRIPT } from "../../../app/utils/play/script/sidecar";
 import type { Typed } from "../../../app/utils/play/script/typed";
-import { SAGE_MOMENTS, SHEETS, SHELL_MOMENTS, SIDECAR_MOMENTS, windowsOf } from "./sheets";
+import { HAND_BACK_VOICE_MS, SHEETS, SIDECAR_SEAM_MS, windowsOf } from "./sheets";
 import type { ClickVariant, KeyVariant, TickVariant, WhooshDirection } from "./lib/synth";
 
 export type FilmName = "sidecar" | "sage" | "shell";
@@ -66,8 +66,6 @@ const typing = (id: string, script: Typed, seed: number, marks: string): CueSpec
   id, at: script.at[0] ?? 0, sound: "typing", endMs: script.at.at(-1) ?? 0, presses: script.at, text: script.text, seed, marks, sheet: "",
 });
 
-const retimed = (script: Typed, was: number, now: number): Typed => ({ text: script.text, at: script.at.map((t) => t + now - was) });
-
 const RANGES = {
   sidecar: [[0, 3], [3, 10], [10, 18], [18, 28], [28, 34], [34, 41], [41, 45]],
   sage: [[0, 3], [3, 9], [9, 12], [12, 22], [22, 30], [30, 36], [36, 40]],
@@ -100,8 +98,7 @@ const narratorCues = (film: FilmName, voicesAt: readonly number[]): CueSpec[] =>
 };
 
 const sageCues = (): CueSpec[] => {
-  const m = SAGE_MOMENTS;
-  const { words, fill } = SAGE_SCRIPT;
+  const { moments: m, words, fill } = SAGE_SCRIPT;
   return withSheets("sage", [
     ...frame("sage"),
     { id: "optionDown", at: m.optionDown, sound: "key", variant: "down", marks: "the right Option key goes down", sheet: "" },
@@ -118,33 +115,31 @@ const sageCues = (): CueSpec[] => {
     { id: "ask-2", at: m.words2Start, sound: "voice", voice: "person", text: words.second.text, marks: "the second spoken ask", sheet: "" },
     { id: "release2", at: m.release2, sound: "key", variant: "up", marks: "the key is released", sheet: "" },
     { id: "payOutlined", at: m.payOutlined, sound: "thud", marks: "Pay is outlined, stopped at the line", sheet: "" },
-    { id: "handback", at: m.handBackVoice, sound: "voice", voice: "sage", text: "Stopped at Pay. It's yours to press.", marks: "Sage hands Pay back", sheet: "" },
-    ...narratorCues("sage", [m.wordsStart, m.understood, m.words2Start, m.handBackVoice]),
+    { id: "handback", at: HAND_BACK_VOICE_MS, sound: "voice", voice: "sage", text: "Stopped at Pay. It's yours to press.", marks: "Sage hands Pay back", sheet: "" },
+    ...narratorCues("sage", [m.wordsStart, m.understood, m.words2Start, HAND_BACK_VOICE_MS]),
   ]);
 };
 
 const shellCues = (): CueSpec[] => {
-  const m = SHELL_MOMENTS;
-  const was = SHELL_SCRIPT.moments;
-  const presses = SHELL_SCRIPT.presses;
+  const { moments: m, presses } = SHELL_SCRIPT;
   const click = (id: string, at: number, marks: string): CueSpec => ({ id, at, sound: "click", variant: "soft", marks, sheet: "" });
   const output = Array.from({ length: 5 }, (_, i): CueSpec => ({
     id: i ? `outputFind-${i + 1}` : "outputFind", at: m.outputFind + i * 45, sound: "tick", variant: "high", gainDb: -2 * i, marks: `the find output, line ${i + 1}`, sheet: "",
   }));
   return withSheets("shell", [
     ...frame("shell"),
-    typing("typeFind", retimed(presses.find, was.typeFind, m.typeFind), 21, "the first ask is typed"),
+    typing("typeFind", presses.find, 21, "the first ask is typed"),
     click("enterFind", m.enterFind, "Enter, the spinner starts"),
     ...output,
-    typing("typeDist", retimed(presses.dist, was.typeDist, m.typeDist), 22, "the second ask is typed"),
+    typing("typeDist", presses.dist, 22, "the second ask is typed"),
     click("enterDist", m.enterDist, "Enter on the second ask, the spinner starts"),
     { id: "stagedDist", at: m.stagedDist, sound: "tick", variant: "low", marks: "caution · deletes files lands with rm -r dist on the line", sheet: "" },
     { ...click("killDist", m.killDist, "ctrl U clears the staged rm -r dist from the line"), gainDb: -5 },
-    typing("typePush", retimed(presses.push, was.typePush, m.typePush), 23, "the third ask is typed"),
+    typing("typePush", presses.push, 23, "the third ask is typed"),
     click("enterPush", m.enterPush, "Enter on the third ask, the spinner starts"),
     { id: "askedPush", at: m.askedPush, sound: "thud", marks: "danger · changes something remote or published, and the y/N prompt", sheet: "" },
     { id: "answerNo", at: m.answerNo, sound: "key", variant: "down", marks: "N answers the prompt and leaves an empty line", sheet: "" },
-    typing("typePipe", retimed(presses.pipe, was.typePipe, m.typePipe), 24, "the pipe is typed"),
+    typing("typePipe", presses.pipe, 24, "the pipe is typed"),
     click("enterPipe", m.enterPipe, "Enter on the pipe"),
     { id: "answerPipe", at: m.answerPipe, sound: "chime", marks: "one conventional commit subject comes back", sheet: "" },
     ...narratorCues("shell", []),
@@ -152,7 +147,7 @@ const shellCues = (): CueSpec[] => {
 };
 
 const sidecarCues = (): CueSpec[] => {
-  const m = SIDECAR_MOMENTS;
+  const { moments: m, presses } = SIDECAR_SCRIPT;
   const click = (id: string, at: number, variant: ClickVariant, marks: string): CueSpec => ({ id, at, sound: "click", variant, marks, sheet: "" });
   const tick = (id: string, at: number, variant: TickVariant, marks: string): CueSpec => ({ id, at, sound: "tick", variant, marks, sheet: "" });
   return withSheets("sidecar", [
@@ -165,16 +160,20 @@ const sidecarCues = (): CueSpec[] => {
     tick("tellLands", m.tellLands, "low", "the reject lands in the terminal as a message"),
     tick("reply", m.reply, "low", "Claude answers that it saw the reject"),
     click("select", m.select, "soft", "a paragraph is selected"),
-    typing("typeNote", retimed(SIDECAR_SCRIPT.presses.note, SIDECAR_SCRIPT.moments.typeNote, m.typeNote), 11, "the note is typed"),
+    typing("typeNote", presses.note, 11, "the note is typed"),
     click("addToTray", m.addToTray, "soft", "Enter adds the note to the tray"),
     click("send", m.send, "soft", "the note is sent"),
     whoosh("noteArc", m.send, m.noteLands - m.send, "rtl", "the note arcs into the terminal"),
     { id: "noteLands", at: m.noteLands, sound: "chime", marks: "the note lands as Marco's own message", sheet: "" },
     click("undo", m.undo, "soft", "cmd Z takes back the last decision"),
     tick("undoStacks", m.undo + 100, "low", "the decision history changes"),
+    click("undoAgain", m.undoAgain, "soft", "cmd Z takes back the one before"),
+    tick("undoAgainStacks", m.undoAgain + 100, "low", "the decision history changes"),
     click("redo", m.redo, "soft", "cmd shift Z redoes it"),
     tick("redoStacks", m.redo + 100, "low", "the decision history changes"),
-    { id: "seam", at: m.seam, sound: "line", durMs: 600, marks: "the violet line between terminal and island draws", sheet: "" },
+    click("redoAgain", m.redoAgain, "soft", "cmd shift Z redoes the next one"),
+    tick("redoAgainStacks", m.redoAgain + 100, "low", "the decision history changes"),
+    { id: "seam", at: SIDECAR_SEAM_MS, sound: "line", durMs: 600, marks: "the violet line between terminal and island draws", sheet: "" },
     ...narratorCues("sidecar", []),
   ]);
 };
