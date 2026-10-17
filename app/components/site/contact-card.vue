@@ -48,6 +48,8 @@ onBeforeUnmount(() => {
 <template>
   <Surface v-press :as="tag" variant="flat" pad="md" class="card" v-bind="attrs" @click="copy">
     <span class="name" :aria-live="email ? 'polite' : undefined">{{ copied ? "Copied" : name }}</span>
+    <!-- A line break between inline siblings compiles to nothing, so the text twin would read "LinkedInlinkedin.com". -->
+    {{ " " }}
     <span class="handle">{{ address ?? handle }}</span>
     <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true">
       <path v-if="copied" d="M5 12.5l4.5 4.5L19 7.5" />
