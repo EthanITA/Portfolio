@@ -13,14 +13,12 @@ const root = resolve(import.meta.dirname, "../..");
 const publicDir = join(root, "public/sequence");
 const manifestFile = join(root, "app/utils/scroll/manifest.gen.ts");
 
-const THEMES = ["light", "dark"] as const;
 const SCREENS = ["sidecar", "sage", "shell"] as const;
 const FRAMES = 192;
 const FILM_MS = 6400;
 const LQ = [...Array.from({ length: FRAMES / 8 }, (_, n) => n * 8), FRAMES - 1];
-const PLACEHOLDER = { light: "#ffffff", dark: "#18181b" } as const;
+const PLACEHOLDER = "#ffffff";
 
-type Theme = (typeof THEMES)[number];
 type Format = "avif" | "webp";
 type Quads = Record<(typeof SCREENS)[number], [number, number][]>;
 type Set = { name: string; dir: string; width: number; format: Format; quality: number; budget?: number; only?: number[] };
@@ -31,12 +29,10 @@ const { positionals, values } = parseArgs({
     work: { type: "string", default: join(tmpdir(), "madong-sequence") },
     stills: { type: "string" },
     port: { type: "string" },
-    themes: { type: "string", default: THEMES.join(",") },
   },
 });
 
 const work = resolve(values.work);
-const themes = values.themes.split(",").filter((theme): theme is Theme => (THEMES as readonly string[]).includes(theme));
 const pad = (index: number): string => String(index).padStart(3, "0");
 const mb = (bytes: number): string => `${(bytes / 1_000_000).toFixed(2)} MB`;
 
@@ -56,7 +52,7 @@ const codec = (format: Format, quality: number): string[] =>
     ? ["-pix_fmt", "yuv444p", "-c:v", "libaom-av1", "-still-picture", "1", "-crf", String(quality), "-cpu-used", "6", "-row-mt", "1", "-threads", "2", "-f", "avif"]
     : ["-pix_fmt", "yuv420p", "-c:v", "libwebp", "-quality", String(quality), "-compression_level", "6"];
 
-// Dark re-renders flip a few pixels by up to 9 levels between runs; past 80 dB that vanishes in the AVIF encode.
+// Re-renders flip a few pixels by up to 9 levels between runs; past 80 dB that vanishes in the AVIF encode.
 const MIN_PSNR = 80;
 
 const psnr = async (a: string, b: string): Promise<number> => {
@@ -82,21 +78,19 @@ const size = async (dir: string, extension: string): Promise<number> => {
 };
 
 const stills = async (): Promise<void> => {
-  for (const theme of themes) {
-    const dir = join(publicDir, theme, "screens");
-    await mkdir(dir, { recursive: true });
-    const sourceDir = join(work, "stills", theme);
-    await mkdir(sourceDir, { recursive: true });
-    for (const screen of SCREENS) {
-      const source = values.stills ? join(resolve(values.stills), theme, `${screen}.png`) : join(sourceDir, `${screen}.png`);
-      if (!values.stills) await ffmpeg(["-f", "lavfi", "-i", `color=c=${PLACEHOLDER[theme]}:s=1600x1000`, "-frames:v", "1", source]);
-      for (const width of [1600, 800]) {
-        await encodeStill(source, join(dir, `${screen}-${width}.avif`), width, "avif", 20);
-        await encodeStill(source, join(dir, `${screen}-${width}.webp`), width, "webp", 85);
-      }
+  const dir = join(publicDir, "screens");
+  await mkdir(dir, { recursive: true });
+  const sourceDir = join(work, "stills");
+  await mkdir(sourceDir, { recursive: true });
+  for (const screen of SCREENS) {
+    const source = values.stills ? join(resolve(values.stills), `${screen}.png`) : join(sourceDir, `${screen}.png`);
+    if (!values.stills) await ffmpeg(["-f", "lavfi", "-i", `color=c=${PLACEHOLDER}:s=1600x1000`, "-frames:v", "1", source]);
+    for (const width of [1600, 800]) {
+      await encodeStill(source, join(dir, `${screen}-${width}.avif`), width, "avif", 20);
+      await encodeStill(source, join(dir, `${screen}-${width}.webp`), width, "webp", 85);
     }
-    console.log(`${theme} stills ${values.stills ? `from ${values.stills}` : "as flat placeholders"}`);
   }
+  console.log(`stills ${values.stills ? `from ${values.stills}` : "as flat placeholders"}`);
 };
 
 const render = async (): Promise<Quads> => {
@@ -104,20 +98,18 @@ const render = async (): Promise<Quads> => {
   // Render.serve reuses whatever answers on its port, so a fixed one can render another worktree's dev server.
   const server = await Render.serve({ route, port: values.port ? Number(values.port) : await freePort(), root });
   try {
-    for (const theme of themes) {
-      const started = performance.now();
-      const options = { url: `${server.origin}${route}?theme=${theme}`, width: 1920, height: 1080, fps: FRAMES / (FILM_MS / 1000), to: FILM_MS };
-      const frames = await Render.frames({ ...options, dir: join(work, "frames", theme) });
-      console.log(`${theme} rendered ${frames.count} frames in ${((performance.now() - started) / 1000).toFixed(0)} s`);
-      const mismatches = await Render.check({ ...options, frames, samples: 8 });
-      const drift = await Promise.all(mismatches.map(({ index }) => psnr(join(frames.dir, Render.Frame.name(index)), join(frames.dir, "check", Render.Frame.name(index)))));
-      const worst = Math.min(...drift);
-      if (worst < MIN_PSNR) throw new Error(`${theme} frames ${mismatches.map(({ index }) => index).join(", ")} differ on re-render, worst ${worst.toFixed(1)} dB`);
-      console.log(`${theme} re-rendered 8 frames in fresh pages, ${8 - mismatches.length} identical${mismatches.length ? `, ${mismatches.length} within ${worst.toFixed(1)} dB` : ""}`);
-    }
+    const started = performance.now();
+    const options = { url: `${server.origin}${route}`, width: 1920, height: 1080, fps: FRAMES / (FILM_MS / 1000), to: FILM_MS };
+    const frames = await Render.frames({ ...options, dir: join(work, "frames") });
+    console.log(`rendered ${frames.count} frames in ${((performance.now() - started) / 1000).toFixed(0)} s`);
+    const mismatches = await Render.check({ ...options, frames, samples: 8 });
+    const drift = await Promise.all(mismatches.map(({ index }) => psnr(join(frames.dir, Render.Frame.name(index)), join(frames.dir, "check", Render.Frame.name(index)))));
+    const worst = Math.min(...drift);
+    if (worst < MIN_PSNR) throw new Error(`frames ${mismatches.map(({ index }) => index).join(", ")} differ on re-render, worst ${worst.toFixed(1)} dB`);
+    console.log(`re-rendered 8 frames in fresh pages, ${8 - mismatches.length} identical${mismatches.length ? `, ${mismatches.length} within ${worst.toFixed(1)} dB` : ""}`);
     const browser = await chromium.launch();
     const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
-    await page.goto(`${server.origin}${route}?theme=light`);
+    await page.goto(`${server.origin}${route}`);
     await page.waitForFunction(() => typeof (window as unknown as { __ready?: unknown }).__ready === "function");
     await page.evaluate(() => (window as unknown as { __ready: () => Promise<void> }).__ready());
     const quads = (await page.evaluate(() => (window as unknown as { __quads: () => unknown }).__quads())) as Quads;
@@ -145,18 +137,16 @@ const encodeSet = async (frames: string, set: Set): Promise<number> => {
 };
 
 const encode = async (quads: Quads): Promise<void> => {
-  for (const theme of themes) {
-    const frames = join(work, "frames", theme);
-    const sets: Set[] = [
-      { name: `${theme}/1920`, dir: join(publicDir, theme, "1920"), width: 1920, format: "avif", quality: 18, budget: 6_000_000 },
-      { name: `${theme}/1920`, dir: join(publicDir, theme, "1920"), width: 1920, format: "webp", quality: 72, budget: 6_000_000 },
-      { name: `${theme}/960`, dir: join(publicDir, theme, "960"), width: 960, format: "avif", quality: 22, budget: 2_500_000 },
-      { name: `${theme}/960`, dir: join(publicDir, theme, "960"), width: 960, format: "webp", quality: 68, budget: 2_500_000 },
-      { name: `${theme}/lq`, dir: join(publicDir, theme, "lq"), width: 960, format: "avif", quality: 50, only: LQ },
-      { name: `${theme}/lq`, dir: join(publicDir, theme, "lq"), width: 960, format: "webp", quality: 30, only: LQ },
-    ];
-    for (const set of sets) await encodeSet(frames, set);
-  }
+  const frames = join(work, "frames");
+  const sets: Set[] = [
+    { name: "1920", dir: join(publicDir, "1920"), width: 1920, format: "avif", quality: 18, budget: 6_000_000 },
+    { name: "1920", dir: join(publicDir, "1920"), width: 1920, format: "webp", quality: 72, budget: 6_000_000 },
+    { name: "960", dir: join(publicDir, "960"), width: 960, format: "avif", quality: 22, budget: 2_500_000 },
+    { name: "960", dir: join(publicDir, "960"), width: 960, format: "webp", quality: 68, budget: 2_500_000 },
+    { name: "lq", dir: join(publicDir, "lq"), width: 960, format: "avif", quality: 50, only: LQ },
+    { name: "lq", dir: join(publicDir, "lq"), width: 960, format: "webp", quality: 30, only: LQ },
+  ];
+  for (const set of sets) await encodeSet(frames, set);
   const files = (await readdir(publicDir, { recursive: true })).filter((file) => /\.(avif|webp)$/.test(file)).sort();
   const hash = createHash("sha256");
   for (const file of files) hash.update(file).update(await readFile(join(publicDir, file)));
@@ -179,6 +169,6 @@ else if (command === "all") {
   await stills();
   await encode(await render());
 } else {
-  console.error("usage: tsx tools/sequence/cli.ts [all | stills | render | encode] [--work dir] [--stills dir] [--themes light,dark]");
+  console.error("usage: tsx tools/sequence/cli.ts [all | stills | render | encode] [--work dir] [--stills dir] [--port n]");
   process.exit(1);
 }
