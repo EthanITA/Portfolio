@@ -84,8 +84,6 @@ const run = async ({ width, height, reduced }: { width: number; height: number; 
   const page = await context.newPage();
   const errors: string[] = [];
   page.on("console", (message) => {
-    // Full Chromium asks for /favicon.ico on its own, outside the page's requests; the site shipping one is web's call.
-    if (message.location().url.endsWith("/favicon.ico")) return;
     if (message.type() === "error" || message.text().includes("THREE.")) errors.push(`${message.type()}: ${message.text()} ${message.location().url}`);
   });
   page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
@@ -233,7 +231,7 @@ const edges = async (): Promise<Record<string, unknown>> => {
     const page = await context.newPage();
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
-    page.on("console", (message) => message.type() === "error" && !message.location().url.endsWith("/favicon.ico") && errors.push(message.text()));
+    page.on("console", (message) => message.type() === "error" && errors.push(message.text()));
     return { page, errors };
   };
 

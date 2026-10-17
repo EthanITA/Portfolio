@@ -91,11 +91,9 @@ const work: Work[] = [
 
 const hero = useTemplateRef<HTMLElement>("hero");
 const intro = useTemplateRef<HTMLElement>("intro");
-const holder = useTemplateRef<HTMLElement>("holder");
 const heroProgress = ref(0);
 let drift: JSAnimation | undefined;
 let scroller: ScrollObserver | undefined;
-let away: IntersectionObserver | undefined;
 
 // A global smooth scroll-behavior would also animate the router's back and forward restores across the whole page.
 const toWork = (event: MouseEvent): void => {
@@ -106,7 +104,7 @@ const toWork = (event: MouseEvent): void => {
 };
 
 onMounted(() => {
-  if (!hero.value || !intro.value || !holder.value || !motionOn()) return;
+  if (!hero.value || !intro.value || !motionOn()) return;
   scroller = onScroll({
     target: hero.value,
     enter: "top top",
@@ -121,14 +119,9 @@ onMounted(() => {
     translateY: [0, -hero.value.offsetHeight * DRIFT],
     autoplay: scroller,
   });
-  const stage = holder.value;
-  // Half a viewport past the pin the sequence covers it, and hidden it can never show through the tile break.
-  away = new IntersectionObserver(([entry]) => (stage.style.visibility = entry?.isIntersecting ? "" : "hidden"), { rootMargin: "50% 0px 0px 0px" });
-  away.observe(hero.value);
 });
 
 onBeforeUnmount(() => {
-  away?.disconnect();
   drift?.revert();
   scroller?.revert();
 });
@@ -137,7 +130,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="home">
     <div class="opening">
-      <div ref="holder" v-enter.now.wide.scale="150" class="holder">
+      <div v-enter.now.wide.scale="150" class="holder">
         <SiteMount name="hero">
           <LazyStageHero :progress="heroProgress" />
         </SiteMount>

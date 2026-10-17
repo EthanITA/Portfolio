@@ -60,8 +60,9 @@ const INIT_SCRIPT = `(() => {
   else document.addEventListener("DOMContentLoaded", style, { once: true });
 })();`;
 
-// SwiftShader over Metal: the GPU path gave different pixels for the same frame across runs and was no faster.
+// Metal, and Skia's GPU raster even on SwiftShader, flipped edge pixels between captures of an unchanged page, so tiles raster on the CPU.
 const LAUNCH_ARGS = [
+  "--disable-gpu-rasterization",
   "--force-color-profile=srgb",
   "--hide-scrollbars",
   "--disable-lcd-text",
@@ -96,15 +97,18 @@ export const openPage = async ({ browser, url, width, height, scale = 1, timeout
   return worker;
 };
 
-// A cold Vite server re-bundles dependencies on first use, and with HMR off a page that asked for the old bundle just fails to import.
-const VITE_REBUNDLE = /Failed to fetch dynamically imported module|Outdated Optimize Dep|Importing a module script failed/;
+// A cold Vite server re-bundles dependencies on first use and Nuxt may restart for it, so a page fails to import or finds the port closed.
+const VITE_REBUNDLE = /Failed to fetch dynamically imported module|Outdated Optimize Dep|Importing a module script failed|ERR_CONNECTION_REFUSED/;
 
 const rebundling = (worker: Worker): boolean => worker.errors.some((error) => VITE_REBUNDLE.test(error));
 
 const arm = async ({ worker, url, timeout }: { worker: Worker; url: string; timeout: number }): Promise<void> => {
   for (let attempt = 1; ; attempt++) {
     worker.errors = [];
-    await worker.page.goto(url, { waitUntil: "load", timeout });
+    await worker.page.goto(url, { waitUntil: "load", timeout }).catch((error: unknown) => {
+      if (!VITE_REBUNDLE.test(String(error))) throw error;
+      worker.errors.push(String(error));
+    });
     const deadline = Date.now() + timeout;
     let ready = false;
     while (!ready && !rebundling(worker) && Date.now() < deadline) {
@@ -124,7 +128,7 @@ const arm = async ({ worker, url, timeout }: { worker: Worker; url: string; time
     }
     if (!rebundling(worker)) throw new Error(`${url} never exposed window.__seek and window.__ready; mount it through useFilm()`);
     if (attempt === 5) throw new Error(`${url} still failed to load after ${attempt} tries: ${worker.errors.join("; ")}`);
-    console.warn(`vite re-bundled dependencies under ${url}, reloading it (try ${attempt + 1})`);
+    console.warn(`the dev server behind ${url} was re-bundling or restarting, loading it again (try ${attempt + 1})`);
     await sleep(1000 * attempt);
   }
   worker.errors = [];

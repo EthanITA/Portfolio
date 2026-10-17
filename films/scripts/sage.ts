@@ -1,13 +1,5 @@
-import type { FilmScript, Key } from "./script.ts";
-
-// SAGE_SCRIPT's keys from app/utils/play/script/sage.ts on overhaul/play; becomes that import once it lands on feat/overhaul.
-const PLAY = {
-  keys: [
-    { key: "opt", at: 3000, until: 8600 },
-    { key: "enter", at: 26_500 },
-    { key: "opt", at: 30_000, until: 31_600 },
-  ] satisfies Key[],
-};
+import { SAGE_SCRIPT } from "../../app/utils/play/script/sage.ts";
+import type { FilmScript } from "./script.ts";
 
 const LINE = 36_600;
 
@@ -17,7 +9,7 @@ export default {
   poster: 3000,
   title: { text: "Sage", at: 600, until: 3000 },
   captions: [],
-  keys: PLAY.keys,
+  keys: SAGE_SCRIPT.keys,
   island: [{ at: LINE - 600, shape: "island", draw: LINE, y: 0.25 }],
   rules: [],
   rig: {
