@@ -20,10 +20,8 @@ export default {
   ],
   violet: ["Enter", "not", "asks", "yours"],
   keys: SHELL_SCRIPT.keys,
-  island: [
-    { at: 0, until: 3000, shape: "line", draw: 400 },
-    { at: LINE - 600, shape: "island", draw: LINE, y: 0.25 },
-  ],
+  waits: [{ key: "enter", at: SHELL_SCRIPT.moments.stagedDist, until: SHELL_SCRIPT.moments.killDist }],
+  island: {},
   rules: [],
   stops: [
     { at: SHELL_SCRIPT.moments.stagedDist, until: SHELL_SCRIPT.moments.killDist },
