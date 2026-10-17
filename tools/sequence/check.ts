@@ -70,18 +70,29 @@ const settle = (page: Page): Promise<void> => page.waitForTimeout(700);
 
 const run = async ({ width, height, reduced }: { width: number; height: number; reduced?: boolean }): Promise<Record<string, unknown>> => {
   const label = `${width}x${height}${reduced ? " reduced" : ""}`;
-  const browser = await chromium.launch({ args: ["--enable-unsafe-swiftshader"] });
+  // Full Chromium renders WebGL on the GPU; the headless shell's SwiftShader stalls on every canvas readback.
+  const browser = await chromium.launch({ channel: "chromium" });
   const context = await browser.newContext({ viewport: { width, height }, reducedMotion: reduced ? "reduce" : "no-preference" });
   const page = await context.newPage();
   const errors: string[] = [];
   page.on("console", (message) => {
-    if (message.type() === "error" || message.text().includes("THREE.")) errors.push(`${message.type()}: ${message.text()}`);
+    // Full Chromium asks for /favicon.ico on its own, outside the page's requests; the site shipping one is web's call.
+    if (message.location().url.endsWith("/favicon.ico")) return;
+    if (message.type() === "error" || message.text().includes("THREE.")) errors.push(`${message.type()}: ${message.text()} ${message.location().url}`);
   });
   page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
   page.on("requestfailed", (request) => errors.push(`failed: ${request.url()} ${request.failure()?.errorText}`));
   page.on("response", (response) => response.status() >= 400 && errors.push(`${response.status()}: ${response.url()}`));
+  const warnings: string[] = [];
+  page.on("console", (message) => message.type() === "warning" && warnings.push(message.text().slice(0, 140)));
+  await page.addInitScript(`(() => {
+    const long = (window.__long = []);
+    new PerformanceObserver((list) => list.getEntries().forEach((entry) => long.push([Math.round(entry.startTime), Math.round(entry.duration)]))).observe({ type: "longtask", buffered: true });
+  })()`);
   await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
   const report: Record<string, unknown> = { label };
+  const loaded = await page.evaluate(() => Math.round(performance.getEntriesByType("navigation")[0]?.toJSON().loadEventEnd ?? 0));
+  let scrolled = Infinity;
 
   const sizes = await page.evaluate(() => {
     const section = document.querySelector<HTMLElement>("[data-scene=sequence]")!;
@@ -129,6 +140,7 @@ const run = async ({ width, height, reduced }: { width: number; height: number; 
       };
       requestAnimationFrame(tick);
     })()`);
+    scrolled = await page.evaluate(() => Math.round(performance.now()));
     for (let step = 0; step <= 100; step++) {
       await scrub(page, step / 100);
       await page.waitForTimeout(40);
@@ -187,6 +199,12 @@ const run = async ({ width, height, reduced }: { width: number; height: number; 
   }
   report.errors = errors;
   expect(!errors.length, `${label}: ${errors.length} console errors or failed requests`);
+  const long = (await page.evaluate(() => (window as unknown as { __long: [number, number][] }).__long)).filter(([start]) => start > loaded);
+  const scrolling = long.filter(([start]) => start >= scrolled);
+  report.longTasks = { loaded, scrolled, setup: long.filter(([start]) => start < scrolled), scrolling };
+  report.warnings = warnings;
+  expect(scrolling.every(([, duration]) => duration <= 50), `${label}: long tasks during the scroll ${JSON.stringify(scrolling)}`);
+  expect(!warnings.some((warning) => warning.includes("GPU stall")), `${label}: GPU stall warnings ${warnings.length}`);
   await browser.close();
   return report;
 };
