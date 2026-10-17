@@ -5,24 +5,43 @@ import type {} from "~~/tools/render/contract";
 
 export type FilmSeekable = Seekable & { ready?: () => Promise<void> };
 
-export type FilmContext = { timeline: Timeline; onFrame: (render: (ms: number) => void) => void };
+export type FilmContext = {
+  timeline: Timeline;
+  onFrame: (render: (ms: number) => Promise<void> | void) => void;
+  measure: <T>(points: number[], read: (index: number) => T) => Promise<T[]>;
+};
 
 const FILM: InjectionKey<FilmContext> = Symbol("film");
 
 export const useFilm = (film: FilmSeekable): FilmContext => {
   // The default "replace" composition renders the wrong value when a seek jumps back between two tweens on one property.
   const timeline = createTimeline({ autoplay: false, defaults: { composition: "none" } });
-  const renders: ((ms: number) => void)[] = [];
-  const context: FilmContext = { timeline, onFrame: (render) => renders.push(render) };
+  const renders: ((ms: number) => Promise<void> | void)[] = [];
+  let current = 0;
+
+  const measure = async <T>(points: number[], read: (index: number) => T): Promise<T[]> => {
+    const values: T[] = [];
+    for (const [index, ms] of points.entries()) {
+      film.seek(ms);
+      await nextTick();
+      values.push(read(index));
+    }
+    film.seek(current);
+    await nextTick();
+    return values;
+  };
+
+  const context: FilmContext = { timeline, onFrame: (render) => renders.push(render), measure };
   provide(FILM, context);
 
   onMounted(() => {
     Object.defineProperty(window, "__duration", { configurable: true, get: () => film.duration });
     window.__seek = async (ms) => {
+      current = ms;
       timeline.seek(ms);
       film.seek(ms);
       await nextTick();
-      for (const render of renders) render(ms);
+      for (const render of renders) await render(ms);
     };
     window.__ready = async () => {
       await document.fonts.ready;
