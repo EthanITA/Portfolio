@@ -1,0 +1,9 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "A companion window for Claude Code.",
+  "spoken": "A companion window for Claude Code.",
+  "transcript": "A companion window for Claude Code.",
+  "adopted": "narrator-1.attempt6.wav",
+  "speechMs": 2028
+}

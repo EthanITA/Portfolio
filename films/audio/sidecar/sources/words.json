@@ -1,0 +1,443 @@
+{
+  "aligner": "pocketsphinx forced alignment checked against faster-whisper small, starts moved past gaps, disputes settled by cut-and-transcribe",
+  "takes": {
+    "narrator-1": {
+      "takeSha": "5d3be7291b19ef42",
+      "clipSha": "cbac8d2b4b10984e",
+      "clipMs": 2028,
+      "spoken": "A companion window for Claude Code.",
+      "words": [
+        {
+          "text": "A",
+          "startMs": 0,
+          "endMs": 60,
+          "onset": "aligned"
+        },
+        {
+          "text": "companion",
+          "startMs": 108,
+          "endMs": 580,
+          "onset": "silence"
+        },
+        {
+          "text": "window",
+          "startMs": 580,
+          "endMs": 860,
+          "onset": "tail"
+        },
+        {
+          "text": "for",
+          "startMs": 860,
+          "endMs": 1160,
+          "onset": "tail"
+        },
+        {
+          "text": "Claude",
+          "startMs": 1227,
+          "endMs": 1550,
+          "onset": "silence"
+        },
+        {
+          "text": "Code.",
+          "startMs": 1600,
+          "endMs": 1990,
+          "onset": "silence"
+        }
+      ]
+    },
+    "narrator-2": {
+      "takeSha": "f2d4977cef9b0aaf",
+      "clipSha": "9dde0bd09368b6c9",
+      "clipMs": 3126,
+      "spoken": "No scrolling diffs. Each change lands in your list.",
+      "words": [
+        {
+          "text": "No",
+          "startMs": 0,
+          "endMs": 220,
+          "onset": "aligned"
+        },
+        {
+          "text": "scrolling",
+          "startMs": 220,
+          "endMs": 730,
+          "onset": "aligned"
+        },
+        {
+          "text": "diffs.",
+          "startMs": 730,
+          "endMs": 1180,
+          "onset": "contested"
+        },
+        {
+          "text": "Each",
+          "startMs": 1292,
+          "endMs": 1560,
+          "onset": "silence"
+        },
+        {
+          "text": "change",
+          "startMs": 1578,
+          "endMs": 2000,
+          "onset": "silence"
+        },
+        {
+          "text": "lands",
+          "startMs": 2000,
+          "endMs": 2280,
+          "onset": "tail"
+        },
+        {
+          "text": "in",
+          "startMs": 2280,
+          "endMs": 2490,
+          "onset": "tail"
+        },
+        {
+          "text": "your",
+          "startMs": 2490,
+          "endMs": 2610,
+          "onset": "aligned"
+        },
+        {
+          "text": "list.",
+          "startMs": 2610,
+          "endMs": 3090,
+          "onset": "aligned"
+        }
+      ]
+    },
+    "narrator-3": {
+      "takeSha": "a25e9139281a032a",
+      "clipSha": "bb49067c0994ce2d",
+      "clipMs": 2254,
+      "spoken": "Approve a hunk. Reject two lines.",
+      "words": [
+        {
+          "text": "Approve",
+          "startMs": 0,
+          "endMs": 420,
+          "onset": "aligned"
+        },
+        {
+          "text": "a",
+          "startMs": 420,
+          "endMs": 500,
+          "onset": "aligned"
+        },
+        {
+          "text": "hunk.",
+          "startMs": 500,
+          "endMs": 950,
+          "onset": "aligned"
+        },
+        {
+          "text": "Reject",
+          "startMs": 969,
+          "endMs": 1440,
+          "onset": "silence"
+        },
+        {
+          "text": "two",
+          "startMs": 1497,
+          "endMs": 1680,
+          "onset": "silence"
+        },
+        {
+          "text": "lines.",
+          "startMs": 1680,
+          "endMs": 2210,
+          "onset": "aligned"
+        }
+      ]
+    },
+    "narrator-4": {
+      "takeSha": "72907c31ca99a62c",
+      "clipSha": "27966c91b626beb2",
+      "clipMs": 1324,
+      "spoken": "Claude hears about it.",
+      "words": [
+        {
+          "text": "Claude",
+          "startMs": 0,
+          "endMs": 430,
+          "onset": "aligned"
+        },
+        {
+          "text": "hears",
+          "startMs": 430,
+          "endMs": 660,
+          "onset": "aligned"
+        },
+        {
+          "text": "about",
+          "startMs": 660,
+          "endMs": 1120,
+          "onset": "tail"
+        },
+        {
+          "text": "it.",
+          "startMs": 1120,
+          "endMs": 1290,
+          "onset": "tail"
+        }
+      ]
+    },
+    "narrator-5": {
+      "takeSha": "2a5dc3d8c8755b59",
+      "clipSha": "816691ee4bb4ccf9",
+      "clipMs": 2447,
+      "spoken": "It built a page? Select anything on it.",
+      "words": [
+        {
+          "text": "It",
+          "startMs": 0,
+          "endMs": 140,
+          "onset": "aligned"
+        },
+        {
+          "text": "built",
+          "startMs": 197,
+          "endMs": 440,
+          "onset": "silence"
+        },
+        {
+          "text": "a",
+          "startMs": 440,
+          "endMs": 480,
+          "onset": "tail"
+        },
+        {
+          "text": "page?",
+          "startMs": 546,
+          "endMs": 1010,
+          "onset": "silence"
+        },
+        {
+          "text": "Select",
+          "startMs": 1106,
+          "endMs": 1520,
+          "onset": "silence"
+        },
+        {
+          "text": "anything",
+          "startMs": 1520,
+          "endMs": 1840,
+          "onset": "silence"
+        },
+        {
+          "text": "on",
+          "startMs": 1840,
+          "endMs": 2200,
+          "onset": "tail"
+        },
+        {
+          "text": "it.",
+          "startMs": 2200,
+          "endMs": 2410,
+          "onset": "aligned"
+        }
+      ]
+    },
+    "narrator-6": {
+      "takeSha": "f1edd11c909eac53",
+      "clipSha": "ce220a342faaa626",
+      "clipMs": 2665,
+      "spoken": "Send a note. It lands in the conversation.",
+      "words": [
+        {
+          "text": "Send",
+          "startMs": 0,
+          "endMs": 330,
+          "onset": "aligned"
+        },
+        {
+          "text": "a",
+          "startMs": 330,
+          "endMs": 380,
+          "onset": "tail"
+        },
+        {
+          "text": "note.",
+          "startMs": 380,
+          "endMs": 890,
+          "onset": "aligned"
+        },
+        {
+          "text": "It",
+          "startMs": 918,
+          "endMs": 1040,
+          "onset": "silence"
+        },
+        {
+          "text": "lands",
+          "startMs": 1040,
+          "endMs": 1400,
+          "onset": "aligned"
+        },
+        {
+          "text": "in",
+          "startMs": 1400,
+          "endMs": 1610,
+          "onset": "tail"
+        },
+        {
+          "text": "the",
+          "startMs": 1610,
+          "endMs": 1690,
+          "onset": "aligned"
+        },
+        {
+          "text": "conversation.",
+          "startMs": 1750,
+          "endMs": 2590,
+          "onset": "silence"
+        }
+      ]
+    },
+    "narrator-7": {
+      "takeSha": "34f7dff38437fe3f",
+      "clipSha": "c8f9b14188ed37ed",
+      "clipMs": 3091,
+      "spoken": "Changed your mind? Command Z takes back fifty decisions.",
+      "words": [
+        {
+          "text": "Changed",
+          "startMs": 0,
+          "endMs": 320,
+          "onset": "aligned"
+        },
+        {
+          "text": "your",
+          "startMs": 320,
+          "endMs": 410,
+          "onset": "aligned"
+        },
+        {
+          "text": "mind?",
+          "startMs": 410,
+          "endMs": 800,
+          "onset": "aligned"
+        },
+        {
+          "text": "⌘Z",
+          "startMs": 916,
+          "endMs": 1550,
+          "onset": "silence"
+        },
+        {
+          "text": "takes",
+          "startMs": 1596,
+          "endMs": 1840,
+          "onset": "silence"
+        },
+        {
+          "text": "back",
+          "startMs": 1887,
+          "endMs": 2080,
+          "onset": "silence"
+        },
+        {
+          "text": "50",
+          "startMs": 2080,
+          "endMs": 2360,
+          "onset": "aligned"
+        },
+        {
+          "text": "decisions.",
+          "startMs": 2360,
+          "endMs": 3060,
+          "onset": "tail"
+        }
+      ]
+    },
+    "narrator-8": {
+      "takeSha": "f2b71eb07ace6fb8",
+      "clipSha": "b98828be8aa14387",
+      "clipMs": 2958,
+      "spoken": "Claude does the work. You decide what lands.",
+      "words": [
+        {
+          "text": "Claude",
+          "startMs": 0,
+          "endMs": 430,
+          "onset": "aligned"
+        },
+        {
+          "text": "does",
+          "startMs": 430,
+          "endMs": 620,
+          "onset": "aligned"
+        },
+        {
+          "text": "the",
+          "startMs": 620,
+          "endMs": 790,
+          "onset": "tail"
+        },
+        {
+          "text": "work.",
+          "startMs": 790,
+          "endMs": 1350,
+          "onset": "aligned"
+        },
+        {
+          "text": "You",
+          "startMs": 1358,
+          "endMs": 1610,
+          "onset": "silence"
+        },
+        {
+          "text": "decide",
+          "startMs": 1610,
+          "endMs": 2100,
+          "onset": "aligned"
+        },
+        {
+          "text": "what",
+          "startMs": 2100,
+          "endMs": 2337,
+          "onset": "tail"
+        },
+        {
+          "text": "lands.",
+          "startMs": 2337,
+          "endMs": 2920,
+          "onset": "silence"
+        }
+      ]
+    },
+    "narrator-end": {
+      "takeSha": "7d40262b17b68abb",
+      "clipSha": "f7ff4af47a062555",
+      "clipMs": 1546,
+      "spoken": "That click stays yours.",
+      "words": [
+        {
+          "text": "That",
+          "startMs": 0,
+          "endMs": 230,
+          "onset": "aligned"
+        },
+        {
+          "text": "click",
+          "startMs": 262,
+          "endMs": 524,
+          "onset": "silence"
+        },
+        {
+          "text": "stays",
+          "startMs": 524,
+          "endMs": 1050,
+          "onset": "silence"
+        },
+        {
+          "text": "yours.",
+          "startMs": 1050,
+          "endMs": 1500,
+          "onset": "tail"
+        }
+      ]
+    }
+  }
+}

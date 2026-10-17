@@ -6,8 +6,9 @@ import {
 } from "./lib/audio";
 import { biquad, fadeEdges, hash, normalizeTo, peaking, rng } from "./lib/dsp";
 import { writeJson } from "./lib/openrouter";
-import { synthBed } from "./lib/bed";
+import { bedPlan, synthBed } from "./lib/bed";
 import * as synth from "./lib/synth";
+import { type Word, anchorOf, loadWords } from "./lib/words";
 import { type CueSpec, FILMS, type FilmName, type FilmSpec } from "./films";
 
 export const ROOT = join(import.meta.dirname, "..");
@@ -31,6 +32,8 @@ const VOICE_THRESHOLD_DB = -28;
 const VOICE_RATIO = 3;
 const VOICE_DRIVE = 1.6;
 const VOICE_PREROLL = samplesAt(6);
+export const VOICE_TAIL_MS = 30;
+const ANCHOR_LEAD_MS = 15;
 
 type Stem = "ui" | "voice";
 
@@ -45,6 +48,11 @@ export type Placed = {
   audible: boolean;
   tolMs: number;
   text?: string;
+  voice?: string;
+  from?: number;
+  until?: number;
+  anchor?: { word: string; beatMs: number };
+  words?: Word[];
   group?: string;
   buffer?: Stereo;
   gain: number;
@@ -71,6 +79,7 @@ const durMsOf = (s: Stereo): number => msAt(s.l.length);
 
 const expand = (film: FilmSpec): Placed[] => {
   const placed: Placed[] = [];
+  const aligned = loadWords(film.name);
   const seed = (id: string): number => hash(`${film.name}/${id}`);
   for (const cue of film.cues) {
     const common = { id: cue.id, atMs: cue.at, marks: cue.marks, sheet: cue.sheet, audible: true, gain: fromDb(cue.gainDb ?? 0), offset: 0 };
@@ -130,9 +139,15 @@ const expand = (film: FilmSpec): Placed[] => {
         placed.push({ ...common, sound: `whoosh.${cue.direction}`, stem: "ui", durMs: durMsOf(buffer), tolMs: 40, buffer, gain: common.gain * fromDb(PEAK_DB.whoosh) });
         break;
       }
-      case "voice":
-        placed.push({ ...common, sound: `voice.${cue.voice}`, stem: "voice", durMs: 0, tolMs: 10, text: cue.text, gain: common.gain });
+      case "voice": {
+        const take = aligned?.takes[cue.id];
+        const atMs = cue.anchor && take ? cue.anchor.beatMs - ANCHOR_LEAD_MS - anchorOf(take.words, cue.anchor.word).startMs : cue.at;
+        const words = take?.words.map(({ text, startMs, endMs }) => ({ text, startMs: atMs + startMs, endMs: atMs + endMs }));
+        placed.push({
+          ...common, atMs, sound: `voice.${cue.voice}`, stem: "voice", durMs: 0, tolMs: 10, text: cue.text, voice: cue.voice, from: cue.from, until: cue.until, anchor: cue.anchor, words,
+        });
         break;
+      }
     }
   }
   return placed;
@@ -172,7 +187,37 @@ const level = (raw: Float32Array): Float32Array => {
   return normalizeTo(y.map((v) => Math.tanh(VOICE_DRIVE * v) / Math.tanh(VOICE_DRIVE)), 1);
 };
 
-export const prepareVoice = async (file: string): Promise<{ clip: Stereo; onset: number }> => {
+export type Pauses = { overMs: number; keepMs: number };
+
+export const NARRATOR_PAUSES: Pauses = { overMs: 180, keepMs: 120 };
+
+const closePauses = (x: Float32Array, { overMs, keepMs }: Pauses): Float32Array => {
+  const hop = samplesAt(5);
+  const rms = frameRms(x, hop);
+  const quiet = Math.max(...rms) * fromDb(-38);
+  const half = Math.floor(samplesAt(keepMs) / 2);
+  const pieces: Float32Array[] = [];
+  let copied = 0;
+  let run = -1;
+  rms.forEach((v, i) => {
+    if (v < quiet) {
+      if (run < 0) run = i;
+      return;
+    }
+    if (run > 0 && (i - run) * hop > samplesAt(overMs)) {
+      pieces.push(x.slice(copied, run * hop + half));
+      copied = i * hop - half;
+    }
+    run = -1;
+  });
+  pieces.push(x.slice(copied));
+  pieces.forEach((piece, k) => fadeEdges(piece, k ? samplesAt(5) : 0, k < pieces.length - 1 ? samplesAt(5) : 0));
+  const out = new Float32Array(pieces.reduce((n, p) => n + p.length, 0));
+  pieces.reduce((at, p) => (out.set(p, at), at + p.length), 0);
+  return out;
+};
+
+export const prepareVoice = async (file: string, pauses?: Pauses): Promise<{ clip: Stereo; onset: number }> => {
   const raw = await decodeMono(file);
   const hop = samplesAt(2);
   const rms = frameRms(raw, hop);
@@ -183,11 +228,11 @@ export const prepareVoice = async (file: string): Promise<{ clip: Stereo; onset:
   if (first < 0) throw new Error(`${file} holds no speech`);
   const onset = first * hop;
   const from = Math.max(0, onset - VOICE_PREROLL);
-  const to = Math.min(raw.length, (lastFrame + 1) * hop + samplesAt(60));
+  const to = Math.min(raw.length, (lastFrame + 1) * hop + samplesAt(VOICE_TAIL_MS));
   const segment = new Float32Array(VOICE_PREROLL + (to - onset));
   segment.set(raw.subarray(onset, to), VOICE_PREROLL);
   segment.set(raw.subarray(from, onset), VOICE_PREROLL - (onset - from));
-  const mono = level(segment);
+  const mono = level(pauses ? closePauses(segment, pauses) : segment);
   const spoken = frameRms(mono, hop);
   const loud = Math.max(...spoken);
   const active = spoken.filter((v) => v > loud * fromDb(-40));
@@ -242,7 +287,7 @@ const duckCurve = (total: number, ducks: Duck[]): Float32Array => {
   return g;
 };
 
-const findSource = async (dir: string, stem: string): Promise<string | undefined> => {
+export const findSource = async (dir: string, stem: string): Promise<string | undefined> => {
   const files = await readdir(dir).catch(() => [] as string[]);
   const hit = files.find((f) => f.startsWith(`${stem}.`) && !f.endsWith(".json"));
   return hit && join(dir, hit);
@@ -269,7 +314,21 @@ const levelVoiceStem = async (voice: Stereo, work: string): Promise<void> => {
   if (peak > -4.5) throw new Error(`the voice stem peaks at ${peak.toFixed(2)} dBFS once it sits at ${VOICE_LUFS} LUFS; compress it harder`);
 };
 
-export type ComposeOptions = { take?: number; source?: FilmSpec["music"]["source"]; bedGainHint?: number };
+const sha = (data: Uint8Array | string): string => createHash("sha256").update(data).digest("hex").slice(0, 16);
+
+export const takeShas = async (file: string, clip: Stereo): Promise<{ takeSha: string; clipSha: string }> => ({
+  takeSha: sha(await readFile(file)),
+  clipSha: sha(Buffer.from(clip.l.buffer)),
+});
+
+const assertAligned = async (name: FilmName, p: Placed, file: string, clip: Stereo): Promise<void> => {
+  const aligned = loadWords(name)?.takes[p.id];
+  if (!aligned) throw new Error(`no aligned words for ${p.id}; run align.ts ${name}`);
+  const now = await takeShas(file, clip);
+  if (aligned.takeSha !== now.takeSha || aligned.clipSha !== now.clipSha) throw new Error(`the words for ${p.id} are from another take or another trim; run align.ts ${name}`);
+};
+
+export type ComposeOptions ={ take?: number; source?: FilmSpec["music"]["source"]; bedGainHint?: number };
 
 const carve = (x: Float32Array): Float32Array => {
   const dips = CARVES.map(([freq, q, gainDb]) => peaking(freq, q, gainDb));
@@ -311,7 +370,8 @@ export const compose = async (name: FilmName, bed: boolean, options: ComposeOpti
       const file = await findSource(sources, `voice-${p.id}`);
       if (!file && !bed) continue;
       if (!file) throw new Error(`no voice source for ${p.id}; run generate-voice ${name}`);
-      const { clip, onset } = await prepareVoice(file);
+      const { clip, onset } = await prepareVoice(file, p.voice === "narrator" ? NARRATOR_PAUSES : undefined);
+      await assertAligned(name, p, file, clip);
       add(voice, clip, at - onset, p.gain);
       p.durMs = msAt(clip.l.length - onset);
     } else if (p.buffer && p.audible) {
@@ -428,12 +488,13 @@ const writeAll = async (name: FilmName, built: Built, out: string, work: string)
   return { bedGain, loudness };
 };
 
-const cuesJson = (name: FilmName, built: Built, bedGain: number, loudness: Loudness): unknown => ({
+const cuesJson = (name: FilmName, built: Built, bedGain: number, loudness: Loudness, mixSha256: string): unknown => ({
   film: name,
+  mixSha256,
   durationMs: built.film.durationMs,
   durationSamples: samplesAt(built.film.durationMs),
   sampleRate: SAMPLE_RATE,
-  sheet: "brief section 9, Sidecar retimed per direction.md section 8",
+  sheet: "film-director's 120 bpm timing sheet",
   mix: { file: "mix.wav", targetLufs: TARGET_LUFS, bedGainDb: Number(toDb(bedGain).toFixed(3)), integratedLufs: loudness.integrated, truePeakDbtp: loudness.truePeak },
   cues: built.placed.map((p) => ({
     id: p.id,
@@ -447,12 +508,15 @@ const cuesJson = (name: FilmName, built: Built, bedGain: number, loudness: Loudn
     sheet: p.sheet,
     marks: p.marks,
     ...(p.text && { text: p.text }),
+    ...(p.voice && { voice: p.voice }),
+    ...(p.stem === "voice" && { onsetMs: p.atMs, endMs: Math.round(p.atMs + p.durMs), fromMs: p.from, untilMs: p.until, words: p.words, anchor: p.anchor }),
     ...(p.group && { group: p.group }),
   })),
   typing: built.film.cues
     .filter((c): c is Extract<CueSpec, { sound: "typing" }> => c.sound === "typing")
     .map((c) => ({ id: c.id, text: c.text, startMs: c.at, endMs: c.endMs, presses: pressTimes({ startMs: c.at, endMs: c.endMs, text: c.text, seed: hash(`${name}/${c.id}`), presses: c.presses }) })),
   ducks: built.ducks,
+  ...(built.film.music.source === "synth" && { bed: bedPlan(name, built.film.durationMs) }),
 });
 
 const main = async (): Promise<void> => {
@@ -470,9 +534,9 @@ const main = async (): Promise<void> => {
   }
   const out = dry ? join(ROOT, "_work", "dry", film) : join(ROOT, film);
   const { bedGain, loudness } = await writeAll(film, built, out, work);
-  await writeJson(join(out, "cues.json"), cuesJson(film, built, bedGain, loudness));
-  const mix = await readFile(join(out, "mix.wav"));
-  console.log(`${film}: bed gain ${toDb(bedGain).toFixed(2)} dB, ${loudness.integrated} LUFS, ${loudness.truePeak} dBTP, sha256 ${createHash("sha256").update(mix).digest("hex").slice(0, 16)}`);
+  const mixSha256 = createHash("sha256").update(await readFile(join(out, "mix.wav"))).digest("hex");
+  await writeJson(join(out, "cues.json"), cuesJson(film, built, bedGain, loudness, mixSha256));
+  console.log(`${film}: bed gain ${toDb(bedGain).toFixed(2)} dB, ${loudness.integrated} LUFS, ${loudness.truePeak} dBTP, sha256 ${mixSha256.slice(0, 16)}`);
 };
 
 if (import.meta.main) await main();

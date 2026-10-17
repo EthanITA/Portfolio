@@ -1,16 +1,26 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
-import { SAGE_SCRIPT } from "../../../app/utils/play/script/sage";
 import { MAX_TRUE_PEAK, ROOT, TARGET_LUFS, compose, rawBed } from "./build";
-import { FILMS, type FilmName } from "./films";
+import { FILMS, type FilmName, spokenForm } from "./films";
 import { SAMPLE_RATE, type Stereo, blank, decode, durationOf, measure, run, samplesAt, toDb } from "./lib/audio";
+import type { BedPlan } from "./lib/bed";
 import { biquad } from "./lib/dsp";
 import { room } from "./lib/synth";
+import { BREATH_MS, SAGE_CLEAR_MS } from "./sheets";
+import { type Word, anchorOf } from "./lib/words";
 
-type CueRow = { id: string; sound: string; stem: "ui" | "voice"; atMs: number; durMs: number; audible: boolean; onsetTolMs: number; text?: string };
+type CueRow = {
+  id: string; sound: string; stem: "ui" | "voice"; atMs: number; durMs: number; audible: boolean; onsetTolMs: number;
+  text?: string; voice?: string; fromMs?: number; untilMs?: number; words?: Word[]; anchor?: { word: string; beatMs: number };
+};
+
+const CLOSE_TOLERANCE_MS = 20;
+const SHARED_BEAT_MS = 30;
+const ANCHOR_WINDOW_MS = 30;
+const WHOOSHES: Record<FilmName, Record<string, number>> = { shell: { islandOpen: 500 }, sage: { islandOpen: 500 }, sidecar: { islandOpen: 500, noteArc: 1000 } };
 type DuckRow = { reason: string; fromMs: number; toMs: number; depthDb: number; attackMs: number; releaseMs: number };
-type CuesFile = { durationMs: number; durationSamples: number; mix: { bedGainDb: number }; cues: CueRow[]; ducks: DuckRow[] };
+type CuesFile = { durationMs: number; durationSamples: number; mixSha256: string; mix: { bedGainDb: number }; cues: CueRow[]; ducks: DuckRow[]; bed: BedPlan };
 
 const COPY = "/Users/madong/.claude/jobs/e4337bca/tmp/site/copy.md";
 const MATCH_SAMPLES = 4800;
@@ -57,14 +67,16 @@ const firstNearPeak = (env: Float64Array, fromMs: number, toMs: number, belowPea
 const match = (m: Float32Array, t: Float32Array, at: number): { lag: number; ratio: number; ncc: number } => {
   let tt = 0;
   for (const v of t) tt += v * v;
-  const base = at - MATCH_RANGE;
-  const prefix = new Float64Array(2 * MATCH_RANGE + t.length + 1);
+  const first = Math.max(-MATCH_RANGE, -at);
+  const last = Math.min(MATCH_RANGE, m.length - at - t.length);
+  const base = at + first;
+  const prefix = new Float64Array(last - first + t.length + 1);
   for (let i = 0; i < prefix.length - 1; i++) prefix[i + 1] = prefix[i]! + m[base + i]! * m[base + i]!;
   let best = { lag: 0, s: 0, ncc: -Infinity };
-  for (let lag = -MATCH_RANGE; lag <= MATCH_RANGE; lag++) {
+  for (let lag = first; lag <= last; lag++) {
     let s = 0;
     for (let j = 0; j < t.length; j++) s += t[j]! * m[at + lag + j]!;
-    const k = lag + MATCH_RANGE;
+    const k = lag - first;
     const ncc = s / Math.sqrt(tt * (prefix[k + t.length]! - prefix[k]!) + 1e-30);
     if (ncc > best.ncc) best = { lag, s, ncc };
   }
@@ -225,17 +237,24 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
 
   const highpass = biquad("highpass", MIX_BAND_HZ);
   const mixHigh = mono(mix).map((v) => highpass(v));
+  const highpassNoVoice = biquad("highpass", MIX_BAND_HZ);
+  const mixNoVoiceHigh = mono(mix).map((v, i) => highpassNoVoice(v - voice[i]!));
   const mixMisses: string[] = [];
   const quiet: string[] = [];
+  const shared: string[] = [];
   let mixChecked = 0;
   let worstLag = 0;
   let weakest = Infinity;
   for (const c of audible.filter((x) => !x.sound.startsWith("thud"))) {
+    if (c.stem === "ui" && cues.bed.accents.some((a) => a.kind !== "clap" && Math.abs(a.atMs - c.atMs) <= SHARED_BEAT_MS)) {
+      shared.push(c.id);
+      continue;
+    }
     const p = byId.get(c.id);
     const f = biquad("highpass", MIX_BAND_HZ);
     const at = samplesAt(c.atMs);
     const source = p?.buffer ? mono(p.buffer).map((v) => v * p.gain) : voice.slice(at, at + MATCH_SAMPLES);
-    const m = match(mixHigh, source.map((v) => f(v)).subarray(0, MATCH_SAMPLES), at);
+    const m = match(p?.buffer ? mixNoVoiceHigh : mixHigh, source.map((v) => f(v)).subarray(0, MATCH_SAMPLES), at);
     if (!AUDIBLE_IN_MIX.test(c.sound)) {
       if (Math.abs(m.lag) > 2 || m.ncc < 0.1) quiet.push(c.id);
       continue;
@@ -248,6 +267,7 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
   report(mixMisses.length === 0, `ticks, clicks, chimes and voice found in mix.wav alone above ${MIX_BAND_HZ} Hz`, `${mixChecked - mixMisses.length} of ${mixChecked} within 2 samples (worst lag ${worstLag}, weakest correlation ${weakest.toFixed(2)})`);
   mixMisses.forEach((l) => console.log(l));
   if (quiet.length) console.log(`NOTE ${quiet.length} keys, whooshes and lines are proven in the stems only, the bed covers them in the mix (first ones: ${quiet.slice(0, 4).join(", ")})`);
+  if (shared.length) console.log(`NOTE ${shared.length} cues share a beat with a bed stab or the closing hit, so only the stems prove them (${shared.join(", ")})`);
 
   const busy: Array<[number, number]> = audible.map((c) => [samplesAt(c.atMs) - samplesAt(10), samplesAt(c.atMs + c.durMs + 900)]);
   busy.sort((a, b) => a[0] - b[0]);
@@ -267,6 +287,41 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
 
     const bed = mono(await rawBed(name));
     const music = mono(stems.music);
+
+    const { grid, closeMs, breakdown, sections, accents } = cues.bed;
+    const endCard = cues.cues.find((c) => c.id === "line-end-card");
+    const apart = endCard ? Math.abs(endCard.atMs - closeMs) : Number.NaN;
+    report(apart <= CLOSE_TOLERANCE_MS, `the closing hit and the end-card line share a beat within ${CLOSE_TOLERANCE_MS} ms`, `closing hit at ${closeMs} ms, line at ${endCard?.atMs} ms`);
+    report(
+      grid.bpm === 120 && grid.beatMs === 500 && grid.barMs === 2000 && grid.originMs === 0 && grid.beats === Math.floor(spec.durationMs / grid.beatMs) && (closeMs - grid.originMs) % grid.beatMs === 0,
+      "the bed is on the 120 bpm grid with the close on a beat",
+      `${grid.bpm} bpm, beat ${grid.beatMs} ms, ${grid.beats} beats, close on beat ${(closeMs - grid.originMs) / grid.beatMs}`,
+    );
+    const closeAccent = accents.find((a) => a.kind === "close");
+    report(!!closeAccent && Math.abs(closeAccent.atMs - closeMs) <= CLOSE_TOLERANCE_MS, "the accents list the close", `${accents.length} accents, close at ${closeAccent?.atMs} ms`);
+    const inBreakdown = sections.filter((s) => s.atMs >= breakdown.fromMs && s.atMs < breakdown.toMs);
+    report(
+      inBreakdown.length > 0 && inBreakdown.every((s) => s.layers.length === 2 && s.layers.includes("kick") && s.layers.includes("bass")) && sections.every((s) => s.layers.includes("kick")),
+      "the breakdown is kick and bass only and the kick never leaves the sections",
+      `${breakdown.fromMs} to ${breakdown.toMs} ms, ${inBreakdown.map((s) => s.layers.join("+")).join(", ")}`,
+    );
+
+    const lowpass = biquad("lowpass", 150);
+    const low = bed.map((v) => lowpass(v));
+    const rise = (ms: number): number => rmsDb(low, samplesAt(ms), samplesAt(ms + 25)) - rmsDb(low, samplesAt(ms - 60), samplesAt(ms - 30));
+    const beats = Array.from({ length: Math.floor(closeMs / grid.beatMs) }, (_, i) => grid.originMs + (i + 1) * grid.beatMs).filter((ms) => ms < closeMs);
+    const weakest = beats.map((ms) => ({ ms, db: rise(ms) })).sort((a, b) => a.db - b.db)[0];
+    report(!!weakest && weakest.db >= 3, "a kick lands on every beat before the close", `${beats.length} beats, weakest at ${weakest?.ms} ms rises ${weakest?.db.toFixed(1)} dB`);
+    const after = Array.from({ length: Math.floor((spec.durationMs - closeMs) / grid.beatMs) - 1 }, (_, i) => closeMs + (i + 1) * grid.beatMs);
+    const strongest = after.map((ms) => ({ ms, db: rise(ms) })).sort((a, b) => b.db - a.db)[0];
+    report(!strongest || strongest.db < 3, "no drum after the close, the chord rings out", `${after.length} beats after the close, strongest rise ${strongest?.db.toFixed(1)} dB`);
+    const frame = samplesAt(5);
+    let loudest = { ms: 0, db: -Infinity };
+    for (let ms = closeMs - 150; ms <= closeMs + 150; ms += 5) {
+      const db = rmsDb(bed, samplesAt(ms), samplesAt(ms) + frame);
+      if (db > loudest.db) loudest = { ms, db };
+    }
+    report(loudest.ms >= closeMs && loudest.ms <= closeMs + 60, "the loudest bed moment around the close is the closing hit", `peak window at ${loudest.ms} ms, close at ${closeMs} ms`);
     const gainDb = cues.mix.bedGainDb;
     const hop = samplesAt(20);
     const ratioAt = (ms: number): number => rmsDb(music, samplesAt(ms), samplesAt(ms) + hop) - rmsDb(bed, samplesAt(ms), samplesAt(ms) + hop) - gainDb;
@@ -278,9 +333,19 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
     const voiceDucks = cues.ducks.filter((d) => d.reason.startsWith("voice "));
     const shallow: string[] = [];
     for (const d of voiceDucks) {
+      let musicEnergy = 0;
+      let bedEnergy = 0;
       let worst = -Infinity;
-      for (let ms = Math.ceil(d.fromMs / 20) * 20 + 20; ms + 40 <= d.toMs; ms += 20) worst = Math.max(worst, ratioAt(ms));
-      if (worst > Math.min(-6, d.depthDb) + 0.5) shallow.push(`  ${d.reason} bed only ${worst.toFixed(1)} dB down, recorded ${d.depthDb} dB`);
+      for (let ms = Math.ceil(d.fromMs / 20) * 20 + 20; ms + 40 <= d.toMs; ms += 20) {
+        const bedDb = rmsDb(bed, samplesAt(ms), samplesAt(ms) + hop);
+        if (bedDb <= -90) continue;
+        musicEnergy += 10 ** (rmsDb(music, samplesAt(ms), samplesAt(ms) + hop) / 10);
+        bedEnergy += 10 ** ((bedDb + gainDb) / 10);
+        if (bedDb > -60) worst = Math.max(worst, ratioAt(ms));
+      }
+      const overall = 10 * Math.log10(musicEnergy / bedEnergy);
+      const floor = Math.min(-6, d.depthDb);
+      if (overall > floor + 0.5 || worst > floor + 2) shallow.push(`  ${d.reason} bed only ${overall.toFixed(1)} dB down over the line and ${worst.toFixed(1)} dB at its shallowest window, recorded ${d.depthDb} dB`);
     }
     report(
       voiceDucks.every((d) => d.depthDb <= -6 && d.attackMs === 120 && d.releaseMs === 400) && shallow.length === 0,
@@ -294,16 +359,69 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
   const spoken = cues.cues.filter((c) => c.stem === "voice");
   report(spoken.every((c) => c.text && copy.includes(c.text)), "voiced strings are copy.md strings", spoken.length ? spoken.map((c) => `"${c.text}"`).join(", ") : "no voice in this film");
 
-  if (name === "sage") {
-    const misfits = SAGE_SCRIPT.voice.flatMap((window) => {
-      const cue = spoken.find((c) => c.text === window.line);
-      if (!cue) return [`  no voice cue says "${window.line}"`];
-      const end = cue.atMs + cue.durMs;
-      return cue.atMs === window.at && end <= window.until ? [] : [`  "${window.line}" runs ${cue.atMs} to ${end} ms and play gives it ${window.at} to ${window.until} ms`];
+  const asWritten = spoken.filter((c) => !c.words || c.words.map((w) => w.text).join(" ") !== c.text);
+  report(asWritten.length === 0 && spoken.every((c) => c.words?.length), "every voice cue carries its words, and they read as the line is written", `${spoken.length} cues`);
+  asWritten.forEach((c) => console.log(`  ${c.id} words read "${c.words?.map((w) => w.text).join(" ")}"`));
+  const reversed = spoken.filter((c) => c.words?.some((w, i) => w.endMs < w.startMs || (i > 0 && w.startMs < c.words![i - 1]!.startMs) || w.startMs < c.atMs || w.endMs > c.atMs + c.durMs + 1));
+  report(reversed.length === 0, "word times run forward and stay inside their take", `${spoken.length} cues`);
+  reversed.forEach((c) => console.log(`  ${c.id} has words out of order or outside ${c.atMs} to ${Math.round(c.atMs + c.durMs)} ms`));
+
+  const narrator = spoken.filter((c) => c.voice === "narrator");
+  if (narrator.length) {
+    const flat = (s: string): string => s.toLowerCase().replace(/[^a-z0-9' ]/g, "").replace(/\s+/g, " ").trim();
+    const misread: string[] = [];
+    for (const c of narrator) {
+      const source = JSON.parse(await readFile(join(dir, "sources", `voice-${c.id}.json`), "utf8")) as { transcript: string };
+      if (flat(source.transcript) !== flat(spokenForm(c.text!))) misread.push(`  ${c.id} was heard as "${source.transcript}"`);
+    }
+    report(misread.length === 0, "each narrator take says its copy.md line with the three spoken swaps", `${narrator.length} lines`);
+    misread.forEach((l) => console.log(`${l}`));
+
+    const off = narrator.flatMap((c) => {
+      if (!c.anchor || !c.words) return [`  ${c.id} has no anchor`];
+      const start = anchorOf(c.words, c.anchor.word).startMs;
+      const lead = c.anchor.beatMs - start;
+      return lead >= 0 && lead <= ANCHOR_WINDOW_MS ? [] : [`  ${c.id} says "${c.anchor.word}" at ${start} ms, ${lead} ms before the beat at ${c.anchor.beatMs} ms`];
     });
-    report(misfits.length === 0, "each voice line fits the window play gives it", SAGE_SCRIPT.voice.map((w) => `"${w.line}" ${w.at} to ${w.until}`).join(", "));
+    report(off.length === 0, `each narrator line says its anchor word 0 to ${ANCHOR_WINDOW_MS} ms before its beat`, `${narrator.length} lines, ${narrator.map((c) => `${c.anchor?.word} ${c.anchor!.beatMs - anchorOf(c.words!, c.anchor!.word).startMs}`).join(", ")}`);
+    off.forEach((l) => console.log(l));
+
+    const misfits = narrator.flatMap((c) => {
+      const end = c.atMs + c.durMs;
+      return c.atMs >= (c.fromMs ?? Number.NaN) && end <= (c.untilMs ?? Number.NaN) ? [] : [`  ${c.id} runs ${c.atMs} to ${Math.round(end)} ms outside ${c.fromMs} to ${c.untilMs} ms`];
+    });
+    report(misfits.length === 0, "each narrator take sits inside its window", `${narrator.length} lines`);
     misfits.forEach((l) => console.log(l));
+
+    const breathless = narrator.flatMap((c, i) => {
+      const next = narrator[i + 1];
+      const gap = next ? next.atMs - (c.atMs + c.durMs) : Number.POSITIVE_INFINITY;
+      return gap >= BREATH_MS ? [] : [`  ${c.id} ends ${Math.round(gap)} ms before ${next?.id}`];
+    });
+    report(breathless.length === 0, `the narrator breathes ${BREATH_MS} ms between lines`, `${narrator.length} lines`);
+    breathless.forEach((l) => console.log(l));
+
+    const others = spoken.filter((c) => c.voice !== "narrator" && c.words?.length);
+    const crowded = narrator.flatMap((n) =>
+      others.flatMap((o) => {
+        const nFirst = n.words![0]!.startMs;
+        const nLast = n.words!.at(-1)!.endMs;
+        const oFirst = o.words![0]!.startMs;
+        const oLast = o.words!.at(-1)!.endMs;
+        const gap = Math.max(nFirst - oLast, oFirst - nLast);
+        return gap >= SAGE_CLEAR_MS ? [] : [`  ${n.id} is ${Math.round(gap)} ms from ${o.id}, word to word`];
+      }),
+    );
+    report(crowded.length === 0, `the narrator stays ${SAGE_CLEAR_MS} ms clear of every other voice, last word to first word`, others.length ? `${others.length} other voice lines` : "no other voice in this film");
+    crowded.forEach((l) => console.log(l));
   }
+
+  const whooshes = Object.fromEntries(cues.cues.filter((c) => c.sound.startsWith("whoosh")).map((c) => [c.id, c.durMs]));
+  report(JSON.stringify(whooshes) === JSON.stringify(WHOOSHES[name]), "the only whooshes are the island opening and the note arc", Object.entries(whooshes).map(([id, ms]) => `${id} ${ms} ms`).join(", "));
+  const retired = cues.cues.filter((c) => /^(push-|scrollToPay)/.test(c.id));
+  report(retired.length === 0, "no camera push or scroll cue is left", `${retired.length} found`);
+  const mixHash = createHash("sha256").update(await readFile(join(dir, "mix.wav"))).digest("hex");
+  report(cues.mixSha256 === mixHash, "cues.json carries the sha256 of mix.wav", `${cues.mixSha256.slice(0, 16)} vs ${mixHash.slice(0, 16)}`);
 
   if (rebuild) {
     const before = createHash("sha256").update(await readFile(join(dir, "mix.wav"))).digest("hex");

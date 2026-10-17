@@ -1,0 +1,9 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "Return, and you're in.",
+  "spoken": "Return, and you're in.",
+  "transcript": "Return, and you're in.",
+  "adopted": "narrator-6.attempt3.wav",
+  "speechMs": 1297
+}

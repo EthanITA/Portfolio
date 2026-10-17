@@ -1,0 +1,12 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "It built a page? Select anything on it.",
+  "spoken": "It built a page? Select anything on it.",
+  "transcript": "It built a page? Select anything on it.",
+  "id": "gen-1792231599-z84qlBZEmxXQaA8Jq9rI",
+  "cost": 0,
+  "bytes": 146400,
+  "speechMs": 2782,
+  "attempt": 1
+}

@@ -1,0 +1,12 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "No scrolling diffs. Each change lands in your list.",
+  "spoken": "No scrolling diffs. Each change lands in your list.",
+  "transcript": "No scrolling diffs. Each change lands in your list.",
+  "id": "gen-1792231534-Gs7haD1MAglFOhwY4DxX",
+  "cost": 0,
+  "bytes": 172800,
+  "speechMs": 3506,
+  "attempt": 2
+}

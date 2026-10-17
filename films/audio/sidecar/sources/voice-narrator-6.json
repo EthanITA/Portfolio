@@ -1,0 +1,12 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "Send a note. It lands in the conversation.",
+  "spoken": "Send a note. It lands in the conversation.",
+  "transcript": "Send a note. It lands in the conversation.",
+  "id": "gen-1792231607-QfHodS6OdPwXNzZNpRsE",
+  "cost": 0,
+  "bytes": 156000,
+  "speechMs": 2940,
+  "attempt": 2
+}

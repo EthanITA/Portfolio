@@ -1,0 +1,12 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "That click stays yours.",
+  "spoken": "That click stays yours.",
+  "transcript": "That click stays yours.",
+  "id": "gen-1792232472-XxeAgPlcd4YGXrlep2iT",
+  "cost": 0,
+  "bytes": 74400,
+  "speechMs": 1400,
+  "attempt": 5
+}

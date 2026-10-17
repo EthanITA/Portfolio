@@ -1,175 +1,90 @@
 import type { FilmName } from "../films";
-import { SAMPLE_RATE, type Stereo, blank, samplesAt } from "./audio";
-import { biquad, rng, smooth } from "./dsp";
+import { SHEETS } from "../sheets";
+import { SAMPLE_RATE, type Stereo } from "./audio";
+import { type GrooveStyle, type Layer, type Section, renderGroove, scheduleLayer } from "./groove";
 
-type Style = { padDb: number; cutoff: number; bellEveryMs: number; pulseDb: number; wet: number; bellDb: number };
+const row = (hits: Record<number, number>): number[] => Array.from({ length: 16 }, (_, step) => hits[step] ?? 0);
 
-const STYLES: Record<FilmName, Style> = {
-  sidecar: { padDb: 0, cutoff: 1500, bellEveryMs: 4200, pulseDb: -15, wet: 0.5, bellDb: -17 },
-  sage: { padDb: -2, cutoff: 1000, bellEveryMs: 7000, pulseDb: -17, wet: 0.55, bellDb: -20 },
-  shell: { padDb: -3, cutoff: 1250, bellEveryMs: 5600, pulseDb: -12, wet: 0.32, bellDb: -19 },
+const EIGHTHS = row({ 0: 1, 2: 0.7, 4: 1, 6: 0.7, 8: 1, 10: 0.7, 12: 1, 14: 0.7 });
+const SIXTEENTHS = row({ 0: 1, 1: 0.4, 2: 0.7, 3: 0.4, 4: 1, 5: 0.4, 6: 0.7, 7: 0.4, 8: 1, 9: 0.4, 10: 0.7, 11: 0.4, 12: 1, 13: 0.4, 14: 0.7, 15: 0.4 });
+
+const BPM = 120;
+const BEATS_PER_BAR = 4;
+const DRIVE: Layer[] = ["kick", "hat", "bass"];
+const FULL: Layer[] = ["kick", "hat", "bass", "clap", "pluck"];
+const BREAKDOWN_LAYERS: Layer[] = ["kick", "bass"];
+const ISLAND_OPEN_BEAT = 4;
+
+const SHARED = {
+  bpm: BPM,
+  swing: 0.08,
+  progression: [
+    [62, 66, 69, 76],
+    [59, 62, 66, 69],
+    [55, 59, 62, 69],
+    [57, 62, 64, 69],
+  ],
+  levelsDb: { kick: -10, bass: -12, stab: -16, clap: -16, pluck: -18, hat: -20 },
+  pumpDepth: 0.3,
+  wet: 0.15,
 };
 
-const midi = (m: number): number => 440 * 2 ** ((m - 69) / 12);
-
-const CHORDS: Array<{ root: number; voices: number[] }> = [
-  { root: midi(38), voices: [50, 57, 64, 66].map(midi) },
-  { root: midi(35), voices: [54, 57, 62, 64].map(midi) },
-  { root: midi(31), voices: [50, 55, 59, 64].map(midi) },
-  { root: midi(33), voices: [52, 57, 61, 64].map(midi) },
-];
-
-const BELLS = [74, 76, 78, 81, 83, 86].map(midi);
-const CHORD_MS = 8000;
-const TABLE = 4096;
-const ATTACK = SAMPLE_RATE * 2.2;
-const RELEASE = SAMPLE_RATE * 3.2;
-
-const saw = ((): Float32Array => {
-  const t = new Float32Array(TABLE);
-  for (let h = 1; h <= 16; h++) for (let i = 0; i < TABLE; i++) t[i]! += Math.sin((2 * Math.PI * h * i) / TABLE) / h;
-  return t;
-})();
-
-const lookup = (phase: number): number => {
-  const p = (phase - Math.floor(phase)) * TABLE;
-  const i = Math.floor(p);
-  const f = p - i;
-  return saw[i]! * (1 - f) + saw[(i + 1) % TABLE]! * f;
+const PATTERNS: GrooveStyle["patterns"] = {
+  kick: row({ 0: 1, 4: 1, 8: 1, 12: 1 }),
+  clap: row({ 4: 1, 12: 1 }),
+  hat: EIGHTHS,
+  bass: row({ 0: 1, 6: 0.9, 10: 0.8 }),
+  pluck: row({ 3: 0.8, 7: 0.6, 11: 0.8, 14: 0.6 }),
 };
 
-type Segment = { start: number; end: number; chord: number };
-
-const plan = (total: number): Segment[] => {
-  const out: Segment[] = [];
-  const last = Math.max(0, total - samplesAt(13000));
-  let k = 0;
-  for (let s = 0; s < last; s += samplesAt(CHORD_MS), k++) out.push({ start: s, end: s + samplesAt(CHORD_MS), chord: k % CHORDS.length });
-  out.push({ start: out.at(-1)?.end ?? 0, end: total, chord: 0 });
-  return out;
+const PATTERN_OVERRIDES: Record<FilmName, Partial<GrooveStyle["patterns"]>> = {
+  shell: { hat: SIXTEENTHS },
+  sage: { pluck: row({ 0: 0.9, 2: 0.5, 4: 0.7, 6: 0.5, 8: 0.9, 10: 0.5, 12: 0.7, 14: 0.5 }) },
+  sidecar: {},
 };
 
-const freeverb = (mono: Float32Array, spread: number, feedback: number, damp: number): Float32Array => {
-  const scale = SAMPLE_RATE / 44100;
-  const combs = [1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617].map((d) => Math.round((d + spread) * scale));
-  const allpasses = [556, 441, 341, 225].map((d) => Math.round((d + spread) * scale));
-  const combBuf = combs.map((d) => new Float32Array(d));
-  const combIdx = new Int32Array(combs.length);
-  const combStore = new Float32Array(combs.length);
-  const apBuf = allpasses.map((d) => new Float32Array(d));
-  const apIdx = new Int32Array(allpasses.length);
-  const out = new Float32Array(mono.length);
-  for (let i = 0; i < mono.length; i++) {
-    const x = mono[i]! * 0.015;
-    let y = 0;
-    for (let c = 0; c < combs.length; c++) {
-      const buf = combBuf[c]!;
-      const read = buf[combIdx[c]!]!;
-      combStore[c] = read * (1 - damp) + combStore[c]! * damp;
-      buf[combIdx[c]!] = x + combStore[c]! * feedback;
-      combIdx[c] = (combIdx[c]! + 1) % combs[c]!;
-      y += read;
-    }
-    for (let a = 0; a < allpasses.length; a++) {
-      const buf = apBuf[a]!;
-      const read = buf[apIdx[a]!]!;
-      buf[apIdx[a]!] = y + read * 0.5;
-      y = read - y;
-      apIdx[a] = (apIdx[a]! + 1) % allpasses[a]!;
-    }
-    out[i] = y;
-  }
-  return out;
+const SEEDS: Record<FilmName, number> = { sidecar: 1108, sage: 1208, shell: 1308 };
+
+const beatMs = (60_000 / BPM);
+
+const beatOf = (ms: number): number => {
+  const beat = ms / beatMs;
+  if (!Number.isInteger(beat)) throw new Error(`${ms} ms is off the ${beatMs} ms beat`);
+  return beat;
 };
 
-const envelope = (i: number, seg: Segment): number => {
-  const rise = smooth(Math.min(1, (i - seg.start) / ATTACK));
-  const fall = i < seg.end ? 1 : smooth(1 - (i - seg.end) / RELEASE);
-  return rise * fall;
+const styleOf = (name: FilmName): GrooveStyle => {
+  const { closeMs, breakdown, stabsMs } = SHEETS[name];
+  const sections: Section[] = [
+    { beat: 0, layers: DRIVE },
+    { beat: ISLAND_OPEN_BEAT, layers: FULL },
+    { beat: beatOf(breakdown[0]), layers: BREAKDOWN_LAYERS },
+    { beat: beatOf(breakdown[1]), layers: FULL },
+  ];
+  const stabs = stabsMs.map((ms) => beatOf(ms) * beatMs);
+  return { ...SHARED, patterns: { ...PATTERNS, ...PATTERN_OVERRIDES[name] }, closeBeat: beatOf(closeMs), stabsMs: stabs, sections };
 };
 
-const addPad = (pad: Stereo, seg: Segment, padGain: number, rand: () => number): void => {
-  const chord = CHORDS[seg.chord]!;
-  const tail = Math.min(pad.l.length, seg.end + RELEASE);
-  chord.voices.forEach((f, v) => {
-    for (let o = 0; o < 3; o++) {
-      const base = f * 2 ** (([-7, 0, 7][o]! + (rand() - 0.5) * 2) / 1200);
-      const drift = 0.0006 * (0.5 + rand());
-      const rate = 0.09 + 0.08 * rand();
-      const phi = rand() * 2 * Math.PI;
-      const angle = ((Math.max(-1, Math.min(1, (o - 1) * 0.55 + (v - 1.5) * 0.12)) + 1) * Math.PI) / 4;
-      const gl = Math.cos(angle);
-      const gr = Math.sin(angle);
-      let phase = rand();
-      for (let i = seg.start; i < tail; i++) {
-        phase += (base * (1 + drift * Math.sin(2 * Math.PI * rate * (i / SAMPLE_RATE) + phi))) / SAMPLE_RATE;
-        const s = lookup(phase) * envelope(i, seg) * padGain;
-        pad.l[i]! += s * gl;
-        pad.r[i]! += s * gr;
-      }
-    }
-  });
-  let phase = 0;
-  for (let i = seg.start; i < tail; i++) {
-    phase += (2 * Math.PI * chord.root) / SAMPLE_RATE;
-    const s = (Math.sin(phase) + 0.35 * Math.sin(2 * phase)) * envelope(i, seg) * padGain * 1.4;
-    pad.l[i]! += s;
-    pad.r[i]! += s;
-  }
+export const synthBed = (name: FilmName, durationMs: number): Stereo => renderGroove(styleOf(name), durationMs, SEEDS[name]);
+
+export type BedPlan = {
+  grid: { bpm: number; beatMs: number; barMs: number; originMs: number; beats: number };
+  closeMs: number;
+  breakdown: { fromMs: number; toMs: number };
+  sections: Array<{ bar: number; beat: number; atMs: number; layers: Layer[] }>;
+  accents: Array<{ atMs: number; kind: "clap" | "stab" | "close" }>;
 };
 
-export const synthBed = (name: FilmName, durationMs: number): Stereo => {
-  const style = STYLES[name];
-  const total = samplesAt(durationMs);
-  const rand = rng(900 + name.length);
-  const segments = plan(total);
-
-  const pad = blank(total);
-  for (const seg of segments) addPad(pad, seg, 10 ** (style.padDb / 20) * 0.05, rand);
-  const lpL = [biquad("lowpass", style.cutoff), biquad("lowpass", style.cutoff)];
-  const lpR = [biquad("lowpass", style.cutoff), biquad("lowpass", style.cutoff)];
-  const dry = blank(total);
-  for (let i = 0; i < total; i++) {
-    dry.l[i] = lpL[1]!(lpL[0]!(pad.l[i]!));
-    dry.r[i] = lpR[1]!(lpR[0]!(pad.r[i]!));
-  }
-
-  const beat = samplesAt(1000);
-  const pulse = 10 ** (style.pulseDb / 20) * 0.12;
-  for (let b = 0, at = 0; at < total; b++, at += beat) {
-    const root = CHORDS[(segments.find((s) => at >= s.start && at < s.end) ?? segments.at(-1)!).chord]!.root;
-    const level = (b % 4 === 0 ? 1 : 0.55) * pulse;
-    for (let j = 0; j < Math.min(beat, total - at); j++) {
-      const t = j / SAMPLE_RATE;
-      const w = 2 * Math.PI * root * t;
-      const s = (Math.sin(w) + 0.9 * Math.sin(2 * w) + 0.45 * Math.sin(3 * w)) * Math.min(1, t / 0.018) * Math.exp(-t / 0.22) * level;
-      dry.l[at + j]! += s;
-      dry.r[at + j]! += s;
-    }
-  }
-
-  const send = new Float32Array(total);
-  const bellGain = 10 ** (style.bellDb / 20) * 0.5;
-  for (let at = samplesAt(5500 + rand() * 1500); at < total - samplesAt(9000); at += samplesAt(style.bellEveryMs * (0.7 + 0.6 * rand()))) {
-    const f = BELLS[Math.floor(rand() * BELLS.length)]!;
-    const angle = (((rand() - 0.5) * 1.2 + 1) * Math.PI) / 4;
-    for (let j = 0; j < Math.min(samplesAt(3500), total - at); j++) {
-      const t = j / SAMPLE_RATE;
-      const w = 2 * Math.PI * f * t;
-      const s = Math.min(1, t / 0.004) * (Math.sin(w) * Math.exp(-t / 1.1) + 0.12 * Math.sin(2.76 * w) * Math.exp(-t / 0.5) + 0.04 * Math.sin(5.4 * w) * Math.exp(-t / 0.25)) * bellGain;
-      dry.l[at + j]! += s * Math.cos(angle);
-      dry.r[at + j]! += s * Math.sin(angle);
-      send[at + j]! += s;
-    }
-  }
-
-  for (let i = 0; i < total; i++) send[i]! += (dry.l[i]! + dry.r[i]!) * 0.5;
-  const wetL = freeverb(send, 0, 0.88, 0.3);
-  const wetR = freeverb(send, 23, 0.88, 0.3);
-  const out = blank(total);
-  for (let i = 0; i < total; i++) {
-    out.l[i] = dry.l[i]! * (1 - style.wet * 0.5) + wetL[i]! * style.wet * 6;
-    out.r[i] = dry.r[i]! * (1 - style.wet * 0.5) + wetR[i]! * style.wet * 6;
-  }
-  return out;
+export const bedPlan = (name: FilmName, durationMs: number): BedPlan => {
+  const style = styleOf(name);
+  const { closeMs, breakdown } = SHEETS[name];
+  const claps = scheduleLayer(style, "clap").map((hit) => ({ atMs: Math.round((hit.at / SAMPLE_RATE) * 1000), kind: "clap" as const }));
+  const accents = [...claps, ...style.stabsMs.map((atMs) => ({ atMs, kind: "stab" as const })), { atMs: closeMs, kind: "close" as const }].sort((a, b) => a.atMs - b.atMs);
+  return {
+    grid: { bpm: BPM, beatMs, barMs: beatMs * BEATS_PER_BAR, originMs: 0, beats: Math.floor(durationMs / beatMs) },
+    closeMs,
+    breakdown: { fromMs: breakdown[0], toMs: breakdown[1] },
+    sections: style.sections.map((s) => ({ bar: Math.floor(s.beat / BEATS_PER_BAR), beat: s.beat, atMs: s.beat * beatMs, layers: s.layers })),
+    accents,
+  };
 };

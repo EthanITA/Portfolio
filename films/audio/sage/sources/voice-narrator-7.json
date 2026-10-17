@@ -1,0 +1,12 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "Money? It stops.",
+  "spoken": "Money? It stops.",
+  "transcript": "Money? It stops.",
+  "id": "gen-1792232644-SYTE47nlr6UYBint2Drs",
+  "cost": 0,
+  "bytes": 76800,
+  "speechMs": 1198,
+  "attempt": 7
+}

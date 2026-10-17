@@ -1,0 +1,12 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "Can't be undone? It asks first.",
+  "spoken": "Can't be undone? It asks first.",
+  "transcript": "Can't be undone? It asks first.",
+  "id": "gen-1792231226-v532TVmRKRRnT8KYavp5",
+  "cost": 0,
+  "bytes": 103200,
+  "speechMs": 2044,
+  "attempt": 3
+}

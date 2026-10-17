@@ -1,0 +1,9 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "Pipe a diff in. A commit message comes out.",
+  "spoken": "Pipe a diff in. A commit message comes out.",
+  "transcript": "Pipe a diff in. A commit message comes out.",
+  "adopted": "narrator-6.attempt3.wav",
+  "speechMs": 2844
+}

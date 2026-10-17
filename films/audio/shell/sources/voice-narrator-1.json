@@ -1,0 +1,12 @@
+{
+  "model": "openai/gpt-audio",
+  "voice": "ash",
+  "text": "Forget the flags. Type ? and say what you want.",
+  "spoken": "Forget the flags. Type a question mark and say what you want.",
+  "transcript": "Forget the flags. Type a question mark and say what you want.",
+  "id": "gen-1792231125-xsU0VdEvCz6b6rx0P0a8",
+  "cost": 0,
+  "bytes": 196800,
+  "speechMs": 3892,
+  "attempt": 2
+}
