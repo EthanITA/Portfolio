@@ -4,8 +4,6 @@ import type { TermRow } from "~/utils/play/sidecar";
 import { Surface } from "@cela/design";
 
 const { rows } = defineProps<{ rows: TermRow[] }>();
-
-const MARKS: Record<TermRow["kind"], string> = { tool: "⏺", claude: "⏺", result: "⎿", told: ">", turn: ">" };
 </script>
 
 <template>
@@ -16,7 +14,12 @@ const MARKS: Record<TermRow["kind"], string> = { tool: "⏺", claude: "⏺", res
     </div>
     <div class="screen">
       <div v-for="row in rows" :key="row.id" class="row" data-row :data-kind="row.kind" :style="{ '--in': `var(--t${row.id}, 1)` }">
-        <span class="mark">{{ MARKS[row.kind] }}</span>
+        <!-- Claude Code's ⏺ and ⎿ are drawn, since no web font here has them and each system would substitute its own. -->
+        <span class="mark">
+          <PlaySidecarIcon v-if="row.kind === 'tool' || row.kind === 'claude'" name="dot" />
+          <PlaySidecarIcon v-else-if="row.kind === 'result'" name="elbow" />
+          <template v-else>&gt;</template>
+        </span>
         <span class="text">{{ row.text }}</span>
       </div>
     </div>
@@ -66,7 +69,8 @@ const MARKS: Record<TermRow["kind"], string> = { tool: "⏺", claude: "⏺", res
 }
 
 .mark {
-  @apply flex-none;
+  @apply flex w-3.5 flex-none items-center justify-center;
+  height: 1lh;
 }
 
 .row[data-kind="tool"] .mark {
