@@ -56,8 +56,6 @@ const flagships: Flagship[] = [
   },
 ];
 
-const tiers = ["Runs", "Waits for you", "Stops at the line"];
-
 const work: Work[] = [
   { name: "Klarna", text: "Software engineer on the Klarna app.", count: { to: 100, after: "M+" }, label: "monthly active users" },
   {
@@ -142,7 +140,7 @@ onBeforeUnmount(() => {
     <ScrollSequence id="sequence" :beats="beats" closing="Three products, one rule." />
 
     <section class="flagships wrap" aria-label="Sidecar, Sage and AI Shell">
-      <SiteFlagship v-for="item in flagships" :key="item.slug" v-enter.stagger v-bind="item" />
+      <SiteFlagship v-for="item in flagships" :key="item.slug" v-bind="item" />
     </section>
 
     <SitePlaygrounds />
@@ -150,9 +148,6 @@ onBeforeUnmount(() => {
     <section class="line wrap" aria-labelledby="line-title">
       <h2 id="line-title" v-enter.words class="heading">One rule runs through all three.</h2>
       <p v-enter class="body">A step that only looks runs by itself. A step that changes something waits for you. A step you can't take back stops at the line, and the click is yours.</p>
-      <ul class="tiers">
-        <li v-for="tier in tiers" :key="tier" v-enter.stagger class="tier">{{ tier }}</li>
-      </ul>
       <SiteMount name="line">
         <LazyStageLine />
       </SiteMount>
@@ -206,11 +201,11 @@ onBeforeUnmount(() => {
 }
 
 .intro {
-  @apply relative mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 sm:px-8;
+  @apply pointer-events-none relative mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 sm:px-8;
 }
 
 .title {
-  @apply m-0 flex max-w-4xl flex-col gap-2 text-4xl font-bold tracking-tight text-balance lg:text-5xl 2xl:text-6xl;
+  @apply m-0 flex max-w-4xl flex-col gap-2 text-4xl font-bold tracking-tight lg:text-5xl 2xl:text-6xl;
 }
 
 .second {
@@ -226,11 +221,11 @@ onBeforeUnmount(() => {
 }
 
 .action {
-  @apply min-h-11 justify-center px-5;
+  @apply pointer-events-auto min-h-11 justify-center px-5;
 }
 
 .flagships {
-  @apply grid gap-4 md:grid-cols-3;
+  @apply relative grid gap-4 md:grid-cols-3;
 }
 
 .line,
@@ -246,14 +241,6 @@ onBeforeUnmount(() => {
 
 .body {
   @apply typo-body-lg max-w-2xl text-muted;
-}
-
-.tiers {
-  @apply m-0 flex list-none flex-wrap gap-2 p-0;
-}
-
-.tier {
-  @apply typo-eyebrow chip-look;
 }
 
 .small {
@@ -315,6 +302,10 @@ onBeforeUnmount(() => {
 
 .links {
   @apply m-0 flex list-none flex-wrap gap-2 p-0;
+
+  & .chip-look {
+    @apply min-h-11 px-3.5 transition-colors duration-(--duration-fast) ease-out;
+  }
 
   & .chip-look:focus-visible {
     @apply focus-ring;
