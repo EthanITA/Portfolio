@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
-import { type JSAnimation, type ScrollObserver, animate, onScroll, stagger, svg } from "animejs";
+import { type JSAnimation, animate, stagger, svg } from "animejs";
 
 import { screen } from "~/utils/scroll/frames";
 import type { Product } from "~/utils/site/films";
-import { SCRUB_SMOOTH, motionOn } from "~/utils/site/motion";
+import { motionOn } from "~/utils/site/motion";
+import { type Scrub, useScrub } from "~/utils/site/scrub";
 
 export type Bar = { value: number; share: number; note?: string };
 
@@ -32,7 +33,7 @@ const lit = ref(items.length - 1);
 let points: { x: number; y: number }[] = [];
 let stops: number[] = [];
 let draw: JSAnimation | undefined;
-let scroller: ScrollObserver | undefined;
+let scrub: Scrub | undefined;
 let resize: ResizeObserver | undefined;
 
 const year = (when: string): number | undefined => (/^\d{4}$/.test(when) ? Number(when) : undefined);
@@ -85,23 +86,28 @@ const measure = (): void => {
   });
 };
 
-const arrive = (node: HTMLElement): void => {
+const arrive = (node: HTMLElement, settled: boolean): void => {
   const dot = node.querySelector<HTMLElement>("[data-dot]");
   const rise = [...node.querySelectorAll<HTMLElement>("[data-enter]:not([data-dot])")];
+  const fills = [...node.querySelectorAll<HTMLElement>("[data-fill]")];
   for (const el of [dot, ...rise]) if (el) el.dataset.entered = "";
+  if (settled) {
+    for (const fill of fills) fill.style.removeProperty("transform");
+    return;
+  }
   if (dot) animate(dot, { duration: MOTION_DURATION.base, ease: MOTION_EASE.out, opacity: [0, 1], scale: [0.95, 1] });
   animate(rise, { duration: MOTION_DURATION.base, delay: stagger(STAGGER_MS), ease: MOTION_EASE.out, opacity: [0, 1], translateY: [8, 0] });
-  node.querySelectorAll<HTMLElement>("[data-fill]").forEach((fill, at) => {
+  fills.forEach((fill, at) => {
     animate(fill, { scaleX: [0, Number(fill.dataset.fill)], duration: BAR_MS, delay: MOTION_DURATION.base + at * BAR_STAGGER_MS, ease: MOTION_EASE.out });
   });
 };
 
-const reach = (progress: number): void => {
+const reach = (progress: number, settled = false): void => {
   lit.value = stops.findLastIndex((stop) => progress >= stop);
   nodes().forEach((node, i) => {
     if (reached.value[i] || progress < (stops[i] ?? 1)) return;
     reached.value[i] = true;
-    arrive(node);
+    arrive(node, settled);
   });
 };
 
@@ -115,22 +121,35 @@ onMounted(async () => {
   reached.value = items.map(() => false);
   lit.value = -1;
   for (const fill of root.value.querySelectorAll<HTMLElement>("[data-fill]")) fill.style.transform = "scaleX(0)";
-  scroller = onScroll({ target: root.value, enter: "center top", leave: "min+=50% bottom", sync: SCRUB_SMOOTH });
-  draw = animate(line, { draw: ["0 0", "0 1"], ease: "linear", autoplay: scroller, onUpdate: (self) => reach(self.progress) });
+  const timeline = root.value;
+  const drawn = animate(line, { draw: ["0 0", "0 1"], ease: "linear", autoplay: false });
+  draw = drawn;
+  const goal = (): number => {
+    const rect = timeline.getBoundingClientRect();
+    return Math.min(Math.max((innerHeight / 2 - rect.top) / rect.height, 0), 1);
+  };
+  // Nodes already passed on a restored scroll land as they were left, so the seed replays no entrance.
+  reach(goal(), true);
+  scrub = useScrub({
+    goal,
+    update: (progress) => {
+      drawn.seek(progress * drawn.duration);
+      reach(progress);
+    },
+  });
   resize = new ResizeObserver(async () => {
     trace();
     await nextTick();
     measure();
-    // onScroll resolves its target a frame after creation, and the observer's first callback can land before that.
-    if (scroller?.target) scroller.refresh();
+    scrub?.wake();
   });
-  resize.observe(root.value);
+  resize.observe(timeline);
 });
 
 onBeforeUnmount(() => {
   resize?.disconnect();
+  scrub?.stop();
   draw?.revert();
-  scroller?.revert();
 });
 </script>
 
