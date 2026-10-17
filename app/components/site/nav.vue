@@ -285,6 +285,11 @@ onBeforeUnmount(() => {
   }
 }
 
+/* The fold only collapses the reveal, which @cela/design's stretched inner never reports, so the inner takes its content's width. */
+.bar .pill :deep(.responsive-box-inner) {
+  width: max-content;
+}
+
 .bar[data-tween="grow"] :deep(.responsive-box[data-animated="true"]) {
   transition-duration: var(--duration-moderate);
   transition-timing-function: var(--ease-drawer);
