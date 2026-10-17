@@ -1,8 +1,7 @@
 <script setup lang="ts">
+import type { Milestone } from "~/components/site/timeline.vue";
 import { links } from "~/utils/site/links";
 import { seo } from "~/utils/site/seo";
-
-type Milestone = { when: string; what: string };
 
 useSeoMeta({ title: seo.about.title, description: seo.about.description });
 useSchemaOrg([defineWebPage({ "@type": ["AboutPage", "ProfilePage"], mainEntity: { "@id": links.identity } })]);
@@ -27,26 +26,21 @@ const facts = ["Based in Milan", "Italian native, English at work"];
 <template>
   <div class="about">
     <header class="head wrap">
-      <h1 class="title">I don't know what I don't know, so I go and find out.</h1>
-      <p class="intro">I studied computer science in Bologna and later took an MBA, because I want to build a business and not only the software inside it. Agents write a lot of my code now. I wrote the rules they work under, I review what they ship, and nothing goes out under my name that I can't explain.</p>
+      <h1 v-enter.now.words.title class="title">I don't know what I don't know, so I go and find out.</h1>
+      <p v-enter.now="320" class="intro">I studied computer science in Bologna and later took an MBA, because I want to build a business and not only the software inside it. Agents write a lot of my code now. I wrote the rules they work under, I review what they ship, and nothing goes out under my name that I can't explain.</p>
     </header>
 
-    <ol class="timeline wrap">
-      <li v-for="item in timeline" :key="item.what" class="milestone">
-        <span class="when">{{ item.when }}</span>
-        <p class="what">{{ item.what }}</p>
-      </li>
-    </ol>
+    <SiteTimeline class="wrap" :items="timeline" />
 
     <ul class="facts wrap">
-      <li v-for="fact in facts" :key="fact">{{ fact }}</li>
+      <li v-for="fact in facts" :key="fact" v-enter.stagger class="chip-look">{{ fact }}</li>
     </ul>
   </div>
 </template>
 
 <style scoped>
 .about {
-  @apply flex flex-col gap-16 pt-8 sm:pt-16;
+  @apply flex flex-col gap-20 pt-8 sm:pt-16;
 }
 
 .head {
@@ -61,32 +55,7 @@ const facts = ["Based in Milan", "Italian native, English at work"];
   @apply typo-body-lg max-w-2xl text-muted;
 }
 
-.timeline {
-  @apply m-0 flex list-none flex-col gap-0 border-s border-border p-0 ps-6;
-}
-
-.milestone {
-  @apply relative flex flex-col gap-1 py-4;
-
-  &::before {
-    @apply absolute top-6 -left-6 size-2 -translate-x-1/2 rounded-full bg-primary;
-    content: "";
-  }
-}
-
-.when {
-  @apply typo-mono-meta text-primary;
-}
-
-.what {
-  @apply typo-body-lg text-fg;
-}
-
 .facts {
   @apply m-0 flex list-none flex-wrap gap-2 p-0;
-
-  & li {
-    @apply typo-caption-medium rounded-full border border-border px-3 py-1;
-  }
 }
 </style>
