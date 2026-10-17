@@ -179,6 +179,8 @@ onBeforeUnmount(() => {
 
 .pill {
   @apply pointer-events-auto max-w-full;
+  /* @cela/design's responsive box measures through the Island's 0.95 mount pop, so a scaled first lock would clip the pill. */
+  transform: none !important;
 }
 
 .row {
