@@ -80,6 +80,20 @@ export const frozen = async (file: string, { seconds = 0.5, noise = "-60dB" }: {
   });
 };
 
+export type Band = { at: number; low: number; high: number; spread: number };
+
+export const band = async (file: string, { at, top = 2 / 3 }: { at: number[]; top?: number }): Promise<Band[]> =>
+  Promise.all(
+    at.map(async (seconds) => {
+      const log = await ffmpeg(["-ss", seconds.toFixed(3), "-i", file, "-frames:v", "1", "-vf", `crop=iw:ih*${1 - top}:0:ih*${top},signalstats,metadata=print`, "-an", "-f", "null", "-"]);
+      const read = (key: string): number => Number(log.match(new RegExp(`lavfi\\.signalstats\\.${key}=([\\d.]+)`))?.[1] ?? Number.NaN);
+      // YLOW and YHIGH are the 10th and 90th percentiles, and a caption covers too little of the band to move them.
+      const low = read("YMIN");
+      const high = read("YMAX");
+      return { at: seconds, low, high, spread: high - low };
+    }),
+  );
+
 export const loudness = async (file: string): Promise<Loudness> => {
   const log = await ffmpeg(["-i", file, "-af", "ebur128=peak=true", "-vn", "-f", "null", "-"]);
   const summary = log.slice(log.lastIndexOf("Summary:"));
