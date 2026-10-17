@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { DiffLine, Hunk } from "~/utils/play/sidecar";
 
-const { hunk, readOnly = false } = defineProps<{ hunk: Hunk; readOnly?: boolean }>();
+const { hunk } = defineProps<{ hunk: Hunk }>();
 
 const emit = defineEmits<{ decide: [isAccept: boolean] }>();
 
@@ -10,7 +10,7 @@ const SIGN: Record<DiffLine["mark"], string> = { add: "+", remove: "−", same: 
 
 <template>
   <div class="hunk" :data-hunk="hunk.id" :data-verdict="hunk.verdict" :style="{ '--v': `var(--v-${hunk.id}, 1)` }">
-    <span v-if="!readOnly" class="seam">
+    <span class="seam">
       <button
         aria-label="Accept the hunk"
         class="arrow"
@@ -33,12 +33,6 @@ const SIGN: Record<DiffLine["mark"], string> = { add: "+", remove: "−", same: 
       >
         <PlaySidecarIcon name="x" />
       </button>
-    </span>
-    <span v-else-if="hunk.verdict !== 'pending'" class="seam">
-      <span class="arrow" :data-tone="hunk.verdict === 'rejected' ? 'reject' : 'accept'" data-chosen="true" aria-hidden="true">
-        <PlaySidecarIcon :name="hunk.verdict === 'rejected' ? 'x' : 'check'" />
-      </span>
-      <span class="sr-only">{{ hunk.verdict === "rejected" ? "Rejected the hunk, Claude is told" : "Accepted the hunk" }}</span>
     </span>
     <div v-for="line in hunk.lines" :key="`${line.mark}${line.line}`" class="row" :data-mark="line.mark">
       <span class="num">{{ line.line }}</span>
@@ -113,8 +107,7 @@ const SIGN: Record<DiffLine["mark"], string> = { add: "+", remove: "−", same: 
   --hit-x: calc(100% + 1px);
 }
 
-.arrow:disabled,
-span.arrow {
+.arrow:disabled {
   @apply cursor-default;
 }
 
