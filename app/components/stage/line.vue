@@ -76,14 +76,14 @@ const place = (): void => {
 };
 
 const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => {
-  const [{ createLine, createStage, readPalette }, { createChip }, { BufferGeometry, Float32BufferAttribute, LineSegments, Vector3 }] = await Promise.all([
+  const [{ createLine, openStage, readPalette }, { createChip }, { BufferGeometry, Float32BufferAttribute, LineSegments, Vector3 }] = await Promise.all([
     import("~/utils/stage/island"),
     import("~/utils/stage/chip"),
     import("three"),
   ]);
   await document.fonts.load(`500 32px ${getComputedStyle(document.documentElement).getPropertyValue("--mono")}`);
 
-  const stage = createStage({ canvas: surface, camera: STAGE_CAMERA.line, film: filming, mobile, fog: [10, 18] });
+  const stage = await openStage({ canvas: surface, camera: STAGE_CAMERA.line, film: filming, mobile, fog: [10, 18] });
   const wide = matchMedia("(min-width: 768px)");
 
   const rows: number[] = [];
@@ -192,6 +192,7 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
 
   refresh = () => frame(clock(), 0);
 
+  await stage.warm();
   return {
     frame,
     theme: (instant) => stage.setPalette(readPalette(), instant),
