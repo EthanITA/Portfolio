@@ -22,7 +22,7 @@ const poster = useTemplateRef<HTMLElement>("poster");
 let tilt: AnimatableObject | undefined;
 let box: DOMRect | undefined;
 
-const still = (width: 800 | 1600, format: FrameFormat): string => sequencePath(`light/screens/${slug}-${width}`, format);
+const still = (width: 800 | 1600, format: FrameFormat): string => sequencePath(`screens/${slug}-${width}`, format);
 const srcset = (format: FrameFormat): string => `${still(800, format)} 800w, ${still(1600, format)} 1600w`;
 
 const fine = (): boolean => matchMedia("(hover: hover) and (pointer: fine)").matches;
