@@ -3,21 +3,15 @@ import { Surface } from "@cela/design";
 import { MOTION_DURATION, MOTION_EASE } from "@cela/design/utils/motion";
 import { type Timeline, createTimeline, svg } from "animejs";
 
+import { BOARD, type BoardTask } from "~/utils/site/board";
 import { motionOn } from "~/utils/site/motion";
-
-type Status = "completed" | "in_progress" | "pending";
-type Line = { id: number; category: "AI" | "USER"; subject: string; status: Status };
 
 const TICK_MS = 600;
 const RISE = 6;
 
-const lines: Line[] = [
-  { id: 4, category: "AI", subject: "Crossfade the sequence frames", status: "completed" },
-  { id: 5, category: "AI", subject: "Re-render the AI Shell film on fixed anchors", status: "in_progress" },
-  { id: 6, category: "USER", subject: "Look at the sequence on a phone", status: "pending" },
-];
+const { tasks = BOARD } = defineProps<{ tasks?: BoardTask[] }>();
 
-const spoken: Record<Status, string> = { completed: "ticked", in_progress: "in progress", pending: "pending" };
+const spoken: Record<BoardTask["status"], string> = { done: "ticked", doing: "in progress", todo: "pending" };
 
 const board = useTemplateRef<InstanceType<typeof Surface>>("board");
 let observer: IntersectionObserver | undefined;
@@ -64,17 +58,17 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <Surface ref="board" as="ul" variant="card" class="board">
-    <li v-for="line in lines" :key="line.id" class="line" :data-line="line.status">
+  <Surface ref="board" as="ul" variant="sunken" class="board">
+    <li v-for="task in tasks" :key="task.id" class="line" :data-line="task.status">
       <svg class="glyph" viewBox="0 0 16 16" aria-hidden="true">
-        <path v-if="line.status === 'completed'" data-mark d="M3 8.5l3.5 3.5L13 4.5" />
-        <rect v-else-if="line.status === 'in_progress'" x="3" y="3" width="10" height="10" rx="2" />
+        <path v-if="task.status === 'done'" data-mark d="M3 8.5l3.5 3.5L13 4.5" />
+        <rect v-else-if="task.status === 'doing'" x="3" y="3" width="10" height="10" rx="2" />
         <rect v-else data-mark x="3.5" y="3.5" width="9" height="9" rx="2" />
       </svg>
-      <span class="sr-only">{{ spoken[line.status] }}</span>
+      <span class="sr-only">{{ spoken[task.status] }}</span>
       <span class="text">
-        <span class="tag">#{{ line.id }} [{{ line.category }}]</span>
-        {{ line.subject }}
+        <span class="tag">#{{ task.id }} [{{ task.category }}]</span>
+        {{ task.subject }}
       </span>
     </li>
   </Surface>
@@ -105,11 +99,11 @@ onBeforeUnmount(() => {
   stroke-width: 1.75;
 }
 
-.line[data-line="completed"] .glyph {
+.line[data-line="done"] .glyph {
   @apply text-primary;
 }
 
-.line[data-line="in_progress"] .glyph {
+.line[data-line="doing"] .glyph {
   @apply text-fg;
   fill: currentColor;
   stroke: none;
@@ -119,11 +113,11 @@ onBeforeUnmount(() => {
   @apply min-w-0 text-fg;
 }
 
-.line[data-line="completed"] .text {
+.line[data-line="done"] .text {
   @apply text-muted line-through;
 }
 
-.line[data-line="in_progress"] .text {
+.line[data-line="doing"] .text {
   @apply font-medium;
 }
 

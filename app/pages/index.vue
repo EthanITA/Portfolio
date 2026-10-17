@@ -183,8 +183,8 @@ onBeforeUnmount(() => {
             <span v-if="entry.count" class="label">{{ entry.label }}</span>
           </p>
           <div v-if="entry.measure" class="measure">
-            <SiteMeasure :share="entry.measure.share" :play="counting.has(entry.name)" />
             <span v-if="entry.measure.caption" class="label">{{ entry.measure.caption }}</span>
+            <SiteMeasure :share="entry.measure.share" :play="counting.has(entry.name)" />
           </div>
           <h3 class="name">{{ entry.name }}</h3>
           <p class="text">{{ entry.text }}</p>
