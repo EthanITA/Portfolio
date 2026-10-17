@@ -269,8 +269,9 @@ export const createTiles = async ({ canvas, grid, pixelRatio, onLost }: TileOpti
     });
   };
 
-  // A cold shader cache links for hundreds of ms; the async compile polls instead of blocking the main thread.
-  await renderer.compileAsync(scene, camera);
+  // A cold shader cache blocks a sync link for hundreds of ms; without the extension compileAsync only adds a warning.
+  if (renderer.extensions.has("KHR_parallel_shader_compile")) await renderer.compileAsync(scene, camera);
+  else renderer.compile(scene, camera);
 
   return {
     setFrame: (bitmap) => swap(ground.material, bitmap),
