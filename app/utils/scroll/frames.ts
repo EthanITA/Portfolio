@@ -1,4 +1,4 @@
-import type { Product } from "../site/films";
+import type { Product } from "~/utils/site/films";
 import { MANIFEST } from "./manifest.gen";
 import { SEQUENCE } from "./sequence";
 

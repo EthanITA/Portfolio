@@ -9,8 +9,7 @@ import { motionOn } from "~/utils/site/motion";
 type Row = { mark: DiffLine["mark"] | "blank"; line?: number; text: string };
 type Pair = { before: Row; after: Row };
 
-// ASCII minus, since DM Mono falls back on U+2212 and the glyph then differs between machines.
-const SIGN: Record<Row["mark"], string> = { add: "+", remove: "-", same: " ", blank: " " };
+const SIGN: Record<Row["mark"], string> = { add: "+", remove: "−", same: " ", blank: " " };
 const BLANK: Row = { mark: "blank", text: "" };
 const REST = 50;
 const WIPE_MS = 1200;

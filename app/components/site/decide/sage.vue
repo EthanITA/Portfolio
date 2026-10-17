@@ -147,7 +147,7 @@ onBeforeUnmount(() => {
 }
 
 .track {
-  @apply relative h-1.5 flex-1 overflow-hidden rounded-full border border-primary/40;
+  @apply relative h-1 flex-1 overflow-hidden rounded-full bg-primary/20;
 }
 
 .fill {

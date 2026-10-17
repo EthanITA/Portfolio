@@ -54,7 +54,7 @@ const { slug, questions } = defineProps<{ slug: Product; questions: Question[] }
 .item::details-content {
   opacity: 0;
   transition:
-    opacity var(--duration-base) ease-out,
+    opacity var(--duration-base) var(--ease-out),
     content-visibility var(--duration-base) allow-discrete;
 }
 
