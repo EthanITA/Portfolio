@@ -90,10 +90,10 @@ const side = [
 }
 
 .contact {
-  @apply typo-mono-meta m-0 mt-2 flex list-none flex-wrap gap-x-4 gap-y-1 p-0 text-muted print:mt-1 print:leading-snug;
+  @apply typo-mono-meta m-0 mt-2 flex list-none flex-wrap items-center gap-x-4 gap-y-1 p-0 text-muted print:mt-1 print:leading-snug;
 
   & a {
-    @apply text-inherit no-underline;
+    @apply inline-flex min-h-6 items-center text-inherit no-underline print:min-h-0;
   }
 
   & a:focus-visible {

@@ -186,7 +186,7 @@ onBeforeUnmount(() => {
 }
 
 .mark {
-  @apply typo-heading shrink-0 text-fg no-underline;
+  @apply typo-heading inline-flex min-h-11 shrink-0 items-center text-fg no-underline;
 
   &:focus-visible {
     @apply focus-ring rounded-field;
@@ -206,7 +206,7 @@ onBeforeUnmount(() => {
 }
 
 .item {
-  @apply typo-body-md block rounded-full px-3 py-2 whitespace-nowrap text-muted no-underline transition-colors duration-(--duration-fast) ease-out;
+  @apply typo-body-md flex min-h-11 items-center rounded-full px-3 whitespace-nowrap text-muted no-underline transition-colors duration-(--duration-fast) ease-out;
 
   &[aria-current="page"] {
     @apply text-fg;
