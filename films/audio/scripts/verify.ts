@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
+import { SAGE_SCRIPT } from "../../../app/utils/play/script/sage";
 import { MAX_TRUE_PEAK, ROOT, TARGET_LUFS, compose, rawBed } from "./build";
 import { FILMS, type FilmName, spokenForm } from "./films";
 import { SAMPLE_RATE, type Stereo, blank, decode, durationOf, measure, run, samplesAt, toDb } from "./lib/audio";
@@ -8,7 +9,7 @@ import type { BedPlan } from "./lib/bed";
 import { biquad } from "./lib/dsp";
 import { room } from "./lib/synth";
 import { BREATH_MS, SAGE_CLEAR_MS } from "./sheets";
-import { type Word, anchorOf } from "./lib/words";
+import { type Word, anchorOf, loadWords } from "./lib/words";
 
 type CueRow = {
   id: string; sound: string; stem: "ui" | "voice"; atMs: number; durMs: number; audible: boolean; onsetTolMs: number;
@@ -365,6 +366,24 @@ const verifyFilm = async (name: FilmName, rebuild: boolean): Promise<void> => {
   const reversed = spoken.filter((c) => c.words?.some((w, i) => w.endMs < w.startMs || (i > 0 && w.startMs < c.words![i - 1]!.startMs) || w.startMs < c.atMs || w.endMs > c.atMs + c.durMs + 1));
   report(reversed.length === 0, "word times run forward and stay inside their take", `${spoken.length} cues`);
   reversed.forEach((c) => console.log(`  ${c.id} has words out of order or outside ${c.atMs} to ${Math.round(c.atMs + c.durMs)} ms`));
+
+  if (name === "sage") {
+    const takes = loadWords("sage")?.takes;
+    const { moments, words, voice } = SAGE_SCRIPT;
+    const asks = [
+      { id: "ask-1", at: moments.wordsStart, typed: words.ask.at, window: voice[0] },
+      { id: "ask-2", at: moments.words2Start, typed: words.second.at, window: voice[1] },
+    ];
+    const drifted = asks.flatMap(({ id, at, typed, window }) => {
+      const take = takes?.[id];
+      if (!take) return [`  ${id} has no words in words.json`];
+      const starts = take.words.map((w) => at + w.startMs);
+      const same = typed.length === starts.length && typed.every((t, i) => t === starts[i]) && window?.at === at && window.until === at + take.clipMs;
+      return same ? [] : [`  ${id} types at ${typed.join(" ")} and is voiced ${window?.at} to ${window?.until}, words.json gives ${starts.join(" ")} and ${at} to ${at + take.clipMs}`];
+    });
+    report(drifted.length === 0, "play's Sage typing and voice windows equal the aligned takes in words.json", asks.map((a) => a.id).join(" and "));
+    drifted.forEach((l) => console.log(l));
+  }
 
   const narrator = spoken.filter((c) => c.voice === "narrator");
   if (narrator.length) {

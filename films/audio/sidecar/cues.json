@@ -1,6 +1,6 @@
 {
   "film": "sidecar",
-  "mixSha256": "302a9c4ac49642313cebe351c71395999475e2ce506051c4cdd0775716d4dc03",
+  "mixSha256": "22eac95f34d5e11784472e058f9d1b2491788a7c0732a321c80a14309a86f1c0",
   "durationMs": 45000,
   "durationSamples": 2160000,
   "sampleRate": 48000,
@@ -456,6 +456,30 @@
       "marks": "the decision history changes"
     },
     {
+      "id": "undoAgain",
+      "sound": "click.soft",
+      "stem": "ui",
+      "atMs": 30500,
+      "atSample": 1464000,
+      "durMs": 100,
+      "audible": true,
+      "onsetTolMs": 1,
+      "sheet": "28-34",
+      "marks": "cmd Z takes back the one before"
+    },
+    {
+      "id": "undoAgainStacks",
+      "sound": "tick.low",
+      "stem": "ui",
+      "atMs": 30600,
+      "atSample": 1468800,
+      "durMs": 90,
+      "audible": true,
+      "onsetTolMs": 1,
+      "sheet": "28-34",
+      "marks": "the decision history changes"
+    },
+    {
       "id": "redo",
       "sound": "click.soft",
       "stem": "ui",
@@ -473,6 +497,30 @@
       "stem": "ui",
       "atMs": 31600,
       "atSample": 1516800,
+      "durMs": 90,
+      "audible": true,
+      "onsetTolMs": 1,
+      "sheet": "28-34",
+      "marks": "the decision history changes"
+    },
+    {
+      "id": "redoAgain",
+      "sound": "click.soft",
+      "stem": "ui",
+      "atMs": 32000,
+      "atSample": 1536000,
+      "durMs": 100,
+      "audible": true,
+      "onsetTolMs": 1,
+      "sheet": "28-34",
+      "marks": "cmd shift Z redoes the next one"
+    },
+    {
+      "id": "redoAgainStacks",
+      "sound": "tick.low",
+      "stem": "ui",
+      "atMs": 32100,
+      "atSample": 1540800,
       "durMs": 90,
       "audible": true,
       "onsetTolMs": 1,
