@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { NuxtError } from "#app";
 
+import { PHONE_REST_BAND } from "~/utils/stage/camera";
+
 const { error } = defineProps<{ error: NuxtError }>();
 
 useSeoMeta({ title: String(error.status) });
@@ -8,7 +10,7 @@ useSeoMeta({ title: String(error.status) });
 
 <template>
   <NuxtLayout>
-    <section class="lost">
+    <section class="lost" :style="{ '--island-bottom': PHONE_REST_BAND.bottom }">
       <SiteMount name="hero">
         <LazyStageHero lost />
       </SiteMount>
@@ -21,8 +23,9 @@ useSeoMeta({ title: String(error.status) });
 </template>
 
 <style scoped>
+/* Under lg the island rests in the home's phone band, so the note starts 8 px under it as the home's copy does. */
 .lost {
-  @apply relative -mt-20 flex h-svh min-h-160 flex-col justify-end overflow-hidden pt-20 pb-16 sm:pb-24;
+  @apply relative -mt-20 flex h-svh min-h-160 flex-col justify-end overflow-hidden pt-20 pb-16 max-lg:justify-start max-lg:pt-[max(13rem,calc(var(--island-bottom)*100svh_+_0.5rem))] sm:pb-24;
 }
 
 .note {
