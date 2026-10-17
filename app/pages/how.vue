@@ -3,12 +3,11 @@ import { Surface } from "@cela/design";
 import { spotlight } from "@cela/design/utils/motion";
 import { type JSAnimation, type ScrollObserver, animate, onScroll, splitText, stagger } from "animejs";
 
-import { BOARD } from "~/utils/site/board";
 import { SCRUB_SMOOTH, motionOn } from "~/utils/site/motion";
 import { seo } from "~/utils/site/seo";
 
 type Rule = { rule: string; why: string };
-type Step = { step: string; receipt?: string };
+type Step = { step: string; receipt?: string; task?: boolean };
 
 useSeoMeta({ title: seo.how.title, description: seo.how.description });
 defineOgImage("Card", { title: seo.how.title, sub: "Agents write a lot of my code." });
@@ -38,7 +37,7 @@ const rules: Rule[] = [
 
 const loop: Step[] = [
   { step: "Read", receipt: "what I typed, what I meant, what it forces" },
-  { step: "Board" },
+  { step: "Board", receipt: "#4 [AI] Crossfade the sequence frames", task: true },
   { step: "Build", receipt: "fix(scroll): crossfade the two frames around the scroll position" },
   { step: "Prove", receipt: "check.ts: 0 failures" },
   { step: "Review" },
@@ -50,7 +49,7 @@ const TYPE_MS = 16;
 const cards = useTemplateRef<HTMLElement>("cards");
 const panel = useTemplateRef<HTMLElement>("panel");
 const heading = useTemplateRef<HTMLElement>("heading");
-const fence = useTemplateRef<{ ripple: () => void }>("fence");
+const fence = useTemplateRef<{ ripple: (at: number) => void }>("fence");
 const stepper = useTemplateRef<HTMLElement>("stepper");
 const rail = useTemplateRef<HTMLElement>("rail");
 const current = ref(0);
@@ -58,7 +57,7 @@ const current = ref(0);
 let travel: JSAnimation | undefined;
 let scroller: ScrollObserver | undefined;
 let landing: IntersectionObserver | undefined;
-let rippleWanted = false;
+let landed = 0;
 let pending = 0;
 const typed = new Set<number>();
 const typing: JSAnimation[] = [];
@@ -88,14 +87,12 @@ const onScrolled = (): void => {
 };
 
 const land = (): void => {
-  if (fence.value) fence.value.ripple();
-  else rippleWanted = true;
+  landed = performance.now();
+  fence.value?.ripple(landed);
 };
 
 watch(fence, (scene) => {
-  if (!scene || !rippleWanted) return;
-  rippleWanted = false;
-  scene.ripple();
+  if (scene && landed) scene.ripple(landed);
 });
 
 const type = (i: number): void => {
@@ -116,10 +113,10 @@ const reveal = (progress: number): void => {
 };
 
 onMounted(() => {
-  if (!motionOn()) return;
   read();
   window.addEventListener("scroll", onScrolled, { passive: true });
   window.addEventListener("resize", onScrolled);
+  if (!motionOn()) return;
   if (heading.value) {
     landing = new IntersectionObserver(
       ([entry]) => {
@@ -163,7 +160,10 @@ onBeforeUnmount(() => {
     <section class="gates wrap" aria-labelledby="gates-title">
       <div class="intro">
         <h2 id="gates-title" ref="heading" v-enter.words class="heading">Eight rules, eight gates</h2>
-        <p v-enter class="body">Hover a gate for its rule. Click a change to stop it yourself.</p>
+        <p v-enter class="body">
+          <span class="fine">Hover a gate for its rule. Click a change to stop it yourself.</span>
+          <span class="coarse">Tap a gate for its rule. Tap a change to stop it yourself.</span>
+        </p>
       </div>
       <div ref="panel" class="panel">
         <SiteMount name="fence">
@@ -190,12 +190,9 @@ onBeforeUnmount(() => {
             <span class="node" aria-hidden="true" />
             <div class="label">
               <span class="word">{{ item.step }}</span>
-              <span v-if="item.receipt" class="receipt" :data-receipt="i"><span data-type>{{ item.receipt }}</span></span>
-              <span v-else-if="item.step === 'Board'" class="receipt board" :data-receipt="i">
-                <span v-for="task in BOARD" :key="task.id" class="task" :data-status="task.status">
-                  <span class="box" aria-hidden="true" />
-                  <span data-type>#{{ task.id }} [{{ task.category }}] {{ task.subject }}</span>
-                </span>
+              <span v-if="item.receipt" class="receipt" :class="{ task: item.task }" :data-receipt="i">
+                <span v-if="item.task" class="box" role="img" aria-label="In progress" />
+                <span data-type>{{ item.receipt }}</span>
               </span>
             </div>
           </li>
@@ -225,6 +222,20 @@ onBeforeUnmount(() => {
   @apply typo-body-lg max-w-prose text-pretty text-muted;
 }
 
+.coarse {
+  @apply hidden;
+}
+
+@media (pointer: coarse) {
+  .fine {
+    @apply hidden;
+  }
+
+  .coarse {
+    @apply inline;
+  }
+}
+
 .heading {
   @apply typo-display m-0 text-balance sm:text-4xl;
 }
@@ -239,7 +250,7 @@ onBeforeUnmount(() => {
 
 /* Under md the panel sticks under the nav and its canvas backdrop hides the rules scrolling beneath it. */
 .panel {
-  @apply sticky top-0 z-1 -mx-5 h-[calc(40svh+6rem)] bg-canvas px-5 pt-20 pb-4 sm:-mx-8 sm:px-8 md:top-24 md:col-start-1 md:row-span-2 md:row-start-1 md:mx-0 md:h-[calc(100svh-8rem)] md:max-h-200 md:self-start md:p-0;
+  @apply sticky top-0 z-1 -mx-5 h-[calc(40svh+6rem)] bg-canvas px-5 pt-20 pb-4 sm:-mx-8 sm:px-8 md:top-20 md:col-start-1 md:row-span-2 md:row-start-1 md:mx-0 md:h-[calc(100svh-5rem)] md:max-h-240 md:self-start md:p-0;
 
   /* The violet line runs off both sides, so it fades out instead of ending on a hard crop. */
   & :deep(.mount) {
@@ -249,7 +260,7 @@ onBeforeUnmount(() => {
 
 /* Room below the last rule, so the panel is still pinned whole when rule 8 crosses the centre. */
 .rules {
-  @apply m-0 flex list-none flex-col gap-4 p-0 md:col-start-2 md:pb-[calc(50svh-11rem)];
+  @apply m-0 flex list-none flex-col gap-4 p-0 md:col-start-2 md:pb-[calc(50svh-9rem)];
 }
 
 .rule {
@@ -306,25 +317,13 @@ onBeforeUnmount(() => {
   @apply invisible;
 }
 
-.board {
-  @apply flex flex-col gap-1 lg:items-start lg:text-left;
-}
-
 .task {
-  @apply flex items-start gap-2;
+  @apply flex items-start gap-2 lg:text-left;
 }
 
-/* Drawn rather than typed, because DM Mono has no ✔, ◼ or ◻ and they would fall back to another face. */
+/* Drawn rather than typed, because DM Mono has no ◼ and it would fall back to another face. */
 .box {
-  @apply mt-0.5 size-2.5 shrink-0 rounded-[2px] border border-current;
-}
-
-.task[data-status="doing"] .box {
-  @apply border-primary bg-primary;
-}
-
-.task[data-status="done"] .box {
-  @apply border-success-text bg-success-text;
+  @apply mt-0.5 size-2.5 shrink-0 rounded-[2px] bg-primary;
 }
 
 /* Under lg the nodes sit on each label's first line, so the track runs from the first node's centre to the last. */
