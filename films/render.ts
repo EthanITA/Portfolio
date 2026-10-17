@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { Encode, Probe, Render, type Media } from "../tools/render/index.ts";
-import { readSheet, SHEETS } from "./scripts/cues.ts";
+import { mixProblems, readSheet, SHEETS } from "./scripts/cues.ts";
 import sage from "./scripts/sage.ts";
 import { GRID, SAFE_MARGIN, type FilmScript } from "./scripts/script.ts";
 import shell from "./scripts/shell.ts";
@@ -110,7 +110,8 @@ const film = async (name: string): Promise<boolean> => {
 
   const mix = join(root, "films/audio", name, "mix.wav");
   const mixSha256 = existsSync(mix) ? createHash("sha256").update(await readFile(mix)).digest("hex") : "no mix.wav";
-  const problems = readSheet({ script, json: SHEETS[script.name], mixSha256 }).problems;
+  const json = SHEETS[script.name];
+  const problems = [...mixProblems({ json, mixSha256 }), ...readSheet({ script, json }).problems];
   const sheet: Check[] = problems.length
     ? problems.map((problem) => ({ name: "timing sheet", pass: false, detail: problem }))
     : [{ name: "timing sheet", pass: true, detail: `${script.lines.length} lines on the ${GRID.bpm} bpm grid, closing at ${script.close} ms` }];

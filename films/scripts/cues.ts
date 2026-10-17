@@ -86,11 +86,14 @@ const spoken = ({ cue, script, problems }: { cue: Data | undefined; script: Film
   return { text: line, voice, onsetMs, endMs, words: timed, anchor: { word: anchorWord, beatMs } };
 };
 
-export const readSheet = ({ script, json, mixSha256 }: { script: FilmScript; json: unknown; mixSha256: string }): { sheet: Sheet; problems: string[] } => {
+export const mixProblems = ({ json, mixSha256 }: { json: unknown; mixSha256: string }): string[] => {
+  const measured = text(record(json), "mixSha256");
+  return measured === mixSha256 ? [] : [`mixSha256 is ${String(measured)}, while the mix.wav beside it hashes to ${mixSha256}`];
+};
+
+export const readSheet = ({ script, json }: { script: FilmScript; json: unknown }): { sheet: Sheet; problems: string[] } => {
   const problems: string[] = [];
   const root = record(json);
-  const measured = text(root, "mixSha256");
-  if (measured !== mixSha256) problems.push(`mixSha256 is ${String(measured)}, while the mix.wav beside it hashes to ${mixSha256}`);
   const bed = record(root?.bed);
   const grid = record(bed?.grid);
   for (const key of ["bpm", "beatMs", "barMs", "originMs"] as const) {

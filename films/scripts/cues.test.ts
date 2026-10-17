@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, it } from "node:test";
-import { readSheet, SHEETS } from "./cues.ts";
+import { mixProblems, readSheet, SHEETS } from "./cues.ts";
 import sage from "./sage.ts";
 import { GRID, type FilmScript } from "./script.ts";
 import shell from "./shell.ts";
@@ -31,7 +31,7 @@ const fixture = (script: FilmScript): Fixture => ({
 const problems = (script: FilmScript, change: (sheet: Fixture) => void = () => {}): string[] => {
   const sheet = fixture(script);
   change(sheet);
-  return readSheet({ script, json: sheet, mixSha256: MIX }).problems;
+  return [...mixProblems({ json: sheet, mixSha256: MIX }), ...readSheet({ script, json: sheet }).problems];
 };
 
 const line = (sheet: Fixture, index: number): Line => {
@@ -55,8 +55,9 @@ describe("readSheet", () => {
       const mixSha256 = createHash("sha256")
         .update(await readFile(join(import.meta.dirname, "../audio", script.name, "mix.wav")))
         .digest("hex");
-      const { sheet, problems: found } = readSheet({ script, json: SHEETS[script.name], mixSha256 });
-      assert.deepEqual(found, [], script.name);
+      const json = SHEETS[script.name];
+      const { sheet, problems: found } = readSheet({ script, json });
+      assert.deepEqual([...mixProblems({ json, mixSha256 }), ...found], [], script.name);
       assert.equal(sheet.lines.length, script.lines.length, script.name);
     }
   });
@@ -274,7 +275,7 @@ describe("readSheet", () => {
     sheet.cues.push({ stem: "voice", voice: "person", text: "I want to join the standup", onsetMs: 5800, endMs: 7700, words: [] });
     const cue = sheet.cues.find((item) => item.text === handBack);
     if (cue) cue.voice = "sage";
-    const { sheet: read, problems: found } = readSheet({ script: sage, json: sheet, mixSha256: MIX });
+    const { sheet: read, problems: found } = readSheet({ script: sage, json: sheet });
     assert.deepEqual(found, []);
     assert.equal(read.lines.find((item) => item.text === handBack)?.voice, "sage");
     assert.equal(read.lines.length, sage.lines.length);
