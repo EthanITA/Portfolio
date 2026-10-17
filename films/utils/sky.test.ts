@@ -18,8 +18,8 @@ const said = (text: string, at: number, anchor?: string): Spoken => {
   return { text, voice: "narrator", onsetMs: at, endMs: words.at(-1)?.endMs ?? at, words, ...(anchor ? { anchor: { word: anchor, beatMs: at } } : {}) };
 };
 
-const planned = ({ lines, cut = "wide", fold = 30_000, violet = [] }: { lines: Spoken[]; cut?: Cut; fold?: number; violet?: string[] }): { lines: Line[]; problems: string[] } =>
-  Sky.plan({ lines, measured: lines.map(measure), cut, fold, violet });
+const planned = ({ lines, cut = "wide", fold = 30_000, end = 45_000, violet = [] }: { lines: Spoken[]; cut?: Cut; fold?: number; end?: number; violet?: string[] }): { lines: Line[]; problems: string[] } =>
+  Sky.plan({ lines, measured: lines.map(measure), cut, fold, end, violet });
 
 const rows = (line: Line): string[] => line.rows.map((row) => row.words.map((word) => word.text).join(" "));
 
@@ -31,7 +31,7 @@ const first = ({ text, cut = "wide" }: { text: string; cut?: Cut }): Line => {
 
 const film = ({ script, cut }: { script: FilmScript; cut: Cut }): { lines: Line[]; problems: string[] } => {
   const { sheet } = readSheet({ script, json: SHEETS[script.name] });
-  return planned({ lines: sheet.lines, cut, fold: script.rig.until, violet: script.violet });
+  return planned({ lines: sheet.lines, cut, fold: script.rig.until, end: script.duration, violet: script.violet });
 };
 
 const named = (lines: Line[], text: string): Line => {
@@ -60,6 +60,29 @@ describe("Sky.plan", () => {
   it("refuses a line that fits no size", () => {
     const { problems } = planned({ lines: [said("Unbreakablecompoundwordthatrunspastthewindow", 1000), said("Done.", 5000)], cut: "tall" });
     assert.deepEqual(problems, ['line "Unbreakablecompoundwordthatrunspastthewindow" fits no tall size inside 624 px']);
+  });
+
+  it("enters a word on 0 ms and ripples an anchor from 0", () => {
+    assert.deepEqual(Sky.pose({ ms: 0, at: 0, leave: 5000, swell: false }), { opacity: 0, y: SKY.rise, blur: SKY.blur, scale: 1 });
+    assert.deepEqual(Sky.pose({ ms: SKY.enter, at: 0, leave: 5000, swell: false }), { opacity: 1, y: 0, blur: 0, scale: 1 });
+    const { lines, problems } = planned({ lines: [said("Runs now.", 0, "Runs"), said("That click stays yours.", 4000)] });
+    assert.deepEqual(problems, []);
+    assert.deepEqual(lines[0]?.rows[0]?.words[0]?.letters?.map((letter) => letter.at), [0, 15, 30, 45]);
+  });
+
+  it("places a zero-length word on its start like any other", () => {
+    const line = said("A quick word.", 1000);
+    const quick = line.words[1];
+    if (quick) quick.endMs = quick.startMs;
+    const { lines, problems } = planned({ lines: [line, said("That click stays yours.", 5000)] });
+    assert.deepEqual(problems, []);
+    assert.equal(lines[0]?.rows.flatMap((row) => row.words).find((word) => word.text === "quick")?.at, 1250);
+  });
+
+  it("refuses a word that can't be in before the film ends, and takes one in on the last ms", () => {
+    const late = planned({ lines: [said("Done.", 1000), said("Too late.", 44_800)] });
+    assert.deepEqual(late.problems, ['"late." in "Too late." is in at 45250 ms, after the film ends at 45000']);
+    assert.deepEqual(planned({ lines: [said("Done.", 1000), said("Just in.", 44_550)] }).problems, []);
   });
 
   it("refuses a line that leaves before its words are in, or overlaps the next", () => {
