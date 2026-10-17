@@ -51,8 +51,7 @@ const overlays = new Map<number, HTMLElement>();
 const rects = new Map<number, [number, number, number, number]>();
 const sizes = new WeakMap<HTMLElement, string>();
 
-// On the page's clock rather than the scene's, so a scene that goes live late joins the ripple in step with the heading.
-let rippleAt = -Infinity;
+let rippleAt = Infinity;
 const ripple = (at: number): void => {
   if (!film && !reduced.value) rippleAt = at;
 };
@@ -112,6 +111,7 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
   let pan = 0;
   let followed = -1;
   let follow = { at: -Infinity, pan, levels: [...levels] };
+  let liveAt = 0;
 
   const framePx = (): number => Math.max(view.height, (view.width * 9) / 16);
   // A box narrower than the gates crops them under cover framing, so the camera eases along the line to whichever gate the page lights.
@@ -140,7 +140,10 @@ const setup: SceneSetup = async ({ canvas: surface, film: filming, mobile }) => 
     stage.camera.updateMatrixWorld();
     if (gates.value) gates.value.style.transform = `translate3d(${-pan * unit * framePx()}px, 0, 0)`;
 
-    const rippled = performance.now() - rippleAt;
+    const now = performance.now();
+    liveAt ||= now;
+    // The later of the heading landing and the first live frame, so the sweep never plays under the poster or below the fold.
+    const rippled = now - Math.max(rippleAt, liveAt);
     const lit = SPOTS.map(({ n }, i) => {
       const from = follow.levels[i] ?? 0;
       levels[i] = from + ((n === lighting ? 1 : 0) - from) * k;
