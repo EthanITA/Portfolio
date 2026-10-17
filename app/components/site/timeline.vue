@@ -86,23 +86,28 @@ const measure = (): void => {
   });
 };
 
-const arrive = (node: HTMLElement): void => {
+const arrive = (node: HTMLElement, settled: boolean): void => {
   const dot = node.querySelector<HTMLElement>("[data-dot]");
   const rise = [...node.querySelectorAll<HTMLElement>("[data-enter]:not([data-dot])")];
+  const fills = [...node.querySelectorAll<HTMLElement>("[data-fill]")];
   for (const el of [dot, ...rise]) if (el) el.dataset.entered = "";
+  if (settled) {
+    for (const fill of fills) fill.style.removeProperty("transform");
+    return;
+  }
   if (dot) animate(dot, { duration: MOTION_DURATION.base, ease: MOTION_EASE.out, opacity: [0, 1], scale: [0.95, 1] });
   animate(rise, { duration: MOTION_DURATION.base, delay: stagger(STAGGER_MS), ease: MOTION_EASE.out, opacity: [0, 1], translateY: [8, 0] });
-  node.querySelectorAll<HTMLElement>("[data-fill]").forEach((fill, at) => {
+  fills.forEach((fill, at) => {
     animate(fill, { scaleX: [0, Number(fill.dataset.fill)], duration: BAR_MS, delay: MOTION_DURATION.base + at * BAR_STAGGER_MS, ease: MOTION_EASE.out });
   });
 };
 
-const reach = (progress: number): void => {
+const reach = (progress: number, settled = false): void => {
   lit.value = stops.findLastIndex((stop) => progress >= stop);
   nodes().forEach((node, i) => {
     if (reached.value[i] || progress < (stops[i] ?? 1)) return;
     reached.value[i] = true;
-    arrive(node);
+    arrive(node, settled);
   });
 };
 
@@ -119,11 +124,14 @@ onMounted(async () => {
   const timeline = root.value;
   const drawn = animate(line, { draw: ["0 0", "0 1"], ease: "linear", autoplay: false });
   draw = drawn;
+  const goal = (): number => {
+    const rect = timeline.getBoundingClientRect();
+    return Math.min(Math.max((innerHeight / 2 - rect.top) / rect.height, 0), 1);
+  };
+  // Nodes already passed on a restored scroll land as they were left, so the seed replays no entrance.
+  reach(goal(), true);
   scrub = useScrub({
-    goal: () => {
-      const rect = timeline.getBoundingClientRect();
-      return Math.min(Math.max((innerHeight / 2 - rect.top) / rect.height, 0), 1);
-    },
+    goal,
     update: (progress) => {
       drawn.seek(progress * drawn.duration);
       reach(progress);
