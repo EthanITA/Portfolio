@@ -25,10 +25,7 @@ export default {
   violet: ["Approve", "Reject", "⌘Z", "You", "decide", "yours"],
   keys: SIDECAR_SCRIPT.keys,
   waits: [],
-  island: [
-    { at: 0, until: 3000, shape: "island", open: 1000 },
-    { at: LINE - 600, shape: "island", draw: LINE, y: 0.25 },
-  ],
+  island: { carry: 500 },
   rules: [{ anchor: "seam", at: SEAM }],
   stops: [{ at: SEAM, until: FOLD }],
   rig: {
