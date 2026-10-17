@@ -62,10 +62,9 @@ export type RatedAsk = { ask: string; tier: Tier; reason?: string; command: stri
 
 const rated = ({ tier, reason, command }: Asked): Omit<RatedAsk, "ask"> => ({ tier, command, ...(reason ? { reason } : {}) });
 
-// The five suggest records captured from the real CLI (ai-shell-capture.md), the short find included for tight spaces.
+// The four suggest records captured from the real CLI (ai-shell-capture.md), one per ask.
 export const RATED_ASKS: RatedAsk[] = [
   { ask: ASK_FIND, ...rated(RECORDS.find) },
-  { ask: "? find the five biggest files in here", tier: "safe", command: "find . -type f -exec stat -f '%z %N' {} + | sort -rn | head -5" },
   { ask: ASK_DIST, ...rated(RECORDS.dist) },
   { ask: ASK_PUSH, ...rated(RECORDS.push) },
   { ask: "? commit the staged changes with a generated message", ...rated(RECORDS.commit) },
