@@ -9,6 +9,7 @@ import {
   ExtrudeGeometry,
   Fog,
   Group,
+  LineBasicMaterial,
   Mesh,
   MeshBasicMaterial,
   MeshPhysicalMaterial,
@@ -25,18 +26,13 @@ import {
 } from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
+import type { CameraPreset } from "./camera";
 import { currentTheme } from "./theme";
 import type { StageTheme } from "./theme";
 
+export { STAGE_CAMERA } from "./camera";
+export type { CameraPreset, Vec3 } from "./camera";
 export type { StageTheme };
-export type Vec3 = readonly [number, number, number];
-export type CameraPreset = { fov: number; position: Vec3; target: Vec3 };
-
-export const STAGE_CAMERA = {
-  hero: { fov: 28, position: [0, 0.63, 6], target: [0, 0, 0] },
-  line: { fov: 28, position: [0, 1.9, 7.6], target: [0, 0, -0.4] },
-  fence: { fov: 28, position: [0, 1.15, 10.5], target: [0, 0.3, 0] },
-} as const satisfies Record<string, CameraPreset>;
 
 export const ISLAND = { width: 2.4, height: 0.56, depth: 0.2, radius: 0.28, core: 0.86, lineGap: 0.12, line: 1.2 } as const;
 
@@ -109,6 +105,7 @@ type Materials = {
   halo: SpriteMaterial;
   ink: MeshBasicMaterial;
   border: MeshBasicMaterial;
+  grid: LineBasicMaterial;
 };
 
 export type Role = keyof Materials;
@@ -123,7 +120,8 @@ const glow = (): CanvasTexture => {
   const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 64;
-  const context = canvas.getContext("2d");
+  // A CPU-backed canvas uploads to WebGL without the GPU readback stall Chrome warns about.
+  const context = canvas.getContext("2d", { willReadFrequently: true });
   if (context) {
     const gradient = context.createRadialGradient(128, 128, 0, 128, 128, 128);
     gradient.addColorStop(0, "rgba(255,255,255,1)");
@@ -154,6 +152,7 @@ const make: { [R in Role]: () => Materials[R] } = {
   halo: () => new SpriteMaterial({ map: glow(), opacity: 0.3, depthWrite: false }),
   ink: () => new MeshBasicMaterial({ transparent: true, depthWrite: false }),
   border: () => new MeshBasicMaterial({ transparent: true, depthWrite: false }),
+  grid: () => new LineBasicMaterial({ transparent: true, opacity: 0.55, depthWrite: false }),
 };
 
 const paint = (material: Material, role: Role, palette: Palette): void => {
@@ -164,6 +163,7 @@ const paint = (material: Material, role: Role, palette: Palette): void => {
   else if (role === "halo" && material instanceof SpriteMaterial) material.color.copy(palette.primary);
   else if (role === "ink" && material instanceof MeshBasicMaterial) material.color.copy(palette.ink);
   else if (role === "border" && material instanceof MeshBasicMaterial) material.color.copy(palette.border);
+  else if (role === "grid" && material instanceof LineBasicMaterial) material.color.copy(palette.border);
 };
 
 export const slab = (o: { width: number; height: number; depth: number; radius: number }): ExtrudeGeometry => {
@@ -203,6 +203,7 @@ export type Stage = {
   camera: PerspectiveCamera;
   readonly palette: Palette;
   material: <R extends Role>(role: R) => Materials[R];
+  discard: (...materials: Material[]) => void;
   aim: (preset: CameraPreset) => void;
   setPalette: (next: Palette, instant?: boolean) => Promise<StageTheme>;
   advance: (dt: number) => void;
@@ -256,6 +257,13 @@ export const createStage = ({ canvas, camera: preset, film, mobile, frame = 16 /
     tracked.set(created, role);
     paint(created, role, palette);
     return created;
+  };
+
+  const discard = (...materials: Material[]): void => {
+    materials.forEach((m) => {
+      tracked.delete(m);
+      m.dispose();
+    });
   };
 
   const applyPalette = (): void => {
@@ -329,6 +337,7 @@ export const createStage = ({ canvas, camera: preset, film, mobile, frame = 16 /
       return palette;
     },
     material,
+    discard,
     aim,
     setPalette,
     advance,
@@ -348,6 +357,7 @@ export type VioletLine = {
   group: Group;
   bar: Mesh<PlaneGeometry, MeshStandardMaterial>;
   set: (o: { opacity?: number; intensity?: number; draw?: number }) => void;
+  dispose: () => void;
 };
 
 export const createLine = (stage: Stage, o: { length: number; thickness?: number }): VioletLine => {
@@ -367,7 +377,13 @@ export const createLine = (stage: Stage, o: { length: number; thickness?: number
     reveal.scale.x = Math.max(draw, 0.0001);
     reveal.position.x = (-(1 - draw) * o.length) / 2;
   };
-  return { group, bar, set };
+  const dispose = (): void => {
+    group.removeFromParent();
+    bar.geometry.dispose();
+    halo.geometry.dispose();
+    stage.discard(bar.material, halo.material);
+  };
+  return { group, bar, set, dispose };
 };
 
 export type Island = {
@@ -375,7 +391,7 @@ export type Island = {
   body: Group;
   glass: Mesh<ExtrudeGeometry, MeshPhysicalMaterial>;
   core: Mesh<ExtrudeGeometry, MeshStandardMaterial>;
-  pose: (o: { ms: number; broken?: boolean; draw?: number; scale?: number }) => void;
+  pose: (o: { ms: number; broken?: boolean; draw?: number; scale?: number; breathe?: number }) => void;
 };
 
 export const createIsland = (stage: Stage): Island => {
@@ -401,8 +417,8 @@ export const createIsland = (stage: Stage): Island => {
   });
   group.add(body, whole.group, ...dashes.map((d) => d.group));
 
-  const pose = ({ ms, broken, draw = 1, scale = 1 }: { ms: number; broken?: boolean; draw?: number; scale?: number }): void => {
-    const b = breath(ms);
+  const pose = ({ ms, broken, draw = 1, scale = 1, breathe = 1 }: { ms: number; broken?: boolean; draw?: number; scale?: number; breathe?: number }): void => {
+    const b = breath(ms) * breathe;
     body.scale.setScalar(scale * (1 + 0.012 * b));
     const opacity = 1 - 0.3 * b;
     whole.set({ opacity, draw: broken ? 0 : draw });
