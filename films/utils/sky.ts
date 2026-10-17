@@ -14,7 +14,7 @@ export const SKY = {
   gap: 8,
   pad: 0.25,
   pulse: { scale: 1.06, over: 250 },
-  dip: { scale: 0.96, over: MOTION_DURATION.press },
+  dip: { over: MOTION_DURATION.press },
 } as const;
 
 export const STEPS = {
@@ -43,6 +43,8 @@ export type Row = { width: number; words: Word[] };
 export type Line = { text: string; size: Size; at: number; leave: number; rows: Row[] };
 
 export type Pose = { opacity: number; y: number; blur: number; scale: number };
+
+export type Press = Pose & { down: number };
 
 export type PlanOptions = { lines: Spoken[]; measured: Partial<Record<Size, Widths>>[]; cut: Cut; fold: number; violet: string[] };
 
@@ -227,11 +229,13 @@ const bump = ({ ms, at, over }: { ms: number; at: number; over: number }): numbe
   return progress > 0 && progress < 1 ? Math.sin(Math.PI * progress) : 0;
 };
 
-const press = ({ ms, cap }: { ms: number; cap: Cap }): Pose => {
+// Like the design's press, a repeat lands down on its beat and eases back up, so tap tap reads as two presses.
+const sink = ({ ms, at }: { ms: number; at: number }): number => (ms >= at && ms < at + SKY.dip.over ? 1 - MOTION_EASE.out((ms - at) / SKY.dip.over) : 0);
+
+const press = ({ ms, cap }: { ms: number; cap: Cap }): Press => {
   const base = pose({ ms, at: cap.at, leave: cap.leave, swell: false });
   const pulse = Math.max(0, ...cap.pulses.map((at) => bump({ ms, at, over: SKY.pulse.over })));
-  const dip = Math.max(0, ...cap.dips.map((at) => bump({ ms, at, over: SKY.dip.over })));
-  return { ...base, scale: base.scale * (1 + (SKY.pulse.scale - 1) * pulse) * (1 - (1 - SKY.dip.scale) * dip) };
+  return { ...base, scale: base.scale * (1 + (SKY.pulse.scale - 1) * pulse), down: Math.max(0, ...cap.dips.map((at) => sink({ ms, at }))) };
 };
 
 export const Sky = { plan, pose, letters, code, caps, press };

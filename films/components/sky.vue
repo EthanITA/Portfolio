@@ -80,7 +80,11 @@ onMounted(() => defer(build()));
 
 onFrame((ms) => {
   for (const { element, ...timing } of movers) Glyphs.apply(element, Sky.pose({ ms, ...timing }));
-  for (const { element, cap } of pressed) Glyphs.apply(element, Sky.press({ ms, cap }));
+  for (const { element, cap } of pressed) {
+    const { down, ...pose } = Sky.press({ ms, cap });
+    Glyphs.apply(element, pose);
+    element.style.setProperty("--down", String(down));
+  }
 });
 </script>
 
@@ -198,6 +202,11 @@ onFrame((ms) => {
 }
 [data-cut="tall"] .film-sky-cap :deep(.kbd) {
   zoom: 2.5;
+}
+/* A press sinks each cap by its 1 px depth line, which the zoom scales with the cap. */
+.film-sky-cap :deep(kbd) {
+  translate: 0 calc(var(--down, 0) * 1px);
+  box-shadow: 0 calc((1 - var(--down, 0)) * 1px) 0 var(--border-strong);
 }
 .film-sky > .film-sky-cap {
   @apply absolute right-0 origin-bottom opacity-0;
