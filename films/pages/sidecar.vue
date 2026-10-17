@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { Seekable } from "#shared/types/seekable";
+import type { FilmSeekable } from "~~/films/composables/film";
 import script from "~~/films/scripts/sidecar";
 
-const play = useTemplateRef<Seekable>("play");
+const play = useTemplateRef<FilmSeekable>("play");
 
-useFilm({ duration: script.duration, seek: (ms) => play.value?.seek(ms) });
+useFilm({ duration: script.duration, seek: (ms) => play.value?.seek(ms), ready: async () => play.value?.ready?.() });
 </script>
 
 <template>
