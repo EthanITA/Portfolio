@@ -4,12 +4,13 @@ const { name } = defineProps<{ name: "hero" | "line" | "fence" | "play" }>();
 
 <template>
   <div class="mount" :data-mount="name">
-    <ClientOnly>
+    <ClientOnly v-if="name === 'play'">
       <slot />
       <template #fallback>
         <div class="poster" aria-hidden="true" />
       </template>
     </ClientOnly>
+    <slot v-else />
   </div>
 </template>
 
@@ -40,9 +41,5 @@ const { name } = defineProps<{ name: "hero" | "line" | "fence" | "play" }>();
 
 .poster {
   @apply bg-sunken;
-}
-
-.mount[data-mount="hero"] .poster {
-  @apply bg-transparent;
 }
 </style>
