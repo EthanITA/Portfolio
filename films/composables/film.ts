@@ -9,6 +9,7 @@ export type FilmContext = {
   timeline: Timeline;
   onFrame: (render: (ms: number) => Promise<void> | void) => void;
   measure: <T>(points: number[], read: (index: number) => T) => Promise<T[]>;
+  defer: (setup: Promise<unknown>) => void;
 };
 
 const FILM: InjectionKey<FilmContext> = Symbol("film");
@@ -31,7 +32,10 @@ export const useFilm = (film: FilmSeekable): FilmContext => {
     return values;
   };
 
-  const context: FilmContext = { timeline, onFrame: (render) => renders.push(render), measure };
+  // Setup that waits on fonts or layout must finish before the renderer's first seek, or a fresh page shows it unbuilt.
+  const setups: Promise<unknown>[] = [];
+
+  const context: FilmContext = { timeline, onFrame: (render) => renders.push(render), measure, defer: (setup) => setups.push(setup) };
   provide(FILM, context);
 
   onMounted(() => {
@@ -45,6 +49,7 @@ export const useFilm = (film: FilmSeekable): FilmContext => {
     };
     window.__ready = async () => {
       await document.fonts.ready;
+      await Promise.all(setups);
       await Promise.all([...document.images].map((image) => image.decode()));
       await film.ready?.();
     };

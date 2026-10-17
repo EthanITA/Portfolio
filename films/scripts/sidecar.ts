@@ -20,6 +20,7 @@ export default {
     "Claude does the work. You decide what lands.",
     "That click stays yours.",
   ],
+  violet: ["Approve", "Reject", "⌘Z", "You", "decide", "yours"],
   keys: SIDECAR_SCRIPT.keys,
   island: [
     { at: 0, until: 3000, shape: "island", open: 1000 },

@@ -13,6 +13,7 @@ const presses = computed(() => script.keys.map((press) => ({ keys: press.key, at
       <slot />
       <FilmRule v-for="rule in script.rules" :key="rule.at" :anchor="rule.anchor" :at="rule.at" />
     </FilmRig>
+    <FilmSky :script="script" />
     <FilmTitle :at="script.title.at" :until="script.title.until" :tone="script.title.tone">{{ script.title.text }}</FilmTitle>
     <FilmKey v-for="press in presses" :key="press.at" :keys="press.keys" :at="press.at" :until="press.until" />
     <FilmEnd :at="script.end.at">{{ script.end.text }}</FilmEnd>

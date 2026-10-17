@@ -20,6 +20,7 @@ export default {
     "Stopped at Pay. It's yours to press.",
     "That click stays yours.",
   ],
+  violet: ["asks", "Return", "stops", "yours"],
   keys: SAGE_SCRIPT.keys,
   island: [{ at: LINE - 600, shape: "island", draw: LINE, y: 0.25 }],
   rules: [],
