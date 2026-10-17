@@ -33,7 +33,7 @@ export type Tone = "ink" | "violet" | "muted";
 
 export type Letter = { text: string; at: number };
 
-export type Word = { text: string; at: number; leave: number; x: number; tone: Tone; code: boolean; swell: boolean; letters?: Letter[] };
+export type Word = { text: string; index: number; at: number; leave: number; x: number; width: number; tone: Tone; code: boolean; swell: boolean; letters?: Letter[] };
 
 export type Row = { width: number; words: Word[] };
 
@@ -102,12 +102,13 @@ const place = ({ spoken, measured, cut, marked, centred }: { spoken: Spoken; mea
     let x = centred ? (WINDOW[cut].width - width) / 2 : 0;
     const words = spoken.words.slice(start, edges[row + 1]).map((word, offset): Word => {
       const index = start + offset;
+      const width = fit.widths.words[index] ?? 0;
       const code = CODE.has(word.text);
       const swell = index === anchored;
       const at = swell && anchor ? anchor.beatMs : word.startMs;
       const tone: Tone = spoken.voice !== NARRATOR ? "muted" : marked.has(bare(word.text)) ? "violet" : "ink";
-      const placed: Word = { text: word.text, at, leave: Number.POSITIVE_INFINITY, x, tone, code, swell, ...(swell && !code ? { letters: letters(word.text).map((text, n) => ({ text, at: at + n * SKY.ripple })) } : {}) };
-      x += (fit.widths.words[index] ?? 0) + fit.widths.space;
+      const placed: Word = { text: word.text, index, at, leave: Number.POSITIVE_INFINITY, x, width, tone, code, swell, ...(swell && !code ? { letters: letters(word.text).map((text, n) => ({ text, at: at + n * SKY.ripple })) } : {}) };
+      x += width + fit.widths.space;
       return placed;
     });
     return { width, words };
@@ -157,4 +158,6 @@ const pose = ({ ms, at, leave, swell }: { ms: number; at: number; leave: number;
   return { opacity: enter, y: SKY.rise * (1 - enter), blur: SKY.blur * (1 - enter), scale: 1 + (SKY.swell - 1) * (1 - settle) };
 };
 
-export const Sky = { plan, pose, letters };
+const code = (text: string): boolean => CODE.has(text);
+
+export const Sky = { plan, pose, letters, code };
