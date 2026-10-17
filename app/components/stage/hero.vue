@@ -25,13 +25,17 @@ const sineInOut = (t: number): number => 0.5 - Math.cos(Math.PI * t) / 2;
 const window01 = (ms: number, at: number, length: number): number => clamp01((ms - at) / length);
 const mix = (a: Vec3, b: Vec3, t: number): [number, number, number] => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
-// The island sits centred on the right third of a 16:9 frame from 9 units back, then glides to the hero preset.
-const restRight = (hero: CameraPreset): CameraPreset => {
-  const distance = 9;
-  const offset = (2 / 3) * distance * Math.tan((hero.fov * Math.PI) / 360) * (16 / 9);
+const restAt = (hero: CameraPreset, { distance, right, up }: { distance: number; right: number; up: number }): CameraPreset => {
+  const height = 2 * distance * Math.tan((hero.fov * Math.PI) / 360);
   const slope = (hero.position[1] - hero.target[1]) / (hero.position[2] - hero.target[2]);
-  return { fov: hero.fov, position: [-offset, hero.target[1] + distance * slope, distance], target: [-offset, hero.target[1], 0] };
+  const target: Vec3 = [-right * height, hero.target[1] - up * height, 0];
+  return { fov: hero.fov, position: [target[0], target[1] + distance * slope, distance], target };
 };
+
+// Fixed rather than measured from the layout, so one poster matches the first frame on every phone under cover framing.
+const REST = { wide: { distance: 9, right: 16 / 27, up: 0 }, narrow: { distance: 12, right: 0, up: 0.257 } } as const;
+// On phones the copy scrolls up through the island's rest spot, so the island rides out ahead and re-forms in the hero pose behind it.
+const RIDE = { speed: 1.5, until: 0.3, fadeAt: 0.45, drawAt: 0.55, length: 0.2 } as const;
 
 const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
   const { createIsland, openStage, readPalette, STAGE_CAMERA } = await import("~/utils/stage/island");
@@ -41,7 +45,7 @@ const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
   await stage.warm();
 
   const hero = STAGE_CAMERA.hero;
-  const rest = restRight(hero);
+  const rest = restAt(hero, REST.wide);
   const wide = matchMedia("(min-width: 768px)");
   const fine = matchMedia("(hover: hover) and (pointer: fine)");
 
@@ -96,13 +100,20 @@ const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
     steer(x, y, gentle);
   };
 
+  const pose = (): Pick<CameraPreset, "position" | "target"> => {
+    if (lost) return hero;
+    const glide = sineInOut(clamp01(progress));
+    if (wide.matches) return { position: mix(rest.position, hero.position, glide), target: mix(rest.target, hero.target, glide) };
+    return progress < RIDE.until ? restAt(hero, { ...REST.narrow, up: REST.narrow.up + RIDE.speed * progress }) : hero;
+  };
+
   const frame = (ms: number, dt: number): boolean => {
     const lerping = stage.advance(dt);
     if (follow) track(ms);
-    const glide = lost || !wide.matches ? 1 : sineInOut(clamp01(progress));
-    const from = lost || !wide.matches ? hero : rest;
-    const position = mix(from.position, hero.position, glide);
-    const target = mix(from.target, hero.target, glide);
+    const { position, target } = pose();
+    const reforming = !lost && !wide.matches && progress >= RIDE.until;
+    const shown = reforming ? MOTION_EASE.out(window01(progress, RIDE.fadeAt, RIDE.length)) : 1;
+    const drawn = reforming ? MOTION_EASE.out(window01(progress, RIDE.drawAt, RIDE.length)) : 1;
     // Breath and tilt fade out at the end of the glide so the handoff lands on the sequence's still frame 0.
     const calm = lost ? 1 : 1 - clamp01((progress - SETTLE_FROM) / (1 - SETTLE_FROM));
 
@@ -136,7 +147,10 @@ const setup: SceneSetup = async ({ canvas: surface, film, mobile }) => {
         draw: MOTION_EASE.out(window01(ms, ENTER.drawAt, ENTER.drawFor)),
         breathe: calm,
       });
-    } else island.pose({ ms, broken: lost, breathe: calm });
+    } else {
+      if (root.value && root.value.style.opacity !== String(shown)) root.value.style.opacity = String(shown);
+      island.pose({ ms, broken: lost, scale: 0.95 + 0.05 * shown, draw: drawn, breathe: calm });
+    }
 
     stage.render();
     // From progress 1 calm is 0, so the frame stops changing and the sequence covers it; rendering it again is waste.
