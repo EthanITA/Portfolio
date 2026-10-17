@@ -269,7 +269,7 @@ onBeforeUnmount(() => {
 }
 
 .small {
-  @apply typo-caption max-w-xl text-subtle;
+  @apply typo-caption max-w-xl text-muted;
 }
 
 .entries {
