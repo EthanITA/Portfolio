@@ -35,7 +35,7 @@ const { slug, numbers } = defineProps<{ slug: Product; numbers: Stat[] }>();
 }
 
 .value {
-  @apply font-mono text-5xl font-medium tracking-tight whitespace-nowrap text-primary tabular-nums sm:text-6xl;
+  @apply numeral max-sm:text-5xl;
 }
 
 .unit {

@@ -302,7 +302,7 @@ onBeforeUnmount(() => {
 }
 
 .number {
-  @apply font-mono text-6xl font-medium tracking-tight whitespace-nowrap text-primary tabular-nums;
+  @apply numeral;
 }
 
 /* "272 of 272" at the number's size needs 346 px against a 277 px cell at lg, so the total steps down. */
