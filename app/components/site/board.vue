@@ -66,6 +66,8 @@ onBeforeUnmount(() => {
         <rect v-else data-mark x="3.5" y="3.5" width="9" height="9" rx="2" />
       </svg>
       <span class="sr-only">{{ spoken[task.status] }}</span>
+      <!-- A line break between inline siblings compiles to nothing, so the text twin would read "ticked#4". -->
+      {{ " " }}
       <span class="text">
         <span class="tag">#{{ task.id }} [{{ task.category }}]</span>
         {{ task.subject }}
