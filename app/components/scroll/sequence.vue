@@ -3,9 +3,9 @@ import type { ScrollObserver, Timer } from "animejs";
 
 import { createTimer, onScroll } from "animejs";
 
-import { createFrames, sequencePath, type Frames } from "~/utils/scroll/frames";
+import { createFrames, sequencePath, type Drawable, type Frames } from "~/utils/scroll/frames";
 import { MANIFEST } from "~/utils/scroll/manifest.gen";
-import { BEAT_RANGES, beatStyle, cardOpacity, fitFrame, frameAt, SEQUENCE } from "~/utils/scroll/sequence";
+import { BEAT_RANGES, beatStyle, cardOpacity, fitFrame, framePosition, SEQUENCE } from "~/utils/scroll/sequence";
 import { createTiles, SCREENS, type Screen, type TileLayer, type Targets } from "~/utils/scroll/tiles";
 
 const { beats, closing } = defineProps<{ beats: string[]; closing: string }>();
@@ -59,7 +59,7 @@ const setup = (): void => {
   let progress = 0;
   let scroll = scrollY;
   let box = { width: 0, height: 0 };
-  let drawn: { bitmap?: ImageBitmap; fit: string } = { fit: "" };
+  let drawn: { bitmap?: ImageBitmap; next?: ImageBitmap; mix: string; fit: string } = { mix: "", fit: "" };
   let breakFrame: ImageBitmap | undefined;
   let stamped = { progress: "", frame: -1 };
   let documentTargets: Targets = {};
@@ -75,20 +75,37 @@ const setup = (): void => {
     if (section.dataset.pinned !== pinned) section.dataset.pinned = pinned;
   };
 
+  const exact = (index: number): Drawable | undefined => {
+    const drawable = frames.best(index);
+    return drawable?.index === index && !drawable.floor ? drawable : undefined;
+  };
+
   const viewTargets = (): Targets =>
     Object.fromEntries(Object.entries(documentTargets).map(([screen, rect]) => [screen, { ...rect, y: rect.y - scroll }]));
 
   const draw = (): void => {
-    const index = frameAt(progress);
+    const position = framePosition(progress);
+    const index = Math.round(position);
     frames.focus(index);
-    const drawable = frames.best(index);
+    const low = Math.floor(position);
+    const base = exact(low);
+    // Frames sit 11 px of scroll apart on desktop, so the next one fades in by the remainder instead of snapping.
+    const next = base && exact(low + 1);
+    const drawable = base ?? frames.best(index);
+    const mix = next ? (position - low).toFixed(2) : "";
     const fit = fitFrame({ ...box, safe: MANIFEST.safe, progress });
     const fitted = fit.width.toFixed(1);
     if (section.dataset.fit !== String(Math.round(fit.width))) section.dataset.fit = String(Math.round(fit.width));
-    if (drawable && (drawable.bitmap !== drawn.bitmap || fitted !== drawn.fit)) {
+    if (drawable && (drawable.bitmap !== drawn.bitmap || next?.bitmap !== drawn.next || mix !== drawn.mix || fitted !== drawn.fit)) {
+      const rect = [fit.x * pixelRatio, fit.y * pixelRatio, fit.width * pixelRatio, fit.height * pixelRatio] as const;
       context.clearRect(0, 0, canvas.width, canvas.height);
-      context.drawImage(drawable.bitmap, fit.x * pixelRatio, fit.y * pixelRatio, fit.width * pixelRatio, fit.height * pixelRatio);
-      drawn = { bitmap: drawable.bitmap, fit: fitted };
+      context.drawImage(drawable.bitmap, ...rect);
+      if (next && Number(mix) > 0) {
+        context.globalAlpha = Number(mix);
+        context.drawImage(next.bitmap, ...rect);
+        context.globalAlpha = 1;
+      }
+      drawn = { bitmap: drawable.bitmap, next: next?.bitmap, mix, fit: fitted };
       if (state.value === "poster") state.value = inView ? "live" : "paused";
     }
     const last = frames.best(LAST);
@@ -128,7 +145,7 @@ const setup = (): void => {
     box = { width: boxWidth, height: boxHeight };
     canvas.width = Math.round(boxWidth * pixelRatio);
     canvas.height = Math.round(boxHeight * pixelRatio);
-    drawn = { fit: "" };
+    drawn = { mix: "", fit: "" };
     tiles?.resize({ width: innerWidth, height: innerHeight, fit: fitFrame({ ...box, safe: MANIFEST.safe }) });
     scroll = scrollY;
     documentTargets = Object.fromEntries(
