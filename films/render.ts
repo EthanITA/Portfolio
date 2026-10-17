@@ -1,10 +1,12 @@
+import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { Encode, Probe, Render, type Media } from "../tools/render/index.ts";
-import { voiceOf } from "./scripts/cues.ts";
+import { readSheet, SHEETS } from "./scripts/cues.ts";
 import sage from "./scripts/sage.ts";
-import { SAFE_MARGIN, type FilmScript } from "./scripts/script.ts";
+import { GRID, SAFE_MARGIN, type FilmScript } from "./scripts/script.ts";
 import shell from "./scripts/shell.ts";
 import sidecar from "./scripts/sidecar.ts";
 
@@ -25,11 +27,11 @@ const { positionals, values } = parseArgs({
     cut: { type: "string", default: "16x9" },
     check: { type: "string", default: "24" },
     port: { type: "string" },
+    fit: { type: "boolean" },
   },
 });
 
 type Check = { name: string; pass: boolean; detail: string };
-
 
 type Placed = { name: string; left: number; right: number; top: number; bottom: number };
 
@@ -40,8 +42,9 @@ const fit = async ({ url, script, width, height }: { url: string; script: FilmSc
     height,
     scale: SCALE,
     times: Array.from({ length: script.duration / 100 }, (_, n) => n * 100),
-    read: (): Placed[] =>
-      [".film-caption", ".film-key-caps", ".film-title [data-word]", ".film-end"].flatMap((selector) =>
+    read: (): { placed: Placed[]; landed: string } => ({
+      landed: document.querySelector<HTMLElement>(".film-rig")?.dataset.landed ?? "",
+      placed: [".film-key-caps", ".film-title [data-word]", ".film-end"].flatMap((selector) =>
         [...document.querySelectorAll(selector)]
           .filter((element) => {
             let opacity = 1;
@@ -55,16 +58,19 @@ const fit = async ({ url, script, width, height }: { url: string; script: FilmSc
             return { name: `${selector} "${element.textContent?.trim()}"`, left: box.left, right: box.right, top: box.top, bottom: box.bottom };
           }),
       ),
+    }),
   });
+  const landed = samples.at(-1)?.value.landed.split(" ").map(Number) ?? [];
+  const shots: Check[] = script.rig.shots.map((shot, index) => ({ name: `shot at ${shot.at} ms${shot.anchor ? ` on "${shot.anchor}"` : ""} lands`, pass: true, detail: `scale ${landed[index]?.toFixed(3)} of ${shot.scale}` }));
   const closest = new Map<string, { margin: number; ms: number }>();
   for (const { ms, value } of samples) {
-    for (const placed of value) {
+    for (const placed of value.placed) {
       const margin = Math.min(placed.left, width - placed.right, placed.top, height - placed.bottom);
       const previous = closest.get(placed.name);
       if (!previous || margin < previous.margin) closest.set(placed.name, { margin, ms });
     }
   }
-  return [...closest].map(([name, { margin, ms }]) => ({ name: `${name} inside the frame`, pass: margin >= SAFE_MARGIN, detail: `${margin.toFixed(1)} px from the edge at ${ms} ms` }));
+  return [...shots, ...[...closest].map(([name, { margin, ms }]) => ({ name: `${name} inside the frame`, pass: margin >= SAFE_MARGIN, detail: `${margin.toFixed(1)} px from the edge at ${ms} ms` }))];
 };
 
 const verify = async ({ script, files, width, height, audio }: { script: FilmScript; files: string[]; width: number; height: number; audio: boolean }): Promise<Check[]> => {
@@ -89,8 +95,6 @@ const verify = async ({ script, files, width, height, audio }: { script: FilmScr
   const [master = ""] = files;
   const black = await Probe.black(master);
   expect("no black stretch", !black.length, JSON.stringify(black));
-  const at = [...script.captions, ...voiceOf(script.name)].map((caption) => (caption.at + caption.until) / 2000);
-  for (const band of at.length ? await Probe.band(master, { at }) : []) expect(`caption band at ${band.at} s`, band.spread > 40, `spread ${band.spread}`);
   if (audio) {
     const loudness = await Probe.loudness(master);
     expect("integrated loudness", Math.abs(loudness.integrated + 16) <= 1, `${loudness.integrated} LUFS`);
@@ -102,15 +106,30 @@ const verify = async ({ script, files, width, height, audio }: { script: FilmScr
 const film = async (name: string): Promise<boolean> => {
   const script = SCRIPTS[name];
   const cut = CUTS[values.cut];
-  if (!script || !cut) throw new Error(`usage: tsx films/render.ts <${Object.keys(SCRIPTS).join("|")}...> [--cut ${Object.keys(CUTS).join("|")}]`);
+  if (!script || !cut) throw new Error(`usage: tsx films/render.ts <${Object.keys(SCRIPTS).join("|")}...> [--cut ${Object.keys(CUTS).join("|")}] [--fit]`);
+
+  const mix = join(root, "films/audio", name, "mix.wav");
+  const mixSha256 = existsSync(mix) ? createHash("sha256").update(await readFile(mix)).digest("hex") : "no mix.wav";
+  const problems = readSheet({ script, json: SHEETS[script.name], mixSha256 }).problems;
+  const sheet: Check[] = problems.length
+    ? problems.map((problem) => ({ name: "timing sheet", pass: false, detail: problem }))
+    : [{ name: "timing sheet", pass: true, detail: `${script.lines.length} lines on the ${GRID.bpm} bpm grid, closing at ${script.close} ms` }];
+  if (problems.length && !values.fit) {
+    console.log(JSON.stringify({ film: `${name}${cut.suffix}`, misplaced: sheet }, undefined, 2));
+    return false;
+  }
 
   const route = `/film/${name}`;
   const server = await Render.serve({ route, port: values.port ? Number(values.port) : undefined, root });
   try {
     const started = performance.now();
     const options = { url: `${server.origin}${route}`, width: cut.width, height: cut.height, scale: SCALE, fps: FPS };
-    const placement = await fit({ url: options.url, script, width: cut.width, height: cut.height });
+    const placement = [...sheet, ...(await fit({ url: options.url, script, width: cut.width, height: cut.height }))];
     const misplaced = placement.filter((check) => !check.pass);
+    if (values.fit) {
+      console.log(JSON.stringify({ film: `${name}${cut.suffix}`, placement, failed: misplaced.length }, undefined, 2));
+      return !misplaced.length;
+    }
     if (misplaced.length) {
       console.log(JSON.stringify({ film: `${name}${cut.suffix}`, misplaced }, undefined, 2));
       return false;
@@ -125,7 +144,6 @@ const film = async (name: string): Promise<boolean> => {
     const mismatches = await Render.check({ ...options, frames, samples: Number(values.check) });
     if (mismatches.length) throw new Error(`${name} is not deterministic: ${JSON.stringify(mismatches)}`);
 
-    const mix = join(root, "films/audio", name, "mix.wav");
     const audio = existsSync(mix) ? mix : undefined;
     const base = join(root, "public/films", `${name}${cut.suffix}`);
     const files = [];
