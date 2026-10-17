@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { Surface } from "@cela/design";
 import { spotlight } from "@cela/design/utils/motion";
-import { type JSAnimation, type ScrollObserver, animate, onScroll } from "animejs";
+import { type TextSplitter, splitText } from "animejs";
 
-import { SCRUB_SMOOTH, motionOn } from "~/utils/site/motion";
+import { BOARD } from "~/utils/site/board";
+import { motionOn } from "~/utils/site/motion";
 import { seo } from "~/utils/site/seo";
 
 type Rule = { rule: string; why: string };
+type Step = { step: string; receipt?: string; task?: boolean };
 
 useSeoMeta({ title: seo.how.title, description: seo.how.description });
 defineOgImage("Card", { title: seo.how.title, sub: "Agents write a lot of my code." });
@@ -34,28 +36,158 @@ const rules: Rule[] = [
   },
 ];
 
-const loop = ["Read", "Board", "Build", "Prove", "Review", "Ship"];
+// The home's board shows this same task ticked; here it is still being built when the loop reaches Board.
+const [building] = BOARD;
+
+const loop: Step[] = [
+  { step: "Read", receipt: "what I typed, what I meant, what it forces" },
+  { step: "Board", receipt: building && `#${building.id} [${building.category}] ${building.subject}`, task: true },
+  { step: "Build", receipt: "fix(scroll): crossfade the two frames around the scroll position" },
+  { step: "Prove", receipt: "check.ts: 0 failures" },
+  { step: "Review" },
+  { step: "Ship", receipt: "merged into main" },
+];
+
+// The lag of the site's SCRUB_SMOOTH scrubs, kept on the clock so a long frame or a background tab can't strand the runner.
+const RUNNER_MS = 125;
+
+type Receipt = { el: HTMLElement; node: number; next: number; chars: HTMLElement[]; shown: number };
 
 const cards = useTemplateRef<HTMLElement>("cards");
+const panel = useTemplateRef<HTMLElement>("panel");
+const heading = useTemplateRef<HTMLElement>("heading");
+const fence = useTemplateRef<{ ripple: (at: number) => void }>("fence");
 const stepper = useTemplateRef<HTMLElement>("stepper");
 const rail = useTemplateRef<HTMLElement>("rail");
-let travel: JSAnimation | undefined;
-let scroller: ScrollObserver | undefined;
+const current = ref(0);
+
+let landing: IntersectionObserver | undefined;
+let landed = 0;
+let pending = 0;
+let receipts: Receipt[] = [];
+let splits: TextSplitter[] = [];
+let runner = 0;
+let last = 0;
+let frame = 0;
+let scrubbing = false;
+let sizes: ResizeObserver | undefined;
 
 const highlight = (gate: number): void => {
   const card = cards.value?.querySelector<HTMLElement>(`[data-rule="${gate}"]`);
   if (card) spotlight(card);
 };
 
+// From md the line is the viewport's centre; under md it is the middle of what the sticky fence leaves visible below it.
+const readingLine = (): number => {
+  if (matchMedia("(min-width: 768px)").matches || !panel.value) return innerHeight / 2;
+  const stuck = Number.parseFloat(getComputedStyle(panel.value).top) + panel.value.offsetHeight;
+  return (stuck + innerHeight) / 2;
+};
+
+const read = (): void => {
+  const line = readingLine();
+  const rows = [...(cards.value?.querySelectorAll<HTMLElement>("[data-rule]") ?? [])];
+  current.value = rows.filter((row) => row.getBoundingClientRect().top <= line).length;
+};
+
+// The end clamps to the page's last scroll position, a pixel early since scrollHeight is rounded, so a stepper near the bottom still reaches 1.
+const goal = (el: HTMLElement): number => {
+  const top = el.getBoundingClientRect().top;
+  const end = Math.max(innerHeight / 2, top + scrollY + 1 - (document.documentElement.scrollHeight - innerHeight));
+  return Math.min(1, Math.max(0, (innerHeight - top) / Math.max(1, innerHeight - end)));
+};
+
+// A receipt types across the runner's travel from its node to the next, so a slow scroll is the typewriter and a fling types in the smoothing's tail.
+const type = (receipt: Receipt): void => {
+  const length = receipt.chars.length;
+  const through = runner >= receipt.next ? 1 : (runner - receipt.node) / (receipt.next - receipt.node);
+  const count = Math.min(length, Math.max(0, Math.ceil(length * through)));
+  if (count === receipt.shown) return;
+  for (let k = count; k < receipt.shown; k++) receipt.chars[k]?.style.setProperty("opacity", "0");
+  for (let k = receipt.shown; k < count; k++) receipt.chars[k]?.style.removeProperty("opacity");
+  receipt.shown = count;
+  receipt.el.toggleAttribute("data-typed", count > 0);
+};
+
+// Everything is read off the runner, so no queued work or dropped event can leave a receipt it has passed short.
+const step = (now: number): void => {
+  frame = 0;
+  if (!stepper.value || !rail.value) return;
+  const to = goal(stepper.value);
+  runner = to + (runner - to) * Math.exp(-(last ? now - last : 1000 / 60) / RUNNER_MS);
+  if (Math.abs(to - runner) < 0.0005) runner = to;
+  rail.value.style.translate = `${runner * 100}% ${runner * 100}%`;
+  receipts.forEach(type);
+  const settled = runner === to;
+  last = settled ? 0 : now;
+  if (!settled) frame = requestAnimationFrame(step);
+};
+
+const wake = (): void => {
+  if (scrubbing && !frame) frame = requestAnimationFrame(step);
+};
+
+// Counted from the rects on every scrolled frame: an observer on the line misses a jump that lands its gap between two cards.
+const onScrolled = (): void => {
+  cancelAnimationFrame(pending);
+  pending = requestAnimationFrame(read);
+  wake();
+};
+
+const land = (): void => {
+  landed = performance.now();
+  fence.value?.ripple(landed);
+};
+
+watch(fence, (scene) => {
+  if (scene && landed) scene.ripple(landed);
+});
+
+// The runner sits on node i at i fifths of its travel; a receipt is whole at the next node, and Ship, the last, at the end itself.
+const prepare = (el: HTMLElement): Receipt[] =>
+  [...el.querySelectorAll<HTMLElement>("[data-receipt]")].map((receipt) => {
+    const i = Number(receipt.dataset.receipt);
+    const parts = [...receipt.querySelectorAll<HTMLElement>("[data-type]")].map((part) => splitText(part, { chars: true }));
+    splits.push(...parts);
+    const chars = parts.flatMap((part) => part.chars as HTMLElement[]);
+    for (const char of chars) char.style.opacity = "0";
+    return { el: receipt, node: i / (loop.length - 1), next: Math.min(1, (i + 1) / (loop.length - 1)), chars, shown: 0 };
+  });
+
 onMounted(() => {
-  if (!stepper.value || !rail.value || !motionOn()) return;
-  scroller = onScroll({ target: stepper.value, enter: "bottom top", leave: "min+=50% top", sync: SCRUB_SMOOTH });
-  travel = animate(rail.value, { ease: "linear", translateX: ["0%", "100%"], translateY: ["0%", "100%"], autoplay: scroller });
+  read();
+  window.addEventListener("scroll", onScrolled, { passive: true });
+  window.addEventListener("resize", onScrolled);
+  if (!motionOn()) return;
+  if (heading.value) {
+    landing = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        landing?.disconnect();
+        land();
+      },
+      { rootMargin: "0px 0px -10% 0px", threshold: 0.1 },
+    );
+    landing.observe(heading.value);
+  }
+  if (!stepper.value) return;
+  receipts = prepare(stepper.value);
+  runner = goal(stepper.value);
+  scrubbing = true;
+  sizes = new ResizeObserver(wake);
+  sizes.observe(document.body);
+  // Drawn before the first paint, so a scroll restored at the bottom shows five whole receipts with nothing replayed.
+  step(performance.now());
 });
 
 onBeforeUnmount(() => {
-  travel?.revert();
-  scroller?.revert();
+  window.removeEventListener("scroll", onScrolled);
+  window.removeEventListener("resize", onScrolled);
+  cancelAnimationFrame(pending);
+  cancelAnimationFrame(frame);
+  landing?.disconnect();
+  sizes?.disconnect();
+  splits.forEach((split) => split.revert());
 });
 </script>
 
@@ -66,19 +198,27 @@ onBeforeUnmount(() => {
       <p v-enter.now.wide="320" class="lead">Agents write a lot of my code. I wrote the rules they work under, I review what they ship, and nothing goes out under my name that I can't explain.</p>
     </header>
 
-    <ol ref="cards" class="rules wrap">
-      <Surface v-for="(item, i) in rules" :key="item.rule" v-enter.stagger as="li" class="rule" :data-rule="i + 1">
-        <span class="index">{{ i + 1 }}</span>
-        <h2 class="name">{{ item.rule }}</h2>
-        <p class="why">{{ item.why }}</p>
-      </Surface>
-    </ol>
-
-    <div class="fence wrap">
-      <SiteMount name="fence">
-        <LazyStageFence @gate="highlight" />
-      </SiteMount>
-    </div>
+    <section class="gates wrap" aria-labelledby="gates-title">
+      <div class="intro">
+        <h2 id="gates-title" ref="heading" v-enter.words class="heading">Eight rules, eight gates</h2>
+        <p v-enter class="body">
+          <span class="fine">Hover a gate for its rule. Click a change to stop it yourself.</span>
+          <span class="coarse">Tap a gate for its rule. Tap a change to stop it yourself.</span>
+        </p>
+      </div>
+      <div ref="panel" class="panel">
+        <SiteMount name="fence">
+          <LazyStageFence ref="fence" :light="current" @gate="highlight" />
+        </SiteMount>
+      </div>
+      <ol ref="cards" class="rules">
+        <Surface v-for="(item, i) in rules" :key="item.rule" v-enter as="li" class="rule" :data-rule="i + 1">
+          <span class="index">{{ i + 1 }}</span>
+          <h3 class="name">{{ item.rule }}</h3>
+          <p class="why">{{ item.why }}</p>
+        </Surface>
+      </ol>
+    </section>
 
     <section class="loop wrap" aria-labelledby="loop-title">
       <h2 id="loop-title" v-enter.words class="heading">From the ask to shipped</h2>
@@ -87,9 +227,15 @@ onBeforeUnmount(() => {
         <span class="track" aria-hidden="true" />
         <span ref="rail" class="rail" aria-hidden="true"><span class="runner" data-runner /></span>
         <ol class="steps">
-          <li v-for="step in loop" :key="step" v-enter.stagger class="step" :data-review="step === 'Review' || undefined">
+          <li v-for="(item, i) in loop" :key="item.step" v-enter.stagger class="step" :data-review="item.step === 'Review' || undefined">
             <span class="node" aria-hidden="true" />
-            <span class="label">{{ step }}</span>
+            <div class="label">
+              <span class="word">{{ item.step }}</span>
+              <span v-if="item.receipt" class="receipt" :class="{ task: item.task }" :data-receipt="i">
+                <span v-if="item.task" class="box" role="img" aria-label="In progress" />
+                <span data-type>{{ item.receipt }}</span>
+              </span>
+            </div>
           </li>
         </ol>
       </div>
@@ -99,25 +245,64 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .how {
-  @apply flex flex-col gap-20 pt-8 sm:pt-16;
+  @apply flex flex-col gap-16 pt-8 sm:gap-24 sm:pt-16;
 }
 
 .head,
-.loop {
+.loop,
+.intro {
   @apply flex flex-col gap-4;
 }
 
 .title {
-  @apply m-0 text-5xl font-bold tracking-tight sm:text-7xl;
+  @apply m-0 text-5xl font-bold tracking-tight text-balance sm:text-6xl;
 }
 
 .lead,
 .body {
-  @apply typo-body-lg max-w-2xl text-muted;
+  @apply typo-body-lg max-w-prose text-pretty text-muted;
 }
 
+.fine {
+  @apply hidden;
+}
+
+/* Hover only exists on a fine pointer, so every other device reads the tap line. */
+@media (hover: hover) and (pointer: fine) {
+  .fine {
+    @apply inline;
+  }
+
+  .coarse {
+    @apply hidden;
+  }
+}
+
+.heading {
+  @apply typo-display m-0 text-balance sm:text-4xl;
+}
+
+.gates {
+  @apply grid gap-6 md:grid-cols-2 md:gap-x-12 md:gap-y-8;
+}
+
+.intro {
+  @apply md:col-start-2;
+}
+
+/* Under md the panel sticks under the nav and its canvas backdrop hides the rules scrolling beneath it. */
+.panel {
+  @apply sticky top-0 z-1 -mx-5 h-[calc(40svh+6rem)] bg-canvas px-5 pt-20 pb-4 sm:-mx-8 sm:px-8 md:top-20 md:col-start-1 md:row-span-2 md:row-start-1 md:mx-0 md:h-[calc(100svh-5rem)] md:max-h-240 md:self-start md:p-0;
+
+  /* The violet line runs off both sides, so it fades out instead of ending on a hard crop. */
+  & :deep(.mount) {
+    mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+  }
+}
+
+/* 11rem sits 7 px under rule 8's card (183 px from md up), so the section outlasts the panel's bottom as that card crosses the centre. */
 .rules {
-  @apply m-0 grid list-none gap-4 p-0 md:grid-cols-2;
+  @apply m-0 flex list-none flex-col gap-4 p-0 md:col-start-2 md:pb-[calc(50svh-11rem)];
 }
 
 .rule {
@@ -129,50 +314,68 @@ onBeforeUnmount(() => {
 }
 
 .name {
-  @apply typo-heading-lg m-0;
+  @apply typo-heading-xl m-0 text-balance;
 }
 
 .why {
-  @apply typo-body text-muted;
-}
-
-.heading {
-  @apply typo-display m-0 sm:text-4xl;
+  @apply typo-body text-pretty text-muted;
 }
 
 /* The rail travels its own length, so clip on that axis only: x would cut the phone runner's ring at left-1.5. */
 .stepper {
-  @apply relative mt-6 overflow-y-clip sm:overflow-x-clip sm:overflow-y-visible;
+  @apply relative mt-6 overflow-y-clip lg:overflow-x-clip lg:overflow-y-visible;
 }
 
 .steps {
-  @apply m-0 grid list-none grid-rows-6 gap-0 p-0 sm:grid-cols-6 sm:grid-rows-1;
+  @apply m-0 grid list-none grid-rows-6 gap-0 p-0 lg:grid-cols-6 lg:grid-rows-1 lg:gap-6;
 }
 
 .step {
-  @apply flex min-h-14 items-center gap-4 sm:min-h-0 sm:flex-col sm:gap-3;
+  @apply flex items-start gap-4 pb-6 lg:flex-col lg:items-center lg:gap-3 lg:pb-0;
 }
 
 .node {
-  @apply relative z-1 size-3 shrink-0 rounded-full border-2 border-border-strong bg-canvas;
+  @apply relative z-1 mt-1.5 size-3 shrink-0 rounded-full border-2 border-border-strong bg-canvas lg:mt-0;
 }
 
 .label {
-  @apply typo-body-strong flex flex-col gap-1.5 sm:items-center;
+  @apply flex min-w-0 flex-col gap-1.5 lg:items-center lg:text-center;
 }
 
-.step[data-review] .label::after {
-  @apply block h-0.5 w-6 rounded-full bg-primary;
+.word {
+  @apply typo-body-strong;
+}
+
+.step[data-review] .word::after {
+  @apply mt-1.5 block h-0.5 w-6 rounded-full bg-primary lg:mx-auto;
   content: "";
 }
 
+.receipt {
+  @apply typo-caption font-mono break-words text-muted;
+}
+
+:root[data-motion="on"] .receipt:not([data-typed]) {
+  @apply invisible;
+}
+
+.task {
+  @apply flex items-start gap-2 lg:text-left;
+}
+
+/* Drawn rather than typed, because DM Mono has no ◼ and it would fall back to another face. */
+.box {
+  @apply mt-0.5 size-2.5 shrink-0 rounded-xs bg-primary;
+}
+
+/* Under lg the nodes sit on each label's first line, so the track runs from the first node's centre to the last. */
 .track,
 .rail {
-  @apply absolute top-[calc(100%/12)] bottom-[calc(100%/12)] left-1.5 w-0 sm:top-1.5 sm:right-[calc(100%/12)] sm:bottom-auto sm:left-[calc(100%/12)] sm:h-0 sm:w-auto;
+  @apply absolute top-3 bottom-[calc(100%/6-0.75rem)] left-1.5 w-0 lg:top-1.5 lg:right-[calc(100%/12)] lg:bottom-auto lg:left-[calc(100%/12)] lg:h-0 lg:w-auto;
 }
 
 .track {
-  @apply border-s border-border sm:border-s-0 sm:border-t;
+  @apply border-s border-border lg:border-s-0 lg:border-t;
 }
 
 .rail {

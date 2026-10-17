@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { links } from "~/utils/site/links";
+
+// A page that ends on its own contact band already draws the violet line and the links, so the footer joins it.
+const { endsOnContact = false } = defineProps<{ endsOnContact?: boolean }>();
 </script>
 
 <template>
-  <footer class="footer">
-    <span v-enter.line class="rule" aria-hidden="true" />
+  <footer class="footer" :class="{ joined: endsOnContact }">
+    <span v-if="!endsOnContact" v-enter.line class="rule" aria-hidden="true" />
     <div class="wrap inner">
       <p v-enter class="line">Agents wrote a lot of this site. The standard is mine.</p>
-      <ul class="contact">
+      <ul v-if="!endsOnContact" class="contact">
         <li v-enter.stagger><a class="chip-look" :href="links.linkedin" rel="me noopener" target="_blank">LinkedIn</a></li>
         <li v-enter.stagger><a class="chip-look" :href="links.github" rel="me noopener" target="_blank">GitHub</a></li>
         <li v-enter.stagger><SiteEmail class="chip-look" /></li>
@@ -24,6 +27,14 @@ import { links } from "~/utils/site/links";
 <style scoped>
 .footer {
   @apply relative mt-24 bg-sunken print:hidden;
+}
+
+.joined {
+  @apply mt-0;
+
+  & .inner {
+    @apply pt-0;
+  }
 }
 
 .rule {

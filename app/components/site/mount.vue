@@ -32,7 +32,7 @@ const { name } = defineProps<{ name: "hero" | "line" | "fence" | "play" }>();
 }
 
 .mount[data-mount="fence"] {
-  @apply h-[60svh] min-h-80 md:h-svh md:max-h-240;
+  @apply h-full;
 }
 
 .mount[data-mount="play"] {

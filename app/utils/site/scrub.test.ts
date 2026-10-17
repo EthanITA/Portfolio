@@ -49,10 +49,10 @@ const settle = (limit = 200): number => {
   return frames;
 };
 
-const scrub = (start: number, from?: number) => {
+const scrub = (start: number) => {
   const raw = { value: start };
   const seen: number[] = [];
-  const handle = useScrub({ goal: () => raw.value, update: (progress) => seen.push(progress), from });
+  const handle = useScrub({ goal: () => raw.value, update: (progress) => seen.push(progress) });
   return { raw, seen, handle, shown: (): number => seen.at(-1) ?? Number.NaN };
 };
 
@@ -75,17 +75,12 @@ describe("useScrub", () => {
     assert.equal(env.frames.size, 0);
   });
 
-  it("starts from a given seed and catches up to the goal without a raw change", () => {
-    const { seen, shown } = scrub(0.6, 0);
-    assert.equal(seen[0], 0);
-    assert.equal(env.frames.size, 1);
-    settle();
-    assert.equal(shown(), 0.6);
-    assert.ok(seen.every((value, i) => i === 0 || value >= seen[i - 1]!), "went backwards");
-  });
-
-  it("asks for no frame when the given seed is already the goal", () => {
-    scrub(0.6, 0.6);
+  it("writes nothing for a wake that leaves the value where it was", () => {
+    const { seen } = scrub(0);
+    emit("scroll");
+    emit("resize");
+    tick();
+    assert.deepEqual(seen, [0]);
     assert.equal(env.frames.size, 0);
   });
 

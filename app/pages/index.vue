@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Surface } from "@cela/design";
 import { type JSAnimation, animate } from "animejs";
 
 import { links } from "~/utils/site/links";
@@ -9,10 +8,12 @@ import { seo } from "~/utils/site/seo";
 import { PHONE_REST_BAND } from "~/utils/stage/camera";
 
 type Count = { to: number; after?: string; decimals?: number };
-type Work = { name: string; text: string; count?: Count; label: string };
+type Measure = { share: number; caption?: string };
+type Work = { name: string; text: string; count?: Count; total?: number; label: string; measure?: Measure };
 
 const DRIFT = 0.3;
 
+definePageMeta({ endsOnContact: true });
 useHead({ titleTemplate: "%s" });
 useSeoMeta({ title: seo.home.title, description: seo.home.description });
 useSchemaOrg([defineWebPage({ "@type": "ProfilePage", mainEntity: { "@id": links.identity } })]);
@@ -33,20 +34,25 @@ const work: Work[] = [
   {
     name: "LexSA",
     text: "An AI assistant for tax professionals that I built alone end to end, from retrieval and agents down to Cloudflare and the database.",
-    count: { to: 272, after: " of 272" },
+    count: { to: 272 },
+    total: 272,
     label: "commits are mine",
+    measure: { share: 1 },
   },
   {
     name: "Intellectual.AI",
     text: "A custom GPT that strangers keep using. Once #16 in Education.",
     count: { to: 200, after: "K+" },
-    label: "conversations, 4.5 stars from 90+ ratings",
+    label: "conversations",
+    // The rating gets its own bar, so 200K+ stays a count instead of reading as 90 percent of something.
+    measure: { share: 0.9, caption: "4.5 stars from 90+ ratings" },
   },
   {
     name: "Twilight",
     text: "A demand test before building anything: 979 visitors and 113 leads.",
     count: { to: 11.5, after: "%", decimals: 1 },
     label: "conversion",
+    measure: { share: 0.115 },
   },
   {
     name: "Freelance",
@@ -55,6 +61,8 @@ const work: Work[] = [
     label: "engagements",
   },
 ];
+
+const counting = reactive(new Set<string>());
 
 const hero = useTemplateRef<HTMLElement>("hero");
 const intro = useTemplateRef<HTMLElement>("intro");
@@ -151,44 +159,57 @@ onBeforeUnmount(() => {
 
     <section class="work wrap" aria-labelledby="work-title">
       <h2 id="work-title" v-enter.words class="heading">Work</h2>
+      <p v-enter class="body">One checkable number per line.</p>
       <ul class="entries">
-        <Surface v-for="entry in work" :key="entry.name" v-enter.stagger as="li" variant="flat" class="entry">
+        <li v-for="entry in work" :key="entry.name" v-enter.stagger class="entry">
           <p class="figure">
-            <SiteCount v-if="entry.count" class="number" v-bind="entry.count" />
-            <span v-else class="number since">{{ entry.label }}</span>
+            <span v-if="entry.count" class="number">
+              <SiteCount v-bind="entry.count" @start="counting.add(entry.name)" /><span v-if="entry.total" class="total"> of {{ entry.total }}</span>
+            </span>
+            <span v-else class="since">{{ entry.label }}</span>
             <span v-if="entry.count" class="label">{{ entry.label }}</span>
           </p>
+          <div v-if="entry.measure" class="measure">
+            <span v-if="entry.measure.caption" class="label">{{ entry.measure.caption }}</span>
+            <SiteMeasure :share="entry.measure.share" :play="counting.has(entry.name)" />
+          </div>
           <h3 class="name">{{ entry.name }}</h3>
           <p class="text">{{ entry.text }}</p>
-        </Surface>
+        </li>
       </ul>
     </section>
 
     <section class="standard wrap" aria-labelledby="standard-title">
-      <h2 id="standard-title" v-enter.words class="heading">How I work</h2>
-      <p v-enter class="body">Agents write a lot of my code. I wrote the rules they work under, I review what they ship, and nothing goes out under my name that I can't explain.</p>
-      <span v-enter.line class="rule" aria-hidden="true" />
-      <NuxtLink v-enter class="more" to="/how">
-        Read the rules
-        <svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-      </NuxtLink>
+      <div class="story">
+        <h2 id="standard-title" v-enter.words class="heading">How I work</h2>
+        <p v-enter class="body">Agents write a lot of my code. I wrote the rules they work under, I review what they ship, and nothing goes out under my name that I can't explain.</p>
+        <span v-enter.line class="rule" aria-hidden="true" />
+        <NuxtLink v-enter class="more" to="/how">
+          Read the rules
+          <svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        </NuxtLink>
+      </div>
+      <SiteBoard />
     </section>
 
-    <section class="contact wrap" aria-labelledby="contact-title">
-      <h2 id="contact-title" v-enter.words class="heading">Contact</h2>
-      <p v-enter class="body">LinkedIn is the fastest way to reach me. Email works too.</p>
-      <ul class="links">
-        <li v-enter.stagger><a class="chip-look" :href="links.linkedin" rel="me noopener" target="_blank">LinkedIn</a></li>
-        <li v-enter.stagger><a class="chip-look" :href="links.github" rel="me noopener" target="_blank">GitHub</a></li>
-        <li v-enter.stagger><SiteEmail class="chip-look" /></li>
-      </ul>
+    <section class="contact" aria-labelledby="contact-title">
+      <span v-enter.line class="edge" aria-hidden="true" />
+      <div class="wrap band">
+        <h2 id="contact-title" v-enter.words class="heading">Contact</h2>
+        <p v-enter class="body">LinkedIn is the fastest way to reach me. Email works too.</p>
+        <ul class="cards">
+          <li v-enter.stagger><SiteContactCard name="LinkedIn" handle="linkedin.com/in/marcodong-838453" :href="links.linkedin" /></li>
+          <li v-enter.stagger><SiteContactCard name="GitHub" handle="github.com/EthanITA" :href="links.github" /></li>
+          <li v-enter.stagger><SiteContactCard name="Email" email /></li>
+        </ul>
+      </div>
     </section>
   </div>
 </template>
 
 <style scoped>
 .home {
-  @apply flex flex-col gap-28;
+  @apply flex flex-col gap-16 sm:gap-24;
 }
 
 .opening {
@@ -238,53 +259,64 @@ onBeforeUnmount(() => {
 
 .line,
 .work,
-.standard,
-.contact {
+.story,
+.band {
   @apply flex flex-col gap-6;
 }
 
 .heading {
-  @apply typo-display m-0 sm:text-4xl;
+  @apply typo-display m-0 text-balance sm:text-4xl;
 }
 
 .body {
-  @apply typo-body-lg max-w-2xl text-muted;
+  @apply typo-body-lg max-w-prose text-pretty text-muted;
 }
 
 .small {
   @apply typo-caption max-w-xl text-muted;
 }
 
+/* The bleed lines the text up with the heading, and the clip drops the hairlines cells draw past the edge. */
 .entries {
-  @apply m-0 grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3;
+  @apply m-0 -mx-5 grid list-none gap-px overflow-hidden border-y border-border p-0 sm:-mx-6 sm:grid-cols-2 lg:grid-cols-3;
 }
 
+/* Subgrid keeps numbers, bars and names level across a row when only some cells have a bar. */
 .entry {
-  @apply flex flex-col gap-3;
+  @apply row-span-4 grid grid-rows-subgrid gap-y-0 px-5 py-8 shadow-[1px_0_var(--color-border),0_1px_var(--color-border)] sm:px-6;
 }
 
 .figure {
-  @apply flex flex-col gap-1;
+  @apply row-start-1 m-0 flex flex-col gap-2;
 }
 
 .number {
-  @apply font-mono text-5xl font-medium tracking-tight tabular-nums;
+  @apply font-mono text-6xl font-medium tracking-tight whitespace-nowrap text-primary tabular-nums;
+}
+
+/* "272 of 272" at the number's size needs 346 px against a 277 px cell at lg, so the total steps down. */
+.total {
+  @apply text-3xl;
 }
 
 .since {
-  @apply text-3xl;
+  @apply font-mono text-3xl font-medium tracking-tight whitespace-nowrap;
 }
 
 .label {
   @apply typo-caption text-muted;
 }
 
+.measure {
+  @apply row-start-2 flex flex-col gap-2 pt-4;
+}
+
 .name {
-  @apply typo-heading-lg m-0 mt-2;
+  @apply typo-heading-lg row-start-3 m-0 pt-6;
 }
 
 .text {
-  @apply typo-body text-muted;
+  @apply typo-body row-start-4 m-0 pt-2 text-muted;
 }
 
 .rule {
@@ -308,25 +340,29 @@ onBeforeUnmount(() => {
   stroke-width: 2;
 }
 
-.links {
-  @apply m-0 flex list-none flex-wrap gap-2 p-0;
+.standard {
+  @apply grid items-center gap-10 md:grid-cols-2;
+}
 
-  & .chip-look {
-    @apply min-h-11 px-3.5 transition-colors duration-(--duration-fast) ease-out;
-  }
+.contact {
+  @apply relative bg-sunken;
+}
 
-  & .chip-look:focus-visible {
-    @apply focus-ring;
-  }
+.edge {
+  @apply absolute inset-x-0 top-0 h-px origin-left bg-primary;
+}
+
+.band {
+  @apply py-14;
+}
+
+.cards {
+  @apply m-0 grid list-none gap-3 p-0 sm:grid-cols-3;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .more:hover .arrow {
     @apply translate-x-1;
-  }
-
-  .links .chip-look:hover {
-    @apply border-border-strong text-fg;
   }
 }
 </style>
