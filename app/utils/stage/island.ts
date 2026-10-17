@@ -28,7 +28,7 @@ import {
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
 import type { CameraPreset } from "./camera";
-import { HALO_HEIGHT, ISLAND } from "./camera";
+import { HALO_HEIGHT, ISLAND, slabBevel } from "./camera";
 import { currentTheme } from "./theme";
 import type { StageTheme } from "./theme";
 
@@ -167,7 +167,7 @@ const paint = (material: Material, role: Role, palette: Palette): void => {
 };
 
 export const slab = (o: { width: number; height: number; depth: number; radius: number }): ExtrudeGeometry => {
-  const bevel = Math.min(0.06, o.depth / 3);
+  const bevel = slabBevel(o.depth);
   const w = o.width - bevel * 2;
   const h = o.height - bevel * 2;
   const r = Math.max(0.001, Math.min(o.radius - bevel, w / 2, h / 2));
