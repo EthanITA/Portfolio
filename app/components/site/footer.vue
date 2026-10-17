@@ -17,7 +17,7 @@ const { endsOnContact = false } = defineProps<{ endsOnContact?: boolean }>();
         <li v-enter.stagger><NuxtLink class="chip-look" to="/cv">CV</NuxtLink></li>
       </ul>
       <div class="meta">
-        <span>Marco Dong · Milan</span>
+        <span>Marco Dong · Milan</span>{{ " " }}
         <span>Built with Nuxt, three.js and anime.js</span>
       </div>
     </div>

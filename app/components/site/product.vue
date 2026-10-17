@@ -32,7 +32,7 @@ const next = computed(() => nextFlagship(slug));
 
     <section class="next wrap" :aria-labelledby="`${slug}-next`">
       <h2 :id="`${slug}-next`" v-enter.words class="heading">Next</h2>
-      <SiteFlagship v-enter class="card" v-bind="next" />
+      <SiteFlagship v-enter class="next-card" v-bind="next" />
     </section>
   </article>
 </template>
@@ -51,7 +51,7 @@ const next = computed(() => nextFlagship(slug));
 }
 
 .sub {
-  @apply typo-heading-xl text-balance text-muted;
+  @apply typo-heading-xl max-w-prose text-balance text-muted;
 }
 
 .lead {
@@ -75,7 +75,7 @@ const next = computed(() => nextFlagship(slug));
   @apply m-0 flex list-none flex-wrap gap-2 p-0;
 }
 
-.card {
+.next-card {
   @apply md:max-w-md;
 }
 </style>
