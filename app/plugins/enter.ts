@@ -1,4 +1,4 @@
-import type { Directive } from "vue";
+import type { Directive, DirectiveBinding } from "vue";
 
 import { type EnterOptions, enter } from "~/utils/site/motion";
 
@@ -8,6 +8,7 @@ const STAGGER_STEP = 60;
 const STAGGER_CAP = 6;
 
 const options = new WeakMap<Element, EnterOptions>();
+const started = new WeakSet<Element>();
 let observer: IntersectionObserver | undefined;
 
 const watchView = (): IntersectionObserver =>
@@ -30,22 +31,28 @@ const resolve = (el: HTMLElement, value: EnterValue, staggered: boolean): EnterO
   return { ...base, delay: (base.delay ?? 0) + Math.min(index, STAGGER_CAP) * STAGGER_STEP };
 };
 
-// .now runs on mount (title blocks), the default waits for the element to scroll into view.
+const begin = (el: HTMLElement, { modifiers, value }: DirectiveBinding<EnterValue>): void => {
+  const opts = resolve(el, value, !!modifiers.stagger);
+  if (modifiers.words) opts.words = true;
+  if (modifiers.line) opts.line = true;
+  if (modifiers.now) {
+    started.add(el);
+    enter(el, opts);
+    return;
+  }
+  options.set(el, opts);
+  watchView().observe(el);
+};
+
 const vEnter: Directive<HTMLElement, EnterValue> = {
   getSSRProps: () => ({ "data-enter": "" }),
-  beforeMount(el) {
+  beforeMount(el, binding) {
     el.dataset.enter = "";
+    // Hydrating, mounted waits on every async component in the page's Suspense.
+    if (binding.modifiers.now && el.isConnected) begin(el, binding);
   },
-  mounted(el, { modifiers, value }) {
-    const opts = resolve(el, value, !!modifiers.stagger);
-    if (modifiers.words) opts.words = true;
-    if (modifiers.line) opts.line = true;
-    if (modifiers.now) {
-      enter(el, opts);
-      return;
-    }
-    options.set(el, opts);
-    watchView().observe(el);
+  mounted(el, binding) {
+    if (!started.has(el)) begin(el, binding);
   },
   beforeUnmount(el) {
     observer?.unobserve(el);
