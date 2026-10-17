@@ -93,19 +93,39 @@ export const frozen = async (file: string, { seconds = 0.5, noise = "-60dB" }: {
   });
 };
 
-export type Band = { at: number; low: number; high: number; spread: number };
+export type Sound = { sampleRate: number; samples: number };
 
-export const band = async (file: string, { at, top = 2 / 3 }: { at: number[]; top?: number }): Promise<Band[]> =>
-  Promise.all(
-    at.map(async (seconds) => {
-      const log = await ffmpeg(["-ss", seconds.toFixed(3), "-i", file, "-frames:v", "1", "-vf", `crop=iw:ih*${1 - top}:0:ih*${top},signalstats,metadata=print`, "-an", "-f", "null", "-"]);
-      const read = (key: string): number => Number(log.match(new RegExp(`lavfi\\.signalstats\\.${key}=([\\d.]+)`))?.[1] ?? Number.NaN);
-      // YLOW and YHIGH are the 10th and 90th percentiles, and a caption covers too little of the band to move them.
-      const low = read("YMIN");
-      const high = read("YMAX");
-      return { at: seconds, low, high, spread: high - low };
-    }),
-  );
+export const audio = async (file: string): Promise<Sound> => {
+  const { stdout } = await promisify(execFile)("ffprobe", ["-v", "error", "-select_streams", "a:0", "-print_format", "json", "-show_streams", file]);
+  const [stream] = (JSON.parse(stdout) as { streams: { sample_rate?: string; duration_ts?: number }[] }).streams;
+  if (!stream?.sample_rate || !stream.duration_ts) throw new Error(`${file} has no audio stream with a sample count`);
+  return { sampleRate: Number(stream.sample_rate), samples: stream.duration_ts };
+};
+
+export type Peak = { at: number; level: number };
+
+// astats resets on every window, so each level is the loudest sample inside that window alone.
+export const peaks = async (file: string, { from, to, window }: { from: number; to: number; window: number }): Promise<Peak[]> => {
+  const { sampleRate } = await audio(file);
+  const length = Math.round((window / 1000) * sampleRate);
+  const log = await ffmpeg([
+    "-ss",
+    (from / 1000).toFixed(6),
+    "-t",
+    ((to - from) / 1000).toFixed(6),
+    "-i",
+    file,
+    "-af",
+    `asetnsamples=n=${length}:p=0,astats=metadata=1:reset=1,ametadata=print:key=lavfi.astats.Overall.Peak_level`,
+    "-f",
+    "null",
+    "-",
+  ]);
+  return [...log.matchAll(/pts_time:([\d.]+)[\s\S]*?lavfi\.astats\.Overall\.Peak_level=(-?[\d.]+|-inf)/g)].map(([, at = "0", level = "-inf"]) => ({
+    at: from + Number(at) * 1000,
+    level: level === "-inf" ? Number.NEGATIVE_INFINITY : Number(level),
+  }));
+};
 
 export const loudness = async (file: string): Promise<Loudness> => {
   const log = await ffmpeg(["-i", file, "-af", "ebur128=peak=true", "-vn", "-f", "null", "-"]);

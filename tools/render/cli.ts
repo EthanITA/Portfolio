@@ -25,7 +25,6 @@ const { positionals, values } = parseArgs({
     "poster-at": { type: "string", default: "0" },
     sequence: { type: "string", multiple: true, default: [] },
     step: { type: "string", default: "1" },
-    band: { type: "string" },
   },
 });
 
@@ -37,13 +36,11 @@ const fail = (message: string): never => {
 const probe = async (files: string[]): Promise<void> => {
   for (const file of files) {
     const info = await Probe.media(file);
-    const at = values.band?.split(",").map(Number);
     const report = {
       ...info,
       black: await Probe.black(file),
       frozen: await Probe.frozen(file),
       loudness: info.audio ? await Probe.loudness(file) : undefined,
-      band: at ? await Probe.band(file, { at }) : undefined,
     };
     console.log(JSON.stringify(report, undefined, 2));
   }

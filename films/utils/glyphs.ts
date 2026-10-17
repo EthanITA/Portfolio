@@ -34,6 +34,6 @@ const apply = (element: HTMLElement, { opacity, y, blur, scale }: Pose): void =>
 export type Mover = { element: HTMLElement; at: number; leave: number; swell: boolean };
 
 const movers = (root: HTMLElement): Mover[] =>
-  [...root.querySelectorAll<HTMLElement>("[data-at]")].map((element) => ({ element, at: Number(element.dataset.at), leave: Number(element.dataset.leave), swell: "swell" in element.dataset }));
+  [...root.querySelectorAll<HTMLElement>("[data-at]")].map((element) => ({ element, at: Number(element.dataset.at), leave: Number(element.dataset.leave), swell: element.dataset.swell === "true" }));
 
 export const Glyphs = { offsets, load, apply, movers };

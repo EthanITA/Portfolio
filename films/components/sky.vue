@@ -114,7 +114,7 @@ onFrame((ms) => {
               :style="{ left: letterAt({ line: l, word: word.index, letter: n }) }"
               :data-at="letter.at"
               :data-leave="word.leave"
-              data-swell
+              data-swell="true"
               >{{ letter.text }}</span
             >
           </span>
@@ -125,7 +125,7 @@ onFrame((ms) => {
             :style="{ left: `${word.x}px`, width: `${word.width}px` }"
             :data-at="word.at"
             :data-leave="word.leave"
-            :data-swell="word.swell || undefined"
+            :data-swell="word.swell"
           >
             <span v-if="word.code" class="film-sky-chip">{{ word.text }}</span>
             <template v-else>{{ word.text }}</template>

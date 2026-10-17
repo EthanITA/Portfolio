@@ -147,11 +147,12 @@ const shoot = async ({ worker, url, ms, timeout, region }: { worker: Worker; url
 
 type Box = { x: number; y: number; width: number; height: number };
 
-// A crop on whole CSS pixels keeps every capture of the same box the same size and free of half-pixel edges.
-const snap = (box: Box): Box => {
-  const x = Math.floor(box.x);
-  const y = Math.floor(box.y);
-  return { x, y, width: Math.ceil(box.x + box.width) - x, height: Math.ceil(box.y + box.height) - y };
+// A still's size is a contract with the page that shows it, so a box off whole CSS pixels is refused rather than grown, past float noise.
+const snap = ({ box, region, ms }: { box: Box; region: string; ms: number }): Box => {
+  const edges = [box.x, box.y, box.x + box.width, box.y + box.height];
+  const [left = 0, top = 0, right = 0, bottom = 0] = edges.map(Math.round);
+  if (edges.some((edge) => Math.abs(edge - Math.round(edge)) > 0.01)) throw new Error(`${region} at ${ms} ms sits off whole pixels at ${JSON.stringify(box)}, so its still would come out a pixel off`);
+  return { x: left, y: top, width: right - left, height: bottom - top };
 };
 
 const capture = async ({ worker, ms, timeout, region }: { worker: Worker; ms: number; timeout: number; region?: string }): Promise<Buffer> => {
@@ -175,7 +176,7 @@ const capture = async ({ worker, ms, timeout, region }: { worker: Worker; ms: nu
     `frame at ${ms} ms`,
   );
   if (region && !box?.width) throw new Error(`${region} has no box at ${ms} ms`);
-  const crop = region && box ? snap(box) : { x: 0, y: 0, width: worker.width, height: worker.height };
+  const crop = region && box ? snap({ box, region, ms }) : { x: 0, y: 0, width: worker.width, height: worker.height };
   if (crop.x < 0 || crop.y < 0 || crop.x + crop.width > worker.width || crop.y + crop.height > worker.height)
     throw new Error(`${region} at ${ms} ms runs outside the ${worker.width}x${worker.height} frame: ${JSON.stringify(crop)}`);
   // This CDP session never saw Playwright's device scale override, so the clip has to carry it or the frame comes out at CSS size.
