@@ -6,9 +6,6 @@ export type EnterOptions = { delay?: number; distance?: number; words?: boolean;
 
 const LINE_MS = 600;
 
-// onScroll's lerp per frame is lerp(.01, .2, sync), so 0.6 trails the scroll by about 120 ms at 60 fps.
-export const SCRUB_SMOOTH = 0.6;
-
 // MOTION_SPRING's values: the design's own factories call createSpring, which warns on every call under animejs 4.5.
 export const SPRING = {
   gentle: { damping: 15, mass: 1, stiffness: 100 },
