@@ -51,12 +51,24 @@ const { slug, questions } = defineProps<{ slug: Product; questions: Question[] }
   @apply rotate-180;
 }
 
+.item::details-content {
+  opacity: 0;
+  transition:
+    opacity var(--duration-base) ease-out,
+    content-visibility var(--duration-base) allow-discrete;
+}
+
+.item[open]::details-content {
+  opacity: 1;
+}
+
 .answer {
-  @apply typo-body-md m-0 max-w-prose text-pretty px-5 pb-5 text-muted;
+  @apply typo-body-md m-0 block max-w-prose text-pretty px-5 pb-5 text-muted;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .caret {
+  .caret,
+  .item::details-content {
     @apply transition-none;
   }
 }
