@@ -4,7 +4,7 @@ import { parseArgs } from "node:util";
 import { Encode, Probe, Render, type Media } from "../tools/render/index.ts";
 import { voiceOf } from "./scripts/cues.ts";
 import sage from "./scripts/sage.ts";
-import type { FilmScript } from "./scripts/script.ts";
+import { SAFE_MARGIN, type FilmScript } from "./scripts/script.ts";
 import shell from "./scripts/shell.ts";
 import sidecar from "./scripts/sidecar.ts";
 
@@ -30,7 +30,6 @@ const { positionals, values } = parseArgs({
 
 type Check = { name: string; pass: boolean; detail: string };
 
-const MARGIN = 48;
 
 type Placed = { name: string; left: number; right: number; top: number; bottom: number };
 
@@ -65,7 +64,7 @@ const fit = async ({ url, script, width, height }: { url: string; script: FilmSc
       if (!previous || margin < previous.margin) closest.set(placed.name, { margin, ms });
     }
   }
-  return [...closest].map(([name, { margin, ms }]) => ({ name: `${name} inside the frame`, pass: margin >= MARGIN, detail: `${margin.toFixed(1)} px from the edge at ${ms} ms` }));
+  return [...closest].map(([name, { margin, ms }]) => ({ name: `${name} inside the frame`, pass: margin >= SAFE_MARGIN, detail: `${margin.toFixed(1)} px from the edge at ${ms} ms` }));
 };
 
 const verify = async ({ script, files, width, height, audio }: { script: FilmScript; files: string[]; width: number; height: number; audio: boolean }): Promise<Check[]> => {
