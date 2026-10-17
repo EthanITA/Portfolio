@@ -71,6 +71,7 @@ const setup = (): void => {
   let near = false;
   let pending = 0;
   let disposed = false;
+  const idle = window.requestIdleCallback ?? ((callback: () => void) => setTimeout(callback, 1));
 
   const viewTargets = (): Targets =>
     Object.fromEntries(Object.entries(documentTargets).map(([screen, rect]) => [screen, { ...rect, y: rect.y - scroll }]));
@@ -91,8 +92,8 @@ const setup = (): void => {
     }
     const last = frames.best(LAST);
     if (tiles && last && last.bitmap !== breakFrame) {
-      tiles.setFrame(last.bitmap);
       breakFrame = last.bitmap;
+      idle(() => !disposed && breakFrame === last.bitmap && tiles?.setFrame(last.bitmap));
     }
     phase.value = progress < SEQUENCE.breakAt ? "frames" : progress < 1 ? "break" : "landed";
     if (phase.value === "break" && tiles && tilesReady.value) tiles.render(progress, viewTargets());
@@ -204,7 +205,6 @@ const setup = (): void => {
   });
   visible.observe(section);
 
-  const idle = window.requestIdleCallback ?? ((callback: () => void) => setTimeout(callback, 1));
   idle(() => void (!disposed && frames.loadFloor()));
 
   const themes = new MutationObserver(() => {
