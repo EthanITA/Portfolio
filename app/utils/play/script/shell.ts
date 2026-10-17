@@ -1,4 +1,4 @@
-import { typed, type Key } from "./typed";
+import { typed, type Key } from "./typed.ts";
 
 export const ASK_FIND = "? find the five biggest files in here, skip node_modules and .git";
 export const ASK_DIST = "? delete the dist folder";
