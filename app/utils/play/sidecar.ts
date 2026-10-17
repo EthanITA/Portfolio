@@ -56,7 +56,7 @@ const remove = (line: number, text: string): DiffLine => ({ mark: "remove", line
 const TOY_LINE = "A toy version that matches words. Sage and AI Shell ask a separate model to rate every step, never the one that wrote it.";
 
 // Real lines of this repo's own pages, so the review shows the site reviewing itself.
-const EDITS = {
+export const EDITS = {
   index: {
     path: "app/pages/index.vue",
     result: "Updated app/pages/index.vue with 4 additions and 2 removals",
