@@ -88,6 +88,12 @@ describe("Sky.plan", () => {
     assert.deepEqual(planned({ lines: [said("Done.", 1000), said("Just in.", 44_549)] }).problems, []);
   });
 
+  it("refuses a line whose space measured nothing, so its words would touch", () => {
+    const lines = [said("Then it does the steps.", 1000)];
+    const measured = lines.map((spoken) => Object.fromEntries(Object.entries(measure(spoken)).map(([size, widths]) => [size, { ...widths, space: 0 }])));
+    assert.deepEqual(Sky.plan({ lines, measured, cut: "wide", fold: 30_000, end: 45_000, violet: [] }).problems, ['the space between the words of "Then it does the steps." was not measured at 8xl']);
+  });
+
   it("refuses a line that leaves before its words are in, or overlaps the next", () => {
     const { problems } = planned({ lines: [said("Too soon.", 1000), said("Next line.", 1300), said("That click stays yours.", 9000)] });
     assert.deepEqual(problems, ['"Too" in "Too soon." leaves at 1100 ms, before it is in at 1200', '"soon." in "Too soon." leaves at 1120 ms, before it is in at 1450']);
