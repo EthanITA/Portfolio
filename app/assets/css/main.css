@@ -1,11 +1,7 @@
 @import "@cela/design/css";
 
-:root[data-theme="light"] {
+:root {
   color-scheme: light;
-}
-
-:root[data-theme="dark"] {
-  color-scheme: dark;
 }
 
 /* Hidden only while an entrance is still to play; no JS, reduced motion, print and a stalled app all see the page. */

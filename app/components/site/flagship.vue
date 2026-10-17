@@ -3,13 +3,11 @@ import { Surface } from "@cela/design";
 import { type AnimatableObject, createAnimatable, spring } from "animejs";
 
 import { type FrameFormat, sequencePath } from "~/utils/scroll/frames";
-import type { Theme } from "~/utils/scroll/sequence";
 import type { Product } from "~/utils/site/films";
 import { SPRING, motionOn } from "~/utils/site/motion";
 import type { Run } from "~/utils/site/text";
 
 const TILT = 2;
-const THEMES: Theme[] = ["light", "dark"];
 const SIZES = "(min-width: 768px) 320px, 100vw";
 
 const { slug, name, text, to, link } = defineProps<{
@@ -24,8 +22,8 @@ const poster = useTemplateRef<HTMLElement>("poster");
 let tilt: AnimatableObject | undefined;
 let box: DOMRect | undefined;
 
-const still = (theme: Theme, width: 800 | 1600, format: FrameFormat): string => sequencePath(`${theme}/screens/${slug}-${width}`, format);
-const srcset = (theme: Theme, format: FrameFormat): string => `${still(theme, 800, format)} 800w, ${still(theme, 1600, format)} 1600w`;
+const still = (width: 800 | 1600, format: FrameFormat): string => sequencePath(`light/screens/${slug}-${width}`, format);
+const srcset = (format: FrameFormat): string => `${still(800, format)} 800w, ${still(1600, format)} 1600w`;
 
 const fine = (): boolean => matchMedia("(hover: hover) and (pointer: fine)").matches;
 
@@ -53,10 +51,10 @@ onBeforeUnmount(() => tilt?.revert());
 <template>
   <Surface v-press as="article" class="flagship" :data-flagship="slug" @pointerenter="onEnter" @pointermove="onMove" @pointerleave="onLeave">
     <div ref="poster" class="poster" :data-flagship-poster="slug" aria-hidden="true">
-      <picture v-for="theme in THEMES" :key="theme" class="still" :data-still="theme">
-        <source type="image/avif" :srcset="srcset(theme, 'avif')" :sizes="SIZES" />
-        <source type="image/webp" :srcset="srcset(theme, 'webp')" :sizes="SIZES" />
-        <img class="image" :src="still(theme, 800, 'webp')" width="1600" height="1000" alt="" loading="lazy" decoding="async" />
+      <picture>
+        <source type="image/avif" :srcset="srcset('avif')" :sizes="SIZES" />
+        <source type="image/webp" :srcset="srcset('webp')" :sizes="SIZES" />
+        <img class="image" :src="still(800, 'webp')" width="1600" height="1000" alt="" loading="lazy" decoding="async" />
       </picture>
     </div>
     <h2 class="name">{{ name }}</h2>
@@ -76,11 +74,6 @@ onBeforeUnmount(() => tilt?.revert());
 
 .image {
   @apply block size-full object-cover;
-}
-
-:root[data-theme="dark"] .still[data-still="light"],
-:root:not([data-theme="dark"]) .still[data-still="dark"] {
-  @apply hidden;
 }
 
 .name {

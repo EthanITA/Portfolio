@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Island, Surface, ThemeToggle } from "@cela/design";
+import { Island, Surface } from "@cela/design";
 import { type AnimatableObject, createAnimatable, spring, utils } from "animejs";
 
 import { nav } from "~/utils/site/links";
@@ -132,7 +132,6 @@ onBeforeUnmount(() => {
                     </li>
                   </ul>
                   <span ref="underline" class="underline" aria-hidden="true" />
-                  <ThemeToggle data-tip="Light or dark" />
                 </div>
               </div>
             </div>
@@ -153,7 +152,6 @@ onBeforeUnmount(() => {
                 <NuxtLink class="sheet-item" :to="item.to">{{ item.label }}</NuxtLink>
               </li>
             </ul>
-            <ThemeToggle data-tip="Light or dark" />
           </div>
         </nav>
       </Island>
@@ -225,11 +223,6 @@ onBeforeUnmount(() => {
   &[data-visible="false"] {
     @apply opacity-0;
   }
-}
-
-.links :deep(.theme-toggle),
-.sheet :deep(.theme-toggle) {
-  @apply static ms-1 size-10 shrink-0 border-0 bg-transparent shadow-none;
 }
 
 .menu {
