@@ -319,7 +319,7 @@ defineExpose({ ...seekable, restMs: REST_MS, ripple });
 }
 
 .change {
-  @apply absolute top-0 left-0 cursor-pointer rounded-full;
+  @apply absolute top-0 left-0 cursor-pointer rounded-full hit-area;
 
   &:focus-visible {
     @apply focus-ring;
