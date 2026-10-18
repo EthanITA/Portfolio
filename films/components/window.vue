@@ -9,9 +9,21 @@ const { onFrame, cut } = useFilmContext();
 const times = IslandMotion.times(script);
 
 const box = { left: `${WINDOW[cut].x}px`, top: `${WINDOW[cut].y}px`, width: `${WINDOW[cut].width}px`, height: `${WINDOW[cut].height}px` };
+const SCROLLS = new Set(["auto", "scroll"]);
+const scrollers = new Set<HTMLElement>();
 
 onFrame((ms) => {
-  if (glass.value) glass.value.style.opacity = String(1 - IslandMotion.pose({ ms, cut, times }).opacity);
+  if (!glass.value) return;
+  glass.value.style.opacity = String(1 - IslandMotion.pose({ ms, cut, times }).opacity);
+  // The film never scrolls the product, and a scroller at 1.5x gets a layer that squashes its neighbours into ones that raster by seek history.
+  for (const element of scrollers) element.style.removeProperty("overflow");
+  scrollers.clear();
+  for (const element of glass.value.querySelectorAll<HTMLElement>("*")) {
+    const { overflowX, overflowY } = getComputedStyle(element);
+    if (!SCROLLS.has(overflowX) && !SCROLLS.has(overflowY)) continue;
+    element.style.overflow = "hidden";
+    scrollers.add(element);
+  }
 });
 </script>
 
