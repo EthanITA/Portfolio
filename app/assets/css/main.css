@@ -34,6 +34,13 @@
   color-scheme: light;
 }
 
+/* WebKit parses the lens url() in backdrop-filter but can't run an SVG filter on a backdrop, so its liquid glass keeps the frosted blur. */
+@supports (-webkit-backdrop-filter: blur(1px)) {
+  [data-surface="glass-liquid"] {
+    --glass-liquid-refraction: blur(0px) !important;
+  }
+}
+
 /* Hidden only while an entrance is still to play; no JS, reduced motion, print and a stalled app all see the page. */
 @media screen {
   :root[data-motion="on"] [data-enter=""]:not([data-entered]),
