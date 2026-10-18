@@ -1,6 +1,6 @@
 import { readFile, readdir, stat } from "node:fs/promises";
 import { createServer } from "node:http";
-import { extname, join, resolve } from "node:path";
+import { extname, join, relative, resolve } from "node:path";
 
 import { type Browser, type BrowserContextOptions, type Page, chromium } from "playwright";
 
@@ -19,9 +19,11 @@ type Layout = {
   overflow: number;
 };
 type Target = { el: string; size: number; owned: boolean };
+type Nav = { w: number; h: number; folded: boolean; links: number; tween: string; animated: boolean; duration: number; fast: number; moderate: number };
 type Sweep = {
   scrollTo: (top: number, settle: number) => Promise<void>;
   extent: () => { height: number; view: number };
+  nav: () => Nav;
   idle: (ms: number) => Promise<Idle>;
   entered: () => string[];
   visible: (share: number) => string[];
@@ -271,18 +273,64 @@ const touch = async (browser: Browser, route: Route): Promise<void> => {
   await page.context().close();
 };
 
+const FOLD_AT = 0.8;
+const FOLD_MS = 600;
+const same = (a: number, b: number): boolean => Math.abs(a - b) < 0.5;
+const pill = (nav: Nav): string => `${nav.w}x${nav.h}${nav.folded ? " folded" : ""} links ${nav.links}`;
+
+const fold =async (browser: Browser, size: Size, route: Route, reducedMotion: "reduce" | "no-preference"): Promise<void> => {
+  const label = `${route.path} ${size.name}${reducedMotion === "reduce" ? " reduced" : ""} nav`;
+  const page = await open(browser, size, route.path, { reducedMotion });
+  const read = (): Promise<Nav> => sweep(page, (s) => s.nav());
+  const top = await read();
+  const { height, view } = await sweep(page, (s) => s.extent());
+  if (height - view <= view * FOLD_AT + 1) {
+    note(`${label}: the page scrolls ${height - view} px, under the ${Math.round(view * FOLD_AT)} px fold line`);
+    await page.context().close();
+    return;
+  }
+  await page.evaluate(`window.__sweep.scrollTo(${Math.round(Math.min(height - view, view * FOLD_AT + 600))}, ${FOLD_MS})`);
+  const folded = await read();
+  const steps = [`top ${pill(top)}`, `folded ${pill(folded)}`];
+  let ok = folded.folded;
+  if (size.phone) ok &&= same(folded.w, top.w);
+  else {
+    ok &&= folded.w < top.w - 100 && !folded.links && top.links > 0;
+    const x = Math.round((page.viewportSize()?.width ?? 0) / 2);
+    await page.mouse.move(x, 44);
+    await page.waitForTimeout(FOLD_MS);
+    const hovered = await read();
+    await page.mouse.move(x, view - 100);
+    await page.waitForTimeout(FOLD_MS);
+    const unhovered = await read();
+    steps.push(`hovered ${pill(hovered)}`, `unhovered ${pill(unhovered)}`);
+    ok &&= same(hovered.w, top.w) && hovered.links === top.links && same(unhovered.w, folded.w);
+    steps.push(`grow ${hovered.tween} ${hovered.duration} ms, fold ${unhovered.tween} ${unhovered.duration} ms (fast ${top.fast}, moderate ${top.moderate})`);
+    if (reducedMotion === "reduce") ok &&= hovered.duration < 1 && unhovered.duration < 1;
+    else ok &&= hovered.tween === "grow" && hovered.duration === top.moderate && unhovered.tween === "fold" && unhovered.duration === top.fast;
+  }
+  await page.evaluate(`window.__sweep.scrollTo(0, ${FOLD_MS})`);
+  const back = await read();
+  steps.push(`back ${pill(back)}`);
+  ok &&= same(back.w, top.w) && !back.folded;
+  check(ok, `${label}: the pill folds past 80vh${size.phone ? " at its width" : " and grows back on hover"}, and reopens at the top: ${steps.join(", ")}`);
+  await page.context().close();
+};
+
 const CLASS = /\.(-?[A-Za-z_][\w-]*)/g;
 
 // A scoped class named like a bare utility gets the utility too, because Tailwind finds the token in the template.
 const collisions = async (): Promise<void> => {
   const app = join(root, "app");
   const components = (await readdir(app, { recursive: true })).filter((name) => name.endsWith(".vue")).map((name) => join(app, name));
-  const ours = new Set<string>();
+  const ours = new Map<string, string[]>();
   for (const file of components) {
     const source = await readFile(file, "utf8");
     const styled = new Set([...source.matchAll(/<style[^>]*\bscoped\b[^>]*>([\s\S]*?)<\/style>/g)].flatMap((match) => [...match[1]!.matchAll(CLASS)].map((name) => name[1]!)));
+    const written = [...source.matchAll(/\sclass="([^"]*)"/g)].flatMap((match) => match[1]!.split(/\s+/));
+    for (const match of source.matchAll(/\s:class="([^"]*)"/g)) written.push(...[...match[1]!.matchAll(/'([^']*)'|([A-Za-z_][\w-]*)\s*:/g)].flatMap((token) => (token[1] ?? token[2]!).split(/\s+/)));
     // Only a name the template writes itself picks up the bare rule; a scoped rule on a component's own root class (Kbd's .kbd) means to.
-    for (const match of source.matchAll(/\sclass="([^"]*)"/g)) for (const name of match[1]!.split(/\s+/)) if (styled.has(name)) ours.add(name);
+    for (const name of new Set(written)) if (styled.has(name)) ours.set(name, [...(ours.get(name) ?? []), relative(app, file)]);
   }
   // Our own @utility names sit on their elements on purpose, and a scoped rule there extends them.
   const utilities = new Set([...(await readFile(join(app, "assets/css/main.css"), "utf8")).matchAll(/@utility\s+([\w-]+)/g)].map((match) => match[1]!));
@@ -292,8 +340,9 @@ const collisions = async (): Promise<void> => {
   const inline = await Promise.all(pages.map(async (page) => [...(await readFile(page, "utf8")).matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((match) => match[1]).join("\n")));
   const css = [...sheets, ...inline].join("\n");
   const scoped = new Set([...css.matchAll(/\.(-?[A-Za-z_][\w-]*)\[data-v-[0-9a-f]+\]/g)].map((match) => match[1]!).filter((name) => ours.has(name) && !utilities.has(name)));
-  const bare = new Set([...css.matchAll(/(?:^|[{};])\s*\.(-?[A-Za-z_][\w-]*)\s*\{/g)].map((match) => match[1]!));
-  const both = [...scoped].filter((name) => bare.has(name)).sort();
+  // Tailwind groups a utility with its aliases (.ring,.ring-1{…}), so every selector in a list counts on its own.
+  const bare = new Set([...css.matchAll(/(?:^|[{};])([^{}@;]+)\{/g)].flatMap((match) => match[1]!.split(",")).map((selector) => /^\s*\.(-?[A-Za-z_][\w-]*)\s*$/.exec(selector)?.[1]).filter((name) => !!name));
+  const both = [...scoped].filter((name) => bare.has(name)).sort().map((name) => `${name} (${ours.get(name)!.join(", ")})`);
   check(!both.length, `classes: ${scoped.size} scoped class names in app/, none also a bare rule in the generated CSS${list(both)}`);
 };
 
@@ -318,6 +367,7 @@ try {
     const counts = await Promise.all(routes.map((route) => motion(browser, size, route)));
     await Promise.all(routes.map((route) => reduced(browser, size, route)));
     await Promise.all(routes.map((route, i) => prerendered(browser, size, route, counts[i]!)));
+    for (const motion of ["no-preference", "reduce"] as const) await Promise.all(routes.map((route) => fold(browser, size, route, motion)));
   }
   for (const route of routes) await stagger(browser, route);
   await Promise.all(routes.map((route) => touch(browser, route)));
