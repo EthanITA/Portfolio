@@ -7,16 +7,15 @@ import type { ProductPage } from "~/utils/site/products";
 
 type Still = { avif: string; webp: string; src: string; width: number; height: number };
 
-// films/stills.ts renders each beat's region at 2x and 3x, and Sidecar's stills land with its re-render.
+// films/stills.ts renders each beat's region at 2x and 3x.
 const SCALES = [2, 3];
-const STILLED: Product[] = ["shell", "sage"];
 
 const { slug, beats } = defineProps<{ slug: Product; beats: ProductPage["beats"] }>();
 const emit = defineEmits<{ show: [id: string] }>();
 
 const still = (id: string): Still | undefined => {
   const region = REGIONS[id];
-  if (!region || !STILLED.includes(slug)) return;
+  if (!region) return;
   const set = (format: string): string =>
     SCALES.map((scale) => `/films/beats/${id}-${region.width * scale}.${format} ${region.width * scale}w`).join(", ");
   return { avif: set("avif"), webp: set("webp"), src: `/films/beats/${id}-${region.width * 2}.webp`, width: region.width * 2, height: region.height * 2 };
