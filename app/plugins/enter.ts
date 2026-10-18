@@ -2,14 +2,23 @@ import type { Directive, DirectiveBinding } from "vue";
 
 import { type EnterOptions, enter } from "~/utils/site/motion";
 
-type EnterValue = EnterOptions | number | undefined;
+type Chained = EnterOptions & { after?: string };
+type EnterValue = Chained | number | undefined;
 
 const STAGGER_STEP = 60;
 const STAGGER_CAP = 6;
 
-const options = new WeakMap<Element, EnterOptions>();
+const options = new WeakMap<Element, Chained>();
 const started = new WeakSet<Element>();
+const handoffs = new WeakMap<Element, number>();
 let observer: IntersectionObserver | undefined;
+
+// A follower waits out the handoff of a leader that has begun, and never waits on one still out of view.
+const start = (el: HTMLElement, { after, ...opts }: Chained = {}): void => {
+  const leader = after ? document.getElementById(after) : undefined;
+  const wait = leader ? Math.max(0, (handoffs.get(leader) ?? 0) - performance.now()) : 0;
+  handoffs.set(el, performance.now() + enter(el, { ...opts, delay: (opts.delay ?? 0) + wait }));
+};
 
 const watchView = (): IntersectionObserver =>
   (observer ??= new IntersectionObserver(
@@ -17,14 +26,14 @@ const watchView = (): IntersectionObserver =>
       for (const entry of entries) {
         if (!entry.isIntersecting || !(entry.target instanceof HTMLElement)) continue;
         observer?.unobserve(entry.target);
-        enter(entry.target, options.get(entry.target));
+        start(entry.target, options.get(entry.target));
         options.delete(entry.target);
       }
     },
     { rootMargin: "0px 0px -10% 0px", threshold: 0.1 },
   ));
 
-const resolve = (el: HTMLElement, value: EnterValue, staggered: boolean): EnterOptions => {
+const resolve = (el: HTMLElement, value: EnterValue, staggered: boolean): Chained => {
   const base = typeof value === "number" ? { delay: value } : { ...value };
   if (!staggered || !el.parentElement) return base;
   const index = Array.from(el.parentElement.children).indexOf(el);
@@ -45,7 +54,7 @@ const begin = (el: HTMLElement, { modifiers, value }: DirectiveBinding<EnterValu
   if (modifiers.scale) opts.scale = true;
   if (modifiers.now) {
     started.add(el);
-    enter(el, opts);
+    start(el, opts);
     return;
   }
   options.set(el, opts);

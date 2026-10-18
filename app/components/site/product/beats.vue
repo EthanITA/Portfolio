@@ -39,7 +39,7 @@ const sizes = computed(() => {
       <p v-enter class="line">{{ beats.line }}</p>
     </div>
     <div class="cards" :data-count="beats.items.length">
-      <Surface v-for="beat in cards" :key="beat.glyph" v-enter.stagger as="article" class="beat" pad="none" data-glyph-host>
+      <Surface v-for="beat in cards" :key="beat.glyph" v-enter.stagger="{ after: `${slug}-beats` }" as="article" class="beat" pad="none" data-glyph-host>
         <picture v-if="beat.still" class="still">
           <source type="image/avif" :srcset="beat.still.avif" :sizes="sizes" />
           <source type="image/webp" :srcset="beat.still.webp" :sizes="sizes" />
