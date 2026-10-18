@@ -70,6 +70,29 @@
 
     extent: () => ({ height: document.documentElement.scrollHeight, view: innerHeight }),
 
+    nav: () => {
+      const bar = document.querySelector("header.bar");
+      const box = bar?.querySelector(".island .responsive-box");
+      const rect = box?.getBoundingClientRect();
+      const ms = (value) => (value.endsWith("ms") ? parseFloat(value) : parseFloat(value) * 1000);
+      const token = (name) => ms(getComputedStyle(document.documentElement).getPropertyValue(name).trim());
+      const links = [...(bar?.querySelectorAll(".island .items a") ?? [])].filter((a) => {
+        const visible = shown(a);
+        return visible.right - visible.left > 1 && a.checkVisibility({ opacityProperty: true });
+      });
+      return {
+        w: round(rect?.width ?? 0),
+        h: round(rect?.height ?? 0),
+        folded: bar?.dataset.folded === "true",
+        links: links.length,
+        tween: bar?.dataset.tween ?? "",
+        animated: box?.dataset.animated === "true",
+        duration: box ? ms(getComputedStyle(box).transitionDuration.split(",")[0]) : 0,
+        fast: token("--duration-fast"),
+        moderate: token("--duration-moderate"),
+      };
+    },
+
     // rAF calls over the window, grouped by callback, against the loops the motion rules allow while in view.
     idle: async (ms) => {
       const scenes = [...document.querySelectorAll("[data-scene=hero], [data-scene=line], [data-scene=fence]")].filter((el) => el.dataset.state === "live" && inView(el)).map((el) => el.dataset.scene);
