@@ -50,19 +50,26 @@ const loop: Step[] = [
 ];
 
 type Receipt = { el: HTMLElement; node: number; next: number; chars: HTMLElement[]; shown: number };
+type Travel = { across: boolean; stops: number[] };
 
 const cards = useTemplateRef<HTMLElement>("cards");
 const panel = useTemplateRef<HTMLElement>("panel");
 const heading = useTemplateRef<HTMLElement>("heading");
 const fence = useTemplateRef<{ ripple: (at: number) => void }>("fence");
 const stepper = useTemplateRef<HTMLElement>("stepper");
+const steps = useTemplateRef<HTMLElement>("steps");
 const rail = useTemplateRef<HTMLElement>("rail");
+const review = useTemplateRef<{ approve: () => void }[]>("review");
 const current = ref(0);
 
 let landing: IntersectionObserver | undefined;
 let landed = 0;
 let pending = 0;
 let receipts: Receipt[] = [];
+let travel: Travel = { across: false, stops: [] };
+let runnerAt = 0;
+let row: HTMLElement | undefined;
+let approved = false;
 let splits: TextSplitter[] = [];
 let scrub: Scrub | undefined;
 let sizes: ResizeObserver | undefined;
@@ -104,10 +111,45 @@ const type = (receipt: Receipt, runner: number): void => {
   receipt.el.toggleAttribute("data-typed", count > 0);
 };
 
+const REVIEW_AT = loop.findIndex((item) => item.step === "Review") / (loop.length - 1);
+
+// Offsets add up step sizes instead of reading positions, because the steps' entrance slides them and a mid-slide read would park the runner off its node.
+const measure = (list: HTMLElement): Travel => {
+  const items = [...list.children] as HTMLElement[];
+  const across = items[1]?.offsetTop === items[0]?.offsetTop;
+  const style = getComputedStyle(list);
+  const gap = Number.parseFloat(across ? style.columnGap : style.rowGap) || 0;
+  let offset = 0;
+  const stops = items.map((item) => {
+    const stop = offset;
+    const box = item.getBoundingClientRect();
+    offset += (across ? box.width : box.height) + gap;
+    return stop;
+  });
+  return { across, stops };
+};
+
+// Steps differ in height under lg, so the runner crosses each at its own pace and still meets node i at i fifths.
+const place = (runner: number): void => {
+  const { across, stops } = travel;
+  const last = stops.length - 1;
+  const leg = Math.min(last - 1, Math.floor(runner * last));
+  const from = stops[leg] ?? 0;
+  const offset = from + ((stops[leg + 1] ?? from) - from) * (runner * last - leg);
+  if (rail.value) rail.value.style.translate = across ? `${offset}px 0` : `0 ${offset}px`;
+};
+
 // Everything is read off the runner, so no queued work or dropped event can leave a receipt it has passed short.
 const draw = (runner: number): void => {
-  if (rail.value) rail.value.style.translate = `${runner * 100}% ${runner * 100}%`;
+  runnerAt = runner;
+  place(runner);
   for (const receipt of receipts) type(receipt, runner);
+  const reached = runner >= REVIEW_AT;
+  row?.toggleAttribute("data-shown", reached);
+  if (reached && !approved) {
+    approved = true;
+    review.value?.[0]?.approve();
+  }
 };
 
 // Counted from the rects on every scrolled frame: an observer on the line misses a jump that lands its gap between two cards.
@@ -140,7 +182,11 @@ onMounted(() => {
   read();
   window.addEventListener("scroll", onScrolled, { passive: true });
   window.addEventListener("resize", onScrolled);
-  if (!motionOn()) return;
+  // A hydration past the head script's 3 s cutoff runs without motion, while the row went pending on its own reduced-motion check.
+  if (!motionOn()) {
+    review.value?.[0]?.approve();
+    return;
+  }
   if (heading.value) {
     landing = new IntersectionObserver(
       ([entry]) => {
@@ -153,10 +199,18 @@ onMounted(() => {
     landing.observe(heading.value);
   }
   const el = stepper.value;
-  if (!el) return;
+  const list = steps.value;
+  if (!el || !list) return;
   receipts = prepare(el);
+  row = el.querySelector<HTMLElement>("[data-review-row]") ?? undefined;
+  travel = measure(list);
   scrub = useScrub({ goal: () => goal(el), update: draw });
-  sizes = new ResizeObserver(scrub.wake);
+  // A resize moves the nodes without moving the runner's progress, which the scrub would skip as nothing to draw.
+  sizes = new ResizeObserver(() => {
+    travel = measure(list);
+    place(runnerAt);
+    scrub?.wake();
+  });
   sizes.observe(document.body);
 });
 
@@ -206,9 +260,8 @@ onBeforeUnmount(() => {
       <h2 id="loop-title" v-enter.words class="heading">From the ask to shipped</h2>
       <p v-enter class="body">The agent reads what I typed, what I meant and what it forces. It puts the board up, builds in small steps, and proves each one with a check that could disagree. I review it before anything leaves.</p>
       <div ref="stepper" class="stepper">
-        <span class="track" aria-hidden="true" />
         <span ref="rail" class="rail" aria-hidden="true"><span class="runner" data-runner /></span>
-        <ol class="steps">
+        <ol ref="steps" class="steps">
           <li v-for="(item, i) in loop" :key="item.step" v-enter.stagger class="step" :data-review="item.step === 'Review' || undefined">
             <span class="node" aria-hidden="true" />
             <div class="label">
@@ -219,6 +272,9 @@ onBeforeUnmount(() => {
                 <span v-if="item.task" class="box" role="img" aria-label="In progress" />
                 <span data-type>{{ item.receipt }}</span>
               </span>
+              <div v-else-if="item.step === 'Review'" class="review" data-review-row>
+                <PlayReviewRow ref="review" />
+              </div>
             </div>
           </li>
         </ol>
@@ -305,17 +361,22 @@ onBeforeUnmount(() => {
   @apply typo-body text-pretty text-muted;
 }
 
-/* The rail travels its own length, so clip on that axis only: x would cut the phone runner's ring at left-1.5. */
 .stepper {
-  @apply relative mt-6 overflow-y-clip lg:overflow-x-clip lg:overflow-y-visible;
+  @apply relative mt-6;
 }
 
 .steps {
-  @apply m-0 grid list-none grid-rows-6 gap-0 p-0 lg:grid-cols-6 lg:grid-rows-1 lg:gap-6;
+  @apply m-0 flex list-none flex-col p-0 lg:grid lg:grid-cols-6 lg:gap-6;
 }
 
 .step {
-  @apply flex items-start gap-4 pb-6 lg:flex-col lg:items-center lg:gap-3 lg:pb-0;
+  @apply relative flex items-start gap-4 pb-6 lg:flex-col lg:items-center lg:gap-3 lg:pb-0;
+}
+
+/* Each step draws the track on to the next node, so a step can be as tall as its own content. */
+.step:not(:last-child)::before {
+  @apply absolute top-3 left-1.5 h-full border-s border-border lg:top-1.5 lg:left-1/2 lg:h-0 lg:w-[calc(100%+1.5rem)] lg:border-s-0 lg:border-t;
+  content: "";
 }
 
 .node {
@@ -323,7 +384,7 @@ onBeforeUnmount(() => {
 }
 
 .label {
-  @apply flex min-w-0 flex-col gap-1.5 lg:items-center lg:text-center;
+  @apply flex min-w-0 flex-col gap-1.5 lg:items-center lg:self-stretch lg:text-center;
 }
 
 .word {
@@ -339,8 +400,14 @@ onBeforeUnmount(() => {
   @apply typo-caption font-mono break-words text-muted;
 }
 
-:root[data-motion="on"] .receipt:not([data-typed]) {
+:root[data-motion="on"] .receipt:not([data-typed]),
+:root[data-motion="on"] .review:not([data-shown]) {
   @apply invisible;
+}
+
+/* The lg label centres children at their own width, and the row's code lines are wider than the column. */
+.review {
+  @apply w-full;
 }
 
 .task {
@@ -352,22 +419,18 @@ onBeforeUnmount(() => {
   @apply mt-0.5 size-2.5 shrink-0 rounded-xs bg-primary;
 }
 
-/* Under lg the nodes sit on each label's first line, so the track runs from the first node's centre to the last. */
-.track,
+/* The rail starts on Read's node, which from lg is the first column's centre once the five 1.5rem gaps are taken out. */
 .rail {
-  @apply absolute top-3 bottom-[calc(100%/6-0.75rem)] left-1.5 w-0 lg:top-1.5 lg:right-[calc(100%/12)] lg:bottom-auto lg:left-[calc(100%/12)] lg:h-0 lg:w-auto;
+  @apply absolute top-3 left-1.5 z-2 lg:top-1.5 lg:left-[calc((100%-7.5rem)/12)];
 }
 
-.track {
-  @apply border-s border-border lg:border-s-0 lg:border-t;
-}
-
-.rail {
-  @apply z-2;
-}
-
+/* With nothing moving the runner rests on Ship, so Ship's own node wears it wherever that step ends up. */
 :root:not([data-motion="on"]) .rail {
-  translate: 100% 100%;
+  @apply hidden;
+}
+
+:root:not([data-motion="on"]) .step:last-child .node {
+  @apply border-primary bg-primary ring-4 ring-primary/20;
 }
 
 .runner {
