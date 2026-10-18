@@ -20,7 +20,10 @@ const menuButton = useTemplateRef<HTMLButtonElement>("menuButton");
 
 const open = computed(() => menu.value || !folded.value || focused.value);
 
-watch(open, (now) => (tween.value = now ? "grow" : "fold"));
+// The Island's own hover intent opens it too, so the tween follows what it reports rather than our open state.
+const onExpanded = (expanded: boolean): void => {
+  tween.value = expanded ? "grow" : "fold";
+};
 
 let slide: AnimatableObject | undefined;
 const place = (): void => {
@@ -119,6 +122,7 @@ onBeforeUnmount(() => {
         :hover="folded && !menu"
         :dismiss-on-outside-click="menu"
         @update:open="onIslandOpen"
+        @update:expanded="onExpanded"
       >
         <nav aria-label="Main" @focusin="focused = folded" @focusout="onFocusOut" @keydown="onKeydown">
           <div class="row">
