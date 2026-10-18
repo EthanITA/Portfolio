@@ -179,6 +179,9 @@ onBeforeUnmount(() => {
 .bar {
   @apply pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-4 print:hidden;
   padding-top: calc(env(safe-area-inset-top) + 1rem);
+  /* Liquid glass's 15% body vanishes on the near-white canvas, so the pill takes plain glass's fill and blur under the lens. */
+  --glass-liquid-bg: var(--glass-bg);
+  --glass-liquid-blur: blur(16px) saturate(180%);
 }
 
 .pill {
