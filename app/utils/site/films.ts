@@ -11,6 +11,7 @@ const cut = (name: string): Cut => ({
 });
 
 export const films: Partial<Record<Product, Film>> = {
+  sidecar: { landscape: cut("sidecar"), portrait: cut("sidecar-4x5") },
   shell: { landscape: cut("shell"), portrait: cut("shell-4x5") },
   sage: { landscape: cut("sage"), portrait: cut("sage-4x5") },
 };
