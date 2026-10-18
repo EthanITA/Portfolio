@@ -23,36 +23,37 @@ const settle = (el: HTMLElement): void => {
   el.style.removeProperty("transform");
 };
 
-export const enter = (el: HTMLElement, { delay = 0, distance = 12, words = false, line = false, scale = false }: EnterOptions = {}): void => {
+export const enter = (el: HTMLElement, { delay = 0, distance = 12, words = false, line = false, scale = false }: EnterOptions = {}): number => {
   if (!motionOn()) {
     el.dataset.entered = "";
-    return;
+    return 0;
   }
   if (scale) {
     el.style.opacity = "0";
     el.dataset.entered = "";
     animate(el, { delay, duration: MOTION_DURATION.slow, ease: MOTION_EASE.out, opacity: [0, 1], scale: [0.95, 1], onComplete: () => settle(el) });
-    return;
+    return delay + MOTION_DURATION.slow;
   }
   if (line) {
     el.style.transform = "scaleX(0)";
     el.dataset.entered = "";
     animate(el, { delay, duration: LINE_MS, ease: MOTION_EASE.out, scaleX: [0, 1], onComplete: () => settle(el) });
-    return;
+    return delay + LINE_MS;
   }
   if (words) {
     const parts = splitText(el, { words: true }).words as HTMLElement[];
+    const step = Math.min(WORD_STEP_MS, (WORDS_MS - MOTION_DURATION.base) / parts.length);
     for (const part of parts) part.style.opacity = "0";
     el.dataset.entered = "";
     animate(parts, {
-      delay: stagger(Math.min(WORD_STEP_MS, (WORDS_MS - MOTION_DURATION.base) / parts.length), { start: delay }),
+      delay: stagger(step, { start: delay }),
       duration: MOTION_DURATION.base,
       ease: MOTION_EASE.out,
       opacity: [0, 1],
       translateY: ["0.4em", "0em"],
       onComplete: () => parts.forEach(settle),
     });
-    return;
+    return delay + parts.length * step;
   }
   el.style.opacity = "0";
   el.dataset.entered = "";
@@ -64,6 +65,7 @@ export const enter = (el: HTMLElement, { delay = 0, distance = 12, words = false
     translateY: [distance, 0],
     onComplete: () => settle(el),
   });
+  return delay + MOTION_DURATION.base;
 };
 
 export const pageTransition: TransitionProps = {
