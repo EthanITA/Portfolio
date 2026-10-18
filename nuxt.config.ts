@@ -39,6 +39,8 @@ const aiCrawlers = [
 export default defineNuxtConfig({
   aiReady: {
     contentSignal: { aiInput: true, aiTrain: true, search: true },
+    // How's review row is a picture of a diff that screen readers skip, and inside a list mdream runs its lines together.
+    mdreamOptions: { filter: { exclude: ["[data-review-row]"] } },
     llmsTxt: {
       notes: [
         "I build AI products end to end. The agents write a lot of the code, and the standard is mine.",
