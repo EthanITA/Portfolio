@@ -7,16 +7,15 @@ import type { ProductPage } from "~/utils/site/products";
 
 type Still = { avif: string; webp: string; src: string; width: number; height: number };
 
-// films/stills.ts renders each beat's region at 2x and 3x, and Sidecar's stills land with its re-render.
+// films/stills.ts renders each beat's region at 2x and 3x.
 const SCALES = [2, 3];
-const STILLED: Product[] = ["shell", "sage"];
 
 const { slug, beats } = defineProps<{ slug: Product; beats: ProductPage["beats"] }>();
 const emit = defineEmits<{ show: [id: string] }>();
 
 const still = (id: string): Still | undefined => {
   const region = REGIONS[id];
-  if (!region || !STILLED.includes(slug)) return;
+  if (!region) return;
   const set = (format: string): string =>
     SCALES.map((scale) => `/films/beats/${id}-${region.width * scale}.${format} ${region.width * scale}w`).join(", ");
   return { avif: set("avif"), webp: set("webp"), src: `/films/beats/${id}-${region.width * 2}.webp`, width: region.width * 2, height: region.height * 2 };
@@ -39,17 +38,14 @@ const sizes = computed(() => {
       <p v-enter class="line">{{ beats.line }}</p>
     </div>
     <div class="cards" :data-count="beats.items.length">
-      <Surface v-for="beat in cards" :key="beat.glyph" v-enter.stagger="{ after: `${slug}-beats` }" as="article" class="beat" pad="none" data-glyph-host>
+      <Surface v-for="beat in cards" :key="beat.glyph" v-enter.stagger="{ after: `${slug}-beats` }" as="article" class="beat" pad="none">
         <picture v-if="beat.still" class="still">
           <source type="image/avif" :srcset="beat.still.avif" :sizes="sizes" />
           <source type="image/webp" :srcset="beat.still.webp" :sizes="sizes" />
           <img class="shot" :src="beat.still.src" :width="beat.still.width" :height="beat.still.height" alt="" loading="lazy" decoding="async" />
         </picture>
         <div class="body">
-          <div class="beat-head">
-            <h3 :id="`${slug}-beat-${beat.glyph}`" class="name">{{ beat.title }}</h3>
-            <SiteGlyph v-if="!beat.still" :name="beat.glyph" />
-          </div>
+          <h3 :id="`${slug}-beat-${beat.glyph}`" class="name">{{ beat.title }}</h3>
           <p class="text"><SiteRuns :runs="beat.text" /></p>
           <button type="button" class="show" :aria-describedby="`${slug}-beat-${beat.glyph}`" @click="emit('show', beat.glyph)">Show me</button>
         </div>
@@ -97,10 +93,6 @@ const sizes = computed(() => {
 
 .body {
   @apply flex flex-1 flex-col gap-3 p-6;
-}
-
-.beat-head {
-  @apply flex items-start justify-between gap-4;
 }
 
 .name {
