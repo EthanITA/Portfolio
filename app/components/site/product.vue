@@ -6,6 +6,7 @@ const { slug } = defineProps<{ slug: Product }>();
 
 const page = computed(() => products[slug]);
 const next = computed(() => nextFlagship(slug));
+const stage = useTemplateRef("stage");
 </script>
 
 <template>
@@ -16,8 +17,8 @@ const next = computed(() => nextFlagship(slug));
       <p v-enter.now.wide="320" class="lead"><SiteRuns :runs="page.lead" /></p>
     </header>
 
-    <SiteProductStage :slug="slug" />
-    <SiteProductBeats :slug="slug" :beats="page.beats" />
+    <SiteProductStage ref="stage" :slug="slug" />
+    <SiteProductBeats :slug="slug" :beats="page.beats" @show="stage?.show($event)" />
     <SiteProductDecides :slug="slug" :decides="page.decides" />
     <SiteProductNumbers :slug="slug" :numbers="page.numbers" />
     <SiteProductQuestions :slug="slug" :questions="page.questions" />
