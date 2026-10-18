@@ -2,6 +2,7 @@
 import { Segmented, Surface } from "@cela/design";
 
 import { type Cut, type Product, films } from "~/utils/site/films";
+import { motionOn } from "~/utils/site/motion";
 
 type Mode = "try" | "watch";
 
@@ -18,6 +19,7 @@ const mode = ref<Mode>("try");
 const loaded = ref(false);
 const wide = ref(true);
 const portraitMissing = ref(false);
+const root = useTemplateRef<HTMLElement>("root");
 const video = useTemplateRef<HTMLVideoElement>("video");
 const playground = useTemplateRef("playground");
 
@@ -81,6 +83,26 @@ const startFilm = async (): Promise<void> => {
   video.value?.focus();
 };
 
+// scrollIntoView aims at the transformed box, so a press during the stage's own entrance would park it short.
+const restingTop = (el: HTMLElement): number => {
+  const style = getComputedStyle(el);
+  return el.getBoundingClientRect().top + scrollY - new DOMMatrixReadOnly(style.transform).m42 - Number.parseFloat(style.scrollMarginTop);
+};
+
+// Focus follows the press up to the stage, so the next Tab lands in the playground rather than back among the cards.
+const show = async (id: string): Promise<void> => {
+  const el = root.value;
+  if (!el) return;
+  if (mode.value === "watch") choose("try");
+  el.focus({ preventScroll: true });
+  scrollTo({ top: restingTop(el), behavior: motionOn() ? "smooth" : "instant" });
+  // The playground is a lazy chunk, so a press before it mounts waits for it.
+  const toy = playground.value ?? (await new Promise<(typeof playground)["value"]>((resolve) => watch(playground, (value) => resolve(value), { once: true })));
+  toy?.show(id);
+};
+
+defineExpose({ show });
+
 onMounted(() => {
   query = matchMedia(SM);
   wide.value = query.matches;
@@ -92,7 +114,7 @@ onBeforeUnmount(() => query?.removeEventListener("change", onQuery));
 </script>
 
 <template>
-  <div id="film" v-enter.now.wide="420" class="stage wrap">
+  <div id="film" ref="root" v-enter.now.wide="420" class="stage wrap" tabindex="-1">
     <div class="bar">
       <Segmented v-if="film" :model-value="mode" :options="MODES" @update:model-value="choose" />
       <PlayChip class="chip" :play="control" />
@@ -124,7 +146,7 @@ onBeforeUnmount(() => query?.removeEventListener("change", onQuery));
 
 <style scoped>
 .stage {
-  @apply flex scroll-mt-20 flex-col gap-4;
+  @apply flex scroll-mt-20 flex-col gap-4 outline-none;
 }
 
 .bar {
