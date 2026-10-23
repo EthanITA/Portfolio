@@ -16,4 +16,4 @@ export const nav: NavItem[] = [
   { label: "CV", to: "/cv" },
 ];
 
-export const emailParts = ["viaimperiale", "gmail.com"] as const;
+export const emailParts = ["info", "madong.me"] as const;
